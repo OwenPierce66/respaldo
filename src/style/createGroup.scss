@@ -1,0 +1,89 @@
+@media only screen and (max-width: 600px) {
+  .createGroup {
+    .buttons-wrapper {
+      flex-direction: column-reverse;
+    }
+
+    button {
+      margin: 5px;
+    }
+  }
+}
+
+.createGroup {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+
+  .cgTitle {
+    font-size: 19px;
+    margin-bottom: 0px;
+    width: 80%;
+    max-width: 500px;
+    text-align: left;
+    background-color: #d2d2d2;
+    padding: 5px;
+    border: 3px solid #111;
+    border-bottom: 0px;
+  }
+
+  textarea {
+    width: 80%;
+    height: 70vh;
+    resize: none;
+    border: 3px solid black;
+    border-top: 0px;
+    background-color: #d2d2d2;
+    margin-bottom: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    padding: 5px;
+    max-width: 500px;
+    outline: none;
+  }
+
+  textarea::placeholder {
+    font-size: 15px;
+    color: black;
+    font-weight: 600;
+  }
+
+
+  button {
+    width: 150px;
+    height: 33px;
+    cursor: pointer;
+    border: 3px solid black;
+    color: black;
+    background-color: #d2d2d2;
+    font-size: 18px;
+    font-weight: 600;
+    transition: 0.3s;
+  }
+
+  button:hover {
+    background-color: rgb(73, 73, 73);
+  }
+
+  .Back-cg-link {
+    color: black;
+    text-decoration: none;
+  }
+
+  .buttons-wrapper {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    text-align: center;
+    width: 80%;
+    margin: auto;
+  }
+
+  .Back-cg {
+    font-size: 13px;
+    margin: 10px;
+  }
+}

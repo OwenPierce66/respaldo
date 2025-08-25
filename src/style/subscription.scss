@@ -1,0 +1,98 @@
+.subscription-updated {
+  .subscription-updated-header {
+    text-align: center;
+  }
+
+  .subscription-updated-description {
+    text-align: center;
+  }
+
+  .success-icon-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    .success-icon {
+      font-size: 80px;
+      color: $LG-AccentGreen-2;
+    }
+  }
+}
+
+.manage-subscription-header {
+  text-align: center;
+  padding: 10px;
+  margin: 0px;
+}
+
+.change-plan-header {
+  text-align: center;
+  padding: 10px;
+  margin: 0px;
+  margin-top: 10px
+}
+
+.change-plan-description {
+  text-align: center;
+  margin: 0px;
+  margin-top: 5px;
+  padding: 0px;
+}
+
+.inactive-subscription-description{
+  text-align: center;
+  margin: 0px;
+  margin-bottom: 10px;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+.current-subscription-container {
+  margin-left: auto;
+  margin-right: auto;
+  width: 500px;
+  padding: 10px;
+  border: 2px solid $LG-Grey;
+  border-radius: 5px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  p {
+    margin: 0px;
+    padding: 0px;
+    margin-top: 10px;
+  }
+
+  .current-subscription-information {
+    .current-subscription-header-container {
+      display: flex;
+      column-gap: 10px;
+      align-items: center;
+
+      .current-subscription-trial {
+        background-color: $LG-AccentBlue-2;
+        padding-bottom: 3px;
+        padding-top: 3px;
+        padding-left: 10px;
+        padding-right: 10px;
+        color: $LG-White;
+        border-radius: 5px;
+      }
+
+      .current-subscription-header {
+        font-weight: bold;
+        font-size: 18px;
+      }
+    }
+  }
+
+  .current-subscription-cancel {
+    height: 40px;
+    padding-left: 25px;
+    padding-right: 25px;
+    border-radius: 5px;
+    background-color: $LG-Grey;
+    cursor: pointer;
+  }
+}

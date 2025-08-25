@@ -1,0 +1,215 @@
+.calendar {
+  padding: 15px;
+  width: 100%;
+  height: 90%;
+
+  @media only screen and (max-width: 500px) {
+    width: 100vw;
+  }
+}
+
+.user-calendar-categories-update-button {
+  height: 35px;
+  font-size: 14px;
+  background-color: $LG-AccentBlue-2;
+  color: white;
+  cursor: pointer;
+  border-radius: 5px;
+  margin-bottom: 10px;
+}
+
+.user-calendar-category-modal {
+  width: fit-content !important;
+  height: fit-content !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol" !important;
+  padding: 35px;
+
+  .header-text {
+    font-size: 18px;
+    color: black;
+    text-align: center;
+  }
+
+  p {
+    font-size: 14px;
+    margin: 0px;
+    margin-top: 5px;
+    margin-bottom: 15px;
+  }
+  
+  .user-category-container {
+    width: 80%;
+    margin: auto;
+
+    label {
+      margin-left: 10px;
+      font-size: 16px;
+      color: black;
+    }
+
+    input {
+      margin: 0px;
+    }
+  }
+}
+
+.rbc-calendar {
+  min-height: 500px;
+  z-index: 1;
+}
+
+.rbc-row-content {
+  z-index: 2;
+}
+
+.Event-Modal {
+  height: auto;
+  max-width: 700px;
+  width: 95%;
+}
+
+.modal-event {
+  display: grid;
+  grid-template-rows: 50px 60vh 50px;
+  height: 100%;
+  width: 100%;
+
+  .header,
+  .body {
+    border-bottom: 1px solid $LG-Grey;
+    z-index: 10;
+  }
+
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    .title {
+      font-size: 24px;
+      font-weight: 600;
+    }
+
+    .close {
+      height: 100%;
+      width: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      font-size: 26px;
+    }
+  }
+
+  .body {
+    padding: 15px;
+    overflow-y: auto;
+
+    .title,
+    .category,
+    .desc {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+
+      label {
+        width: 100%;
+        max-width: 450px;
+        margin-bottom: 10px;
+      }
+      select, input {
+        width: 100%;
+        max-width: 450px;
+        height: 35px;
+        border-radius: 3px;
+        border: 1px solid gray;
+      }
+    }
+
+    .category {
+      margin-top: 25px;
+
+      select {
+        background-color: white;
+      }
+    }
+
+    .desc {
+      margin-top: 25px;
+
+      textarea {
+        width: 100%;
+        max-width: 450px;
+      }
+    }
+
+    .date-times {
+      margin-top: 25px;
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+      flex-direction: column;
+
+      .input-container {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        max-width: 450px;
+        margin-bottom: 15px;
+
+        .form-control{
+          width: 100%;
+          height: 35px;
+        }
+      }
+    }
+  }
+
+  .footer {
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+
+    button {
+      width: 100%;
+      max-width: 450px;
+      height: 35px;
+      background-color: $LG-AccentGreen-2;
+      color: white;
+      border: 1px solid transparent;
+      border-radius: 5px;
+    }
+
+    .delete{
+      background-color: red;
+    }
+  }
+}
+
+
+.body-show{
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  align-items: center;
+  padding: 20px;
+
+  .desc-show {
+    height: 75.3%;
+    overflow-y: scroll;
+    text-align: center;
+  }
+
+  .date-times-show{
+    display: flex;
+    flex-direction: column;
+  }
+
+  .time{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    margin-bottom: 10px;
+  }
+}

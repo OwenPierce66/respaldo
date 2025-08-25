@@ -1,0 +1,689 @@
+.admin {
+  .adminHeader {
+    height: 100px;
+    padding: 15px;
+    padding-bottom: 0;
+    border-bottom: 1px solid $LG-Grey;
+    display: grid;
+    grid-template-rows: 1fr 1fr;
+
+    .adminHeader-title {
+      .title {
+        text-transform: capitalize;
+        font-size: 30px;
+        font-weight: 700;
+      }
+    }
+
+    .adminHeader-nav {
+      display: flex;
+      justify-content: space-evenly;
+      align-items: flex-end;
+
+      .nav-button {
+        background-color: transparent;
+        font-size: 18px;
+        opacity: 0.5;
+        width: 150px;
+        cursor: pointer;
+      }
+
+      .nav-button:focus {
+        outline: none;
+      }
+
+      .nav-button.active {
+        opacity: 1;
+        border-bottom: 2px solid $LG-AccentGreen-2;
+      }
+    }
+  }
+
+  .adminBody {
+    padding: 15px;
+  }
+}
+
+.admin-with-dropdown {
+  flex-direction: column;
+
+  .dropdown {
+    width: 300px;
+    margin-bottom: 15px;
+    padding: 5px;
+    display: grid;
+    grid-template-rows: 1fr 1fr;
+    height: 40px;
+  }
+
+  .adminElement {
+    width: 100%;
+  }
+}
+
+.adminElement {
+  transition: opacity 0.4s;
+  opacity: 1;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+}
+
+.adminElement.hide {
+  display: none;
+}
+
+.adminTable {
+  max-width: 1200px;
+
+  width: 100%;
+  border: 1px solid $LG-Grey;
+  border-radius: 5px;
+  .adminTableHeader {
+    background-color: #f4f5fa;
+    height: 60px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 40px 15px 40px;
+    border-radius: 5px;
+
+    &-title {
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    &-search {
+      height: 30px;
+      width: 200px;
+      border-radius: 5px;
+      border: 1px solid $LG-Grey;
+
+      &:focus {
+        outline: none;
+      }
+    }
+
+    .adminExcelExport {
+      font-size: 26px;
+
+      &:hover {
+        color: darkgray;
+      }
+    }
+  }
+
+  .adminTableBody {
+    table,
+    th,
+    td {
+      border-collapse: collapse;
+    }
+
+    table {
+      width: 100%;
+      overflow-x: scroll;
+
+      tr:nth-child(odd) {
+        background-color: $LG-White;
+      }
+
+      tr {
+        background-color: #f4f5fa;
+        height: 50px;
+        border-bottom: 1px solid $LG-Grey;
+      }
+
+      td {
+        text-align: center;
+        width: 100px;
+      }
+
+      .rowButton {
+        width: 75px;
+        height: 30px;
+        border: 1px solid $LG-Grey;
+        border-radius: 3px;
+
+        &:hover {
+          opacity: 0.8;
+        }
+      }
+    }
+  }
+
+  .adminTableFooter {
+    height: 50px;
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+
+    .pages {
+      color: grey;
+    }
+
+    .pageNav {
+      display: flex;
+
+      .itemsShowing {
+        margin-right: 10px;
+        color: grey;
+      }
+
+      .changePage {
+        display: flex;
+        justify-content: space-between;
+        width: 40px;
+        .changePage-icon {
+          color: grey;
+          font-size: 20px;
+
+          &:hover {
+            color: darkgray;
+          }
+        }
+
+        .changePage-icon.disabled {
+          color: lightgray;
+        }
+      }
+    }
+  }
+}
+
+.createButtonWrapper {
+  max-width: 1200px;
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+
+  .createButton {
+    width: 150px;
+    height: 35px;
+    border-radius: 3px;
+    background-color: $LG-AccentGreen-2;
+    font-size: 16px;
+    color: #f4f5fa;
+    transition: 0.2s ease all;
+    margin: 15px;
+
+    &:hover {
+      opacity: 0.8;
+    }
+  }
+}
+
+.adminModal {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  &-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid grey;
+    padding: 15px;
+    width: 100%;
+
+    .modal-title {
+      font-size: 25px;
+    }
+
+    .modal-close {
+      height: 40px;
+      width: 40px;
+      background-color: transparent;
+      font-size: 25px;
+    }
+  }
+
+  &-body {
+    padding: 20px;
+    width: 100%;
+    max-width: 800px;
+
+    .successful {
+      color: $LG-AccentGreen-2;
+      font-size: 24px;
+      width: 100%;
+      text-align: center;
+    }
+  }
+}
+
+.adminDeleteForm {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+
+  .input-container {
+    width: 70%;
+    min-width: 250px;
+    display: grid;
+    grid-template-rows: 1fr 1fr;
+    margin-bottom: 15px;
+
+    label {
+      font-size: 18px;
+      margin-bottom: 15px;
+    }
+
+    input,
+    select {
+      height: 35px;
+      border-radius: 5px;
+      border: 1px solid grey;
+      padding: 0px 10px;
+    }
+  }
+
+  .adminModal-button-container {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin-top: 30px;
+
+    button {
+      height: 40px;
+      width: 50%;
+      min-width: 250px;
+      border-radius: 5px;
+      background-color: $LG-AccentGreen-2;
+      color: white;
+      font-size: 18px;
+
+      &:disabled {
+        opacity: 0.5;
+      }
+    }
+  }
+}
+
+.adminCreateForm {
+  display: flex;
+  justify-content: space-evenly;
+  flex-wrap: wrap;
+
+  .img-container {
+    width: 45%;
+    display: grid;
+    grid-template-rows: 25px 1fr;
+    margin-bottom: 15px;
+
+    img {
+      width: 200px;
+      height: 100px;
+    }
+  }
+
+  .input-container {
+    width: 45%;
+    display: grid;
+    grid-template-rows: 1fr 1fr;
+    margin-bottom: 15px;
+
+    label {
+      font-size: 18px;
+    }
+
+    input,
+    select {
+      height: 35px;
+      border-radius: 5px;
+      border: 1px solid grey;
+      padding: 0px 10px;
+    }
+  }
+
+  .content-label {
+    font-size: 18px;
+  }
+
+  .adminModal-button-container {
+    width: 95%;
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 30px;
+
+    button {
+      height: 40px;
+      width: 50%;
+      border-radius: 5px;
+      background-color: $LG-AccentGreen-2;
+      color: white;
+      font-size: 18px;
+    }
+  }
+}
+
+.blog-thumb_nail {
+  width: 40px;
+  height: 40px;
+}
+
+// .admin {
+//   height: 90vh;
+//   width: 100%;
+//   display: grid;
+//   grid-template-rows: 8% 1fr;
+
+//   @include desktop {
+//     grid-template-rows: unset;
+//     grid-template-columns: 10% 1fr;
+//   }
+
+//   .sidebar {
+//     background-color: #313639;
+//     color: white;
+//     height: 40px;
+
+//     @include desktop {
+//       height: fit-content;
+//       width: 100%;
+//     }
+
+//     .sidebar-body {
+//       display: flex;
+//       flex-direction: row;
+//       align-items: center;
+
+//       @include desktop {
+//         flex-direction: column;
+//       }
+
+//       .sidebar-link {
+//         width: 100%;
+//         height: 40px;
+//         display: flex;
+//         justify-content: center;
+//         align-items: center;
+//         cursor: pointer;
+//       }
+
+//       .selected {
+//         background-color: white;
+//         color: #313639;
+//       }
+//     }
+//   }
+
+//   .admin-wrapper {
+//     width: 100%;
+
+//     .admin-table {
+//       margin: 5px;
+//     }
+//     .table {
+//       border-collapse: collapse;
+//       width: 100%;
+
+//       .table-head {
+//         background-color: lightgray;
+//       }
+
+//       tr:nth-child(even) {
+//         background-color: lightgray;
+//       }
+
+//       th,
+//       td {
+//         border: 1px solid black;
+//       }
+
+//       td {
+//         text-align: center;
+//       }
+//     }
+//   }
+// }
+
+// .table-wrapper {
+//   grid-column: 2;
+//   grid-row: 2;
+// }
+
+// .table-wrapper-2 {
+//   grid-column: 2;
+//   grid-row: 2;
+// }
+
+// .admin-table {
+//   width: 90%;
+//   border-collapse: collapse;
+
+//   table,
+//   th,
+//   td {
+//     border: 1px solid black;
+//     position: relative;
+//   }
+
+//   .table-status {
+//     width: 10%;
+//   }
+
+//   .table-info {
+//     text-align: center;
+//   }
+// }
+
+// // Admin Blog Dashboard
+
+// .blogPageTitle {
+//   text-align: center;
+//   width: 100%;
+// }
+
+// .blog-admin {
+//   height: 90vh;
+//   position: relative;
+//   display: grid;
+//   grid-template-rows: 15% auto 10%;
+//   margin: 15px;
+
+//   .header1 {
+//     max-width: 1250px;
+//     display: grid;
+//     grid-template-columns: 1fr;
+
+//     margin: 20px;
+
+//     .top {
+//       grid-row: 1;
+//       width: 100%;
+
+//       display: flex;
+//       justify-content: center;
+//       align-items: center;
+
+//       p {
+//         font-size: 25px;
+//         font-weight: 700;
+//         text-decoration: underline;
+//       }
+
+//       .buttons {
+//         .create {
+//           font-size: 25px;
+//           color: green;
+//           cursor: pointer;
+//           transition: ease all 0.3s;
+
+//           &:hover {
+//             color: darkgreen;
+//           }
+//         }
+//       }
+//     }
+
+//     .header-bottom {
+//       grid-row: 2;
+//       height: 35px;
+//       width: 100%;
+//       border: 1px solid gray;
+//       border-radius: 15px;
+//       display: flex;
+//       align-content: center;
+//       max-width: 1200px;
+
+//       .search-icon {
+//         height: 35px;
+//         margin: 0px 10px 0px 10px;
+//       }
+//       input {
+//         width: 95%;
+//         border: none;
+
+//         &:focus {
+//           outline: none;
+//         }
+//       }
+//     }
+//   }
+
+//   .body {
+//     margin-top: 50px;
+//     .post-container {
+//       width: 100%;
+//       max-width: 1200px;
+//       height: 75px;
+//       border: 1px solid black;
+//       border-radius: 3px;
+//       margin-bottom: 15px;
+//       display: grid;
+//       grid-template-columns: 75px 1fr 75px;
+//       margin-top: 20px;
+
+//       .post-thumbnail {
+//         width: 100%;
+//         height: 73px;
+//       }
+
+//       .post-title {
+//         display: flex;
+//         align-self: center;
+//         margin-left: 15px;
+//         font-size: 18px;
+//         font-weight: 600;
+//       }
+//       .buttons {
+//         display: grid;
+//         grid-template-columns: 1fr 1fr;
+//         justify-content: center;
+//         align-items: center;
+
+//         .button-icon {
+//           color: gray;
+//           transition: ease all 0.3s;
+
+//           &:hover {
+//             color: black;
+//           }
+//         }
+//       }
+//     }
+//   }
+
+//   .footer {
+//     bottom: 0;
+//     width: 100%;
+//     height: 50px;
+//     margin-top: 25px;
+//     margin-bottom: 25px;
+
+//     button {
+//       height: 50px;
+//       width: 200px;
+//     }
+//   }
+// }
+
+// .create-form {
+//   height: 100%;
+
+//   .input-wrapper.edit {
+//     grid-template-columns: 1fr 1fr;
+
+//     .input {
+//       display: flex;
+//     }
+
+//     .thumbnail-image {
+//       // margin-left: 25px;
+//       width: 75px;
+//       height: 75px;
+
+//       align-self: flex-end;
+//     }
+//   }
+
+//   .input-wrapper {
+//     display: grid;
+//     grid-template-columns: 1fr 1fr;
+//     height: 50px;
+//     align-items: center;
+//     margin-bottom: 15px;
+
+//     .input {
+//       display: grid;
+//       grid-template-rows: 1fr 1fr;
+
+//       input,
+//       select {
+//         border: none;
+//         border-bottom: 1px solid gray;
+//         width: 90%;
+//         height: 30px;
+
+//         &:focus {
+//           outline: none;
+//         }
+//       }
+//     }
+//   }
+
+// }
+
+.editor-wrapper {
+  margin-top: 10px;
+  border: 1px solid black;
+
+  .editor-editor {
+    max-height: 300px;
+    overflow-y: auto;
+
+    @include desktop {
+      max-height: 475px;
+    }
+
+    @media (max-height: 550px) {
+      max-height: 250px;
+    }
+  }
+}
+
+.delete-form {
+  margin: 25px;
+
+  .delete-form-wrapper {
+    display: grid;
+    grid-template-rows: 1fr 1fr;
+    // justify-content: center;
+    width: 100%;
+
+    input {
+      height: 35px;
+      width: 100%;
+    }
+  }
+}
+
+.adminCenterTempHolder {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  margin-top: 50px;
+}

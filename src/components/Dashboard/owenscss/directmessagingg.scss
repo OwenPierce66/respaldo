@@ -1,0 +1,83 @@
+.direct-messaging-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    max-width: 600px;
+    margin: 0 auto;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    overflow: hidden;
+
+    .header {
+        padding: 10px;
+        background-color: #007bff;
+        color: white;
+        text-align: center;
+    }
+
+    .messages {
+        flex: 1;
+        padding: 10px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .message {
+        max-width: 70%;
+        margin: 5px 0;
+        padding: 10px;
+        border-radius: 20px;
+        position: relative;
+
+        &.sent {
+            align-self: flex-end;
+            background-color: #dcf8c6;
+            border-bottom-right-radius: 0;
+        }
+
+        &.received {
+            align-self: flex-start;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border-bottom-left-radius: 0;
+        }
+
+        p {
+            margin: 0;
+
+            strong {
+                display: block;
+                margin-bottom: 5px;
+            }
+        }
+    }
+
+    .input-container {
+        display: flex;
+        padding: 10px;
+        background-color: #f1f1f1;
+
+        textarea {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 20px;
+            margin-right: 10px;
+            resize: none;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+
+            &:disabled {
+                background-color: #ccc;
+            }
+        }
+    }
+}

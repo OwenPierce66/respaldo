@@ -1,0 +1,154 @@
+.exchange {
+  border: 1px solid black;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  width: fit-content;
+  .exchange-title {
+    border-right: 1px solid #111;
+    font-weight: 500;
+    text-align: center;
+  }
+
+  .exchange-rate {
+    margin: 3px;
+    text-align: center;
+  }
+}
+
+.admin-exchange {
+  width: 400px;
+  height: auto;
+  table,
+  th,
+  td {
+    border: 1px solid black;
+    text-align: center;
+  }
+
+  th,
+  td {
+    min-width: 70px;
+  }
+
+  td:nth-child(1) {
+    width: 150px;
+  }
+
+  th {
+    height: 50px;
+  }
+}
+
+.exchange-rate-form {
+  .input-container {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+
+    label,
+    input {
+      width: 100%;
+      font-size: 18px;
+    }
+
+    input {
+      height: 35px;
+      margin-bottom: 10px;
+    }
+  }
+}
+
+@media only screen and (max-width: 600px) {
+  .exchange {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .exchange-rate {
+    border-top: 1px solid #111;
+  }
+
+  .exchange-title {
+    border-right: none;
+  }
+}
+
+.exchangePage {
+  width: 100%;
+  height: 89.5vh;
+  display: flex;
+  justify-content: center;
+
+  .exchangePage-container {
+    width: 100%;
+    max-width: 600px;
+    padding: 25px;
+
+    .flags-container {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 15px;
+      img {
+        width: 80px;
+        height: 50px;
+      }
+    }
+
+    .buy-sell {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      height: 35px;
+      background-color: rgb(2, 130, 134);
+
+      .buy-sell-item {
+        font-size: 20px;
+        margin-left: 5px;
+        margin-right: 5px;
+        font-weight: 600;
+        color: white;
+      }
+    }
+
+    .exchange-items {
+      .exchange-item {
+        width: 100%;
+        height: auto;
+        margin-top: 15px;
+        border: 0.5px solid #111;
+        border-radius: 10px;
+
+        .exchange-item-title {
+          text-align: center;
+          font-size: 20px;
+          font-weight: bold;
+          margin-bottom: 5px;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+        }
+
+        .exchange-rates {
+          margin-bottom: 5px;
+          display: flex;
+          justify-content: space-around;
+          .rate {
+            font-size: 30px;
+            font-weight: bold;
+          }
+        }
+      }
+    }
+  }
+}
+
+.rate-buy {
+  font-size: 30px;
+  font-weight: 900;
+  color: rgb(0, 66, 70);
+}
+
+.rate-sell {
+  font-size: 30px;
+  font-weight: 900;
+  color: rgb(0, 66, 70);
+}

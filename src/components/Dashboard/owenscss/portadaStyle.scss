@@ -1,0 +1,131 @@
+.slider-container {
+    width: 100vw;
+    /* Asegura que el contenedor ocupe todo el ancho de la pantalla */
+    overflow: hidden;
+    /* Oculta cualquier contenido que se desborde */
+    margin: 0;
+    padding: 0;
+    position: relative;
+}
+
+.slide-item {
+    display: inline-block;
+    width: 100vw;
+    /* Cada slide ocupará el 100% del ancho de la pantalla */
+    height: auto;
+    position: relative;
+    text-align: center;
+    box-sizing: border-box;
+}
+
+.contenedorImagen {
+    position: relative;
+    width: 100vw;
+    /* Ocupa todo el ancho disponible */
+    height: auto;
+}
+
+
+
+.imagenPeticionn {
+    width: 100%;
+    height: auto;
+    /* Las imágenes se escalarán para ocupar el ancho completo */
+    display: block;
+}
+
+.centrarImagenPCH {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 9px;
+}
+
+.margin-negativo {
+    margin-bottom: -60px;
+    margin-top: 66px;
+
+}
+
+
+.whatpetitiontitle {
+    font-size: 2em;
+    border-radius: 50%;
+    /* Hace que el contenedor sea un círculo */
+
+
+    border: solid 5px;
+    height: 160px;
+    padding-top: 1;
+    width: 160px;
+    background-color: white;
+    margin-top: -84px;
+    position: relative;
+    overflow: hidden;
+    /* Oculta cualquier contenido que desborde del área circular */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.imagenFija {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    /* Asegura que la imagen cubra completamente el contenedor circular */
+    border-radius: 50%;
+    /* Hace que la imagen tenga bordes circulares */
+}
+
+
+.textoEnImagen {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(0, 0, 0, 0.5);
+    color: white;
+    font-size: 1.5em;
+    font-weight: 600;
+    text-align: center;
+    border-radius: 5px;
+}
+
+.iconDelete {
+    position: absolute;
+    top: 2px;
+    right: 5px;
+    background-color: transparent;
+    padding: 5px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1.7em;
+}
+
+
+.iconDelete:hover {
+    background-color: #54afff;
+    color: white;
+}
+
+@media (max-width: 768px) {
+    .imagenPeticionn {
+        width: 100vw;
+        height: auto;
+    }
+
+    .textoEnImagen {
+        font-size: 1.2em;
+    }
+}
+
+@media (max-width: 500px) {
+    .imagenPeticionn {
+        width: 100vw;
+        height: auto;
+    }
+
+    .textoEnImagen {
+        font-size: 1em;
+    }
+}

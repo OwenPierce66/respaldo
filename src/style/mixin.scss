@@ -1,0 +1,29 @@
+$tablet-width: 768px;
+$desktop-width: 1024px;
+
+// Colors
+$LG-White: #FFFFFF;
+$LG-LightGrey: #F4F5FA;
+$LG-Grey: #D2D2D2;
+$LG-DarkGrey: #443737;
+$LG-Tan: #D2CBC6;
+$LG-LightGreen: #30903A;
+$LG-DarkGreen: #2C4E2D;
+
+$LG-AccentGreen-1: #24bbb5;
+$LG-AccentGreen-2: #30903A;
+$LG-AccentBlue-1: #BCE0FD;
+$LG-AccentBlue-2: #2699FB;
+
+@mixin tablet {
+  @media (min-width: #{$tablet-width}) and (max-width: #{$desktop-width - 1px}) {
+    @content;
+  }
+}
+
+@mixin desktop {
+  @media (min-width: #{$desktop-width}) {
+    @content;
+  }
+}
+

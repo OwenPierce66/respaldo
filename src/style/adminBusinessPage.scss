@@ -1,0 +1,132 @@
+.business-page-header {
+  // padding: 0 15px 0 15px;
+  position: relative;
+
+  .banner-img {
+    display: block;
+  }
+
+  .bp-icon-container {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    margin-bottom: 10px;
+    margin-right: 10px;
+    background-color: white;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50px;
+
+    .edit-banner-icon {
+      font-size: 35px;
+
+      &:hover {
+        opacity: 50%;
+      }
+    }
+  }
+}
+
+.info-container {
+  margin-bottom: 15px;
+  .info-header {
+    margin-bottom: 10px;
+    .info-name {
+      font-size: 20px;
+      font-weight: bold;
+    }
+    .info-location {
+      font-size: 12px;
+    }
+  }
+  .info-description {
+    font-size: 14px;
+    margin-bottom: 10px;
+  }
+  .info-misc-container {
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: row;
+    padding: 0 5px 0 5px;
+    .misc-info {
+      font-size: 14px;
+    }
+    .misc-info-seperator {
+      font-size: 12px;
+      margin-left: 5px;
+      margin-right: 5px;
+    }
+  }
+}
+
+.bp-edit-button{
+  width: 100%;
+  height: 25px;
+  border-radius: 5px;
+  background-color: $LG-AccentBlue-1;
+  color: $LG-AccentBlue-2;
+  font-size: 14px;
+  font-weight: bold;
+
+  &:hover{
+    opacity: 50%;
+  }
+
+  &:focus{
+    outline: none;
+  }
+}
+
+.info-form{
+  width: 100%;
+  height: 100%;
+
+  .info-input-container{
+    width: 100%;
+    display: grid;
+    grid-template-columns: 22% 1fr;
+    padding: 5px;
+    border-bottom: 1px solid $LG-Grey;
+
+    label{
+      font-size: 16px;
+      color: black;
+    }
+
+    textarea{
+      height: 80px;
+      width: 100%;
+    }
+
+    .textarea-container{
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+
+      .textarea-counter{
+        width: 125px;
+        display: flex;
+        justify-self: flex-end;
+        font-size: 12px;
+      }
+    }
+
+ 
+
+    input, textarea{
+      border: none;
+      color: $LG-AccentBlue-2;
+
+      &:focus{
+        outline: none;
+      }
+
+      &::placeholder{
+        color: $LG-AccentBlue-1
+      }
+    }
+  }
+}

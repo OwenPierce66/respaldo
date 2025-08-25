@@ -1,0 +1,163 @@
+.group-messaging-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100%;
+    background-color: #f8f9fa;
+
+    .header {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 20px;
+        background-color: #343a40;
+        color: #ffffff;
+
+        h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .select-group {
+            width: 100%;
+            max-width: 600px;
+            margin-top: 10px;
+
+            .select__control {
+                border-radius: 0;
+            }
+        }
+
+        .current-group {
+            margin-top: 10px;
+            font-size: 18px;
+        }
+    }
+
+    .messages {
+        flex: 1;
+        padding: 20px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        background-color: #ffffff;
+        border: 1px solid #dee2e6;
+
+        .message {
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            background-color: #e9ecef;
+
+            &.sent {
+                align-self: flex-end;
+                background-color: #cce5ff;
+            }
+
+            &.received {
+                align-self: flex-start;
+                background-color: #d4edda;
+            }
+
+            p {
+                margin: 0;
+                font-size: 16px;
+            }
+
+            img,
+            video {
+                margin-top: 10px;
+                max-width: 100%;
+                border-radius: 8px;
+            }
+
+            .like-container {
+                display: flex;
+                align-items: center;
+                margin-top: 5px;
+
+                .fa-heart {
+                    cursor: pointer;
+                    margin-right: 5px;
+                }
+
+                span {
+                    font-size: 16px;
+                }
+            }
+        }
+
+        .no-messages {
+            text-align: center;
+            font-size: 18px;
+            color: #6c757d;
+        }
+    }
+
+    .input-container {
+        display: flex;
+        align-items: center;
+        padding: 20px;
+        background-color: #ffffff;
+        border-top: 1px solid #dee2e6;
+
+        textarea {
+            flex: 1;
+            margin-right: 10px;
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 16px;
+            resize: none;
+
+            &:focus {
+                outline: none;
+                border-color: #80bdff;
+                box-shadow: 0 0 5px rgba(0, 123, 255, 0.25);
+            }
+        }
+
+        .file-input {
+            position: relative;
+
+            input[type="file"] {
+                display: none;
+            }
+
+            label {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 10px;
+                border: 1px solid #ced4da;
+                border-radius: 4px;
+                background-color: #f8f9fa;
+                cursor: pointer;
+
+                .fa-image {
+                    font-size: 20px;
+                    color: #6c757d;
+                }
+            }
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            background-color: #007bff;
+            color: #ffffff;
+            font-size: 16px;
+            cursor: pointer;
+
+            &:disabled {
+                background-color: #6c757d;
+                cursor: not-allowed;
+            }
+
+            &:not(:disabled):hover {
+                background-color: #0056b3;
+            }
+        }
+    }
+}

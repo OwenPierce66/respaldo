@@ -1,0 +1,349 @@
+$timing: 0.2s;
+$ease: cubic-bezier(0.865, 0.14, 0.095, 0.87);
+
+.landing {
+  display: grid;
+  background-color: #707070;
+
+  * {
+    max-width: 100vw;
+  }
+
+  .read-more {
+    display: block;
+    padding: 10px 20px;
+    // background-color: #2c4e2d;
+    color: green;
+    font-size: 20px;
+    // border-radius: 15px;
+    text-decoration: none;
+    text-align: center;
+  }
+
+  .landing-icons-container {
+    position: relative;
+
+    background-color: whitesmoke;
+    color: $darkCharcoal;
+
+    padding-top: 45px;
+    overflow: hidden;
+
+    input[name="icon-grid"] {
+      display: none;
+    }
+
+    .icon-grid-checkbox-label {
+      position: absolute;
+
+      top: 5px;
+
+      font-size: 25px;
+      text-align: right;
+
+      padding-right: 15px;
+
+      width: 100%;
+    
+      cursor: pointer;
+    }
+
+    .landing-icons-grid {
+      // accordion stuff start
+
+      max-height: 0;
+
+      transition: all $timing ease-in-out;
+      
+      // accordion stuff end
+
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      grid-gap: 40px;
+      justify-content: space-around;
+
+      .landing-icon {
+        display: grid;
+        grid-template-rows: 2fr 1fr;
+        justify-items: center;
+
+        text-align: center;
+
+        width: 60px;
+        height: 60px;
+
+        padding: 5px;
+        margin: auto;
+        
+
+        // border-radius: 25%;
+        // box-shadow: 0px 0px 4px 1px rgba(0, 0, 0, 0.75);
+
+        // font-weight: 500;
+
+        // background-color: white;
+        // color: $darkCharcoal;
+
+        color: unset;
+        text-decoration: none;
+
+        svg {
+          width: 100%;
+          height: 100%;
+        }
+      }
+    }
+
+    input[name="icon-grid"]:checked ~ .landing-icons-grid {
+      // padding: 20px;
+      max-height: 500px;
+
+      padding-bottom: 20px;
+    }
+  }
+
+  .landing-blog-container {
+    display: grid;
+    justify-items: center;
+    grid-gap: 25px;
+
+    padding: 120px 10px 40px 10px;
+
+    background-position: center;
+    background-size: cover;
+
+    position: relative;
+
+    .landing-blog-header {
+      position: absolute;
+      top: 100px;
+      
+      padding: 10px 25px;
+
+      color: white;
+      background-color: #1a1d21;
+    }
+
+    .landing-blog-square {
+      width: 100%;
+      max-width: 600px;
+      background-color: white;
+      padding: 30px 25px;
+
+      @media (max-width: 400px) {
+        max-width: 300px;
+      }
+
+      .landing-blog-square-header {
+        color: $somehowLightAndDarkAtTheSameTimeBlue;
+        text-align: center;
+        margin-bottom: 10px;
+      }
+    }
+  }
+  .landing-local-news-slider {
+    background-color: #d2cbc6;
+    padding: 50px 0;
+    position: relative;
+
+    display: grid;
+    justify-items: center;
+
+    .landing-local-news-slider-grid {
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+
+      height: 950px;
+      width: 400px;
+
+      position: relative;
+
+      overflow: hidden;
+
+      @media (max-width: 400px) {
+        height: 800px;
+      }
+
+      .landing-local-news-slider-square {
+        display: grid;
+        justify-items: center;
+        grid-gap: 25px;
+
+        position: absolute;
+
+        transition: 1s ease-in-out;
+
+        transform: translateX(1000px);
+
+        .local-news-slider-transitioning-img {
+          // width: 80%;
+          max-width: 400px;
+          height: auto;
+
+          @media (max-width: 400px) {
+            max-width: 300px;
+          }
+        }
+
+        .local-news-slider-transitioning-description {
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+
+          min-height: 300px;
+          // width: 80%;
+          max-width: 400px;
+          padding: 20px 10px;
+          background-color: #1a1d21;
+          color: white;
+
+          text-align: center;
+
+          @media (max-width: 400px) {
+            max-width: 300px;
+          }
+        }
+      }
+
+      .landing-local-news-slider-square.active {
+        transform: unset;
+      }
+    }
+
+    .local-news-slider-header {
+      position: absolute;
+      background-color: #1a1d21;
+      text-transform: uppercase;
+      color: whitesmoke;
+
+      padding: 10px 25px;
+
+      top: 30px;
+      z-index: 1;
+    }
+
+    .local-news-dots {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+      justify-items: center;
+
+      width: 80%;
+      max-width: 400px;
+
+      .local-news-dot {
+        height: 25px;
+        width: 25px;
+        background-color: #2c4e2d;
+        border-radius: 50%;
+      }
+
+      .local-news-dot.active {
+        background-color: green;
+      }
+    }
+  }
+
+  .landing-inspirational-image {
+    width: 100%;
+    max-width: 400px;
+    height: auto;
+    margin: auto;
+  }
+
+  .detailed-links-grid {
+    display: grid;
+    grid-gap: 30px;
+    justify-items: center;
+
+    padding: 50px 0;
+
+    .detailed-links-square {
+      display: grid;
+      justify-items: center;
+
+      width: 70%;
+
+      max-width: 600px;
+
+      background-color: white;
+
+      padding: 20px 30px;
+
+      @media (max-width: 400px) {
+        width: 85%;
+      }
+
+      .icon {
+        width: 25%;
+        max-width: 200px;
+        height: auto;
+        border-radius: 50%;
+
+        @media (max-width: 400px) {
+          width: 40%;
+        }
+      }
+
+      h2 {
+        color: $somehowLightAndDarkAtTheSameTimeBlue;
+        text-transform: uppercase;
+      }
+
+      span {
+        text-align: center;
+        margin: 20px 0;
+      }
+    }
+  }
+
+  .landing-footer {
+    padding: 100px 0 30px 0;
+    background-color: white;
+    position: relative;
+    display: grid;
+
+    justify-items: center;
+
+    .footer-logo {
+      position: absolute;
+      top: 10px;
+      width: 25%;
+      max-width: 100px;
+      height: auto;
+      justify-self: center;
+    }
+
+    .landing-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-gap: 25px;
+
+      .landing-grid-square {
+        margin: 15px;
+
+        display: grid;
+        justify-items: center;
+
+        .landing-grid-square-header {
+          text-transform: uppercase;
+          margin-bottom: 10px;
+        }
+
+        a,
+        span {
+          display: block;
+          margin: 2px 2px;
+          font-size: 14px;
+
+          text-align: center;
+        }
+
+        a {
+          text-decoration: none;
+          color: green;
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,450 @@
+.registration {
+  width: 100vw;
+  height: 100vh;
+  display: grid;
+  grid-template-rows: 10% 90%;
+
+  .pointer {
+    cursor: pointer;
+  }
+
+  .header {
+    height: 100px;
+    padding: 25px;
+    border-bottom: 1px solid lightgray;
+    display: grid;
+    grid-template-columns: 1fr 2fr 1fr;
+
+    .left {
+      display: flex;
+      justify-content: flex-start;
+      font-size: 32px;
+      font-weight: 600;
+    }
+
+    .center {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+
+      p {
+        font-size: 18px;
+        font-weight: 600;
+      }
+
+      .active {
+        color: $LG-AccentGreen-2;
+      }
+    }
+
+    .right {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+
+      p {
+        font-size: 16px;
+        font-weight: 500;
+      }
+      .link {
+        margin-left: 5px;
+        font-size: 16px;
+        font-weight: 500;
+        color: $LG-AccentGreen-2;
+        text-decoration: none;
+      }
+    }
+  }
+
+  .body {
+    padding: 25px;
+    height: 100%;
+
+    .loadingContainer {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+
+      width: 100%;
+      height: 100%;
+    }
+  }
+}
+
+.CreateAccount {
+  display: flex;
+  justify-content: center;
+  margin-left: 25px;
+  margin-right: 25px;
+
+  .left {
+    padding-left: 35px;
+    width: 50%;
+    max-width: 350px;
+
+    .title {
+      margin-top: 15px;
+      font-size: 50px;
+      font-weight: 700;
+      line-height: 45px;
+    }
+
+    .highlights {
+      margin-top: 25px;
+
+      .highlight {
+        display: flex;
+        align-items: flex-start;
+        margin-bottom: 10px;
+
+        .highlight-icon {
+          margin-top: 4px;
+          margin-right: 10px;
+          color: $LG-AccentGreen-2;
+          font-size: 25px;
+          align-items: center;
+        }
+
+        div {
+          font-size: 18px;
+          font-weight: 350;
+        }
+      }
+    }
+  }
+
+  .right {
+    width: 50%;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+
+    .error {
+      font-weight: 500;
+      padding: 0.5em;
+      margin: 0px;
+      width: 100%;
+      text-align: center;
+      color: red;
+    }
+
+    .input-wrapper {
+      margin-bottom: 10px;
+      width: 100%;
+      max-width: 500px;
+
+      .input-label {
+        transform: translateY(10px);
+        display: inline-block;
+        text-align: center;
+        padding-left: 5px;
+        padding-right: 5px;
+        background-color: white;
+        margin-left: 10px;
+        font-size: 14px;
+      }
+      input {
+        width: 100%;
+        height: 50px;
+        border: 1px solid $LG-Grey;
+        border-radius: 5px;
+        font-size: 18px;
+        padding-left: 20px;
+      }
+
+      input:focus {
+        outline: none;
+        border: 2px solid $LG-AccentGreen-2;
+      }
+
+      .usernameTaken:focus, .usernameTaken{
+        border: 2px solid red;
+      }
+
+      .error {
+        font-size: 14px;
+        text-align: left;
+      }
+    }
+
+    .create-button {
+      width: 100%;
+      max-width: 500px;
+      height: 50px;
+      background-color: $LG-LightGreen;
+      color: $LG-White;
+      border-radius: 5px;
+      font-size: 20px;
+      margin-top: 15px;
+      margin-bottom: 1em;
+      cursor: pointer;
+    }
+
+    .agreement {
+      width: 100%;
+      max-width: 500px;
+      input {
+        height: 15px;
+        width: 15px;
+        margin-left: -.2px;
+      }
+      label {
+        font-size: 18px;
+      }
+      a {
+        margin-left: 5px;
+        font-size: 18px;
+        color: $LG-AccentGreen-2;
+      }
+    }
+
+    .agreement-2 {
+      width: 100%;
+      max-width: 500px;
+      margin-top: 10px;
+      margin-bottom: 10px;
+    }
+  }
+}
+
+.Subscription {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+  flex-wrap: wrap;
+
+  .price-card {
+    border: 1px solid $LG-Grey;
+    width: 350px;
+    height: 500px;
+    display: grid;
+    grid-template-rows: 15% 55% 30%;
+    border-radius: 5px;
+    padding: 15px;
+    margin-top: 15px;
+
+ 
+
+    .price-header {
+      .title {
+        font-size: 30px;
+        margin-left: 10px;
+        font-weight: 700;
+      }
+      border-bottom: 1px solid $LG-Grey;
+    }
+
+    .price-body {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-evenly;
+
+      .info-icon-ex {
+        margin-right: 5px;
+        color: rgb(189, 43, 43);
+        font-size: 18px;
+        -webkit-transform:rotate(45deg);
+        -moz-transform: rotate(45deg);
+        -ms-transform: rotate(45deg);
+        -o-transform: rotate(45deg);
+        transform: rotate(45deg);
+      }
+
+      .info-icon {
+        margin-right: 5px;
+        color: $LG-AccentGreen-2;
+        font-size: 18px;
+      }
+    }
+
+    .price-footer {
+      border-top: 1px solid $LG-Grey;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-evenly;
+      align-items: center;
+      .amount {
+        display: flex;
+        .price {
+          font-size: 30px;
+          font-weight: 600;
+          color: $LG-AccentGreen-2;
+        }
+        .time {
+          display: flex;
+          align-items: flex-end;
+          font-weight: 600;
+          color: $LG-Grey;
+        }
+      }
+
+      .price-button {
+        width: 60%;
+        height: 50px;
+        border-radius: 5px;
+        background-color: $LG-AccentGreen-2;
+        color: $LG-White;
+        font-size: 18px;
+        cursor: pointer;
+
+        &:disabled {
+          background-color: $LG-Grey;
+        }
+      }
+    }
+  }
+}
+
+.SubscriptionSuccess {
+  display: grid;
+  grid-template-rows: 1fr 1fr 1fr;
+  height: 100%;
+
+  .success-icon-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    .success-icon {
+      font-size: 140px;
+      color: $LG-AccentGreen-2;
+    }
+  }
+
+  .success-text-wrapper{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    flex-direction: column;
+
+    .dashboard-link{
+      margin-left: 5px;
+      text-decoration: none;
+      color: $LG-AccentGreen-2;
+    }
+
+    .dashboard-link:hover{
+      color: $LG-DarkGreen
+    }
+  }
+}
+
+@media only screen and (max-width: 600px) {
+  .CreateAccount {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    margin-left: 0px;
+    margin-right: 0px;
+
+    .left {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      margin-left: -2.7em;
+
+      .title {
+        font-size: 34px;
+        line-height: 28px;
+        margin-top: 5.6px;
+      }
+
+      #title {
+        font-size: 34px;
+        width: 5em;
+        line-height: 31.4px;
+      }
+
+      .highlights {
+        margin-top: 14px;
+
+        .highlight {
+          display: flex;
+          align-items: center;
+          line-height: 21px;
+          margin-bottom: 6.4px;
+
+          #pen-icon {
+            margin-bottom: 8.5px;
+          }
+        }
+      }
+    }
+
+    .right {
+      width: 100%;
+
+      .error {
+        font-weight: 500;
+        padding: 0.5em;
+        width: 100%;
+        text-align: center;
+        color: red;
+      }
+    }
+  }
+
+  .registration {
+    width: 100vw;
+    height: 100vh;
+    display: grid;
+    grid-template-rows: 10% 90%;
+
+    .header {
+      height: 86px;
+      padding: 25px;
+      border-bottom: 1px solid lightgray;
+      display: flex;
+      flex-direction: column;
+  
+      .left {
+        display: flex;
+        font-size: 32px;
+        font-weight: 600;
+        margin-top: -21px;
+        margin-left: -8px;
+      }
+  
+      .center {
+        display: flex;
+        justify-content: space-between;
+  
+        p {
+          font-size: 16px;
+          font-weight: 600;
+          margin-top: 10px;
+        }
+  
+        .active {
+          color: $LG-AccentGreen-2;
+        }
+      }
+  
+      .right {
+        display: flex;
+        margin-top: -5.7em;
+        margin-right: -8px;
+  
+        p {
+          font-size: 14.6px;
+          font-weight: 500;  
+        }
+
+        .link {
+          margin-left: 5px;
+          font-size: 16px;
+          font-weight: 500;
+          color: $LG-AccentGreen-2;
+          text-decoration: none;
+        }
+      }
+    }
+  }
+
+  .price-card {
+    width: 280px !important;
+  }
+}

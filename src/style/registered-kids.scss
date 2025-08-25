@@ -1,0 +1,245 @@
+.mobile-hidden {
+  @media screen and (max-width: $tablet-width) {
+    display: none;
+  }
+}
+
+.my-registrations {
+  padding: 20px;
+
+  .yoi-form-link {
+      font-weight: bold;
+      // text-decoration: none;
+      color: #1e266d;
+      font-size: 25px;
+  }
+
+  .successful {
+    color: $LG-LightGreen;
+    margin: 5px;
+  }
+
+  > div {
+    width: 70%;
+    margin: auto;
+
+    @media screen and (max-width: $tablet-width) {
+      width: 100%;
+    }
+  }
+
+  .kids-list {
+    display: flex;
+    flex-direction: column;
+
+    .headers, .info > div {
+      display: flex;
+    }
+
+    .headers {
+      width: 100%;
+      padding: 5px 5px;
+      border: 1px solid $LG-Grey;
+      border-radius: 5px 5px 0px 0px;
+      background-color: $LG-LightGrey;
+
+      p {
+        width: 25%;
+        font-weight: bold;
+        padding: 5px;
+        margin: 0px;
+
+        @media screen and (max-width: $tablet-width) {
+          width: 50%;
+        }
+      }
+    }
+
+    .info {
+      width: 100%;
+      border-width: 0px 1px 1px 1px;
+      border-style: solid;
+      border-color: $LG-Grey;
+      padding: 0px 5px 0px 5px;
+      border-radius: 0px 0px 5px 5px;
+
+      > div {
+        padding-top: 15px;
+        padding-bottom: 15px;
+        border-width: 0px 0px 1px 0px;
+        border-style: solid;
+        border-color: $LG-Grey;
+      }
+
+      > div:last-child {
+        border-width: 0px;
+      }
+
+      p {
+        width: 25%;
+        padding: 5px;
+        margin: 0px;
+
+        @media screen and (max-width: $tablet-width) {
+          width: 50%;
+        }
+      }
+    }
+
+    .register-again-button-wrapper {
+      margin-bottom: 15px;
+
+      .register-again-error {
+        font-size: 14px;
+        color: red;
+      }
+    }
+
+    .confirmation-checkbox-input-wrapper {
+      display: flex;
+      align-items: center;
+      margin-bottom: 15px;
+
+      input {
+        margin-right: 8px;
+      }
+
+      input, label {
+        cursor: pointer;
+      }
+    }
+
+    button {
+      height: 30px;
+      border: 1px solid $LG-Grey;
+      border-radius: 3px;
+      padding: 5px 10px;
+      width: fit-content;
+
+      &:hover:enabled {
+        opacity: 0.8;
+        cursor: pointer;
+      }
+    }
+  }
+}
+
+.register-again-modal {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol" !important;
+  width: fit-content !important;
+  height: fit-content !important;
+
+  .header {
+    font-size: 1.5em;
+    text-align: center;
+    color: black;
+    margin-top: 100px;
+  }
+
+  .edit-form {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0px 50px 100px 50px;
+
+    @media screen and (max-width: 1300px) {
+      flex-direction: column;
+      margin: 0px 100px 100px 100px;
+    }
+  }
+
+  .inputWrapper {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 5px;
+    width: 50%;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 20px;
+
+    @media screen and (max-width: $tablet-width) {
+      width: 100%;
+    }
+
+    label {
+      font-weight: 500;
+      width: 250px;
+      text-align: left;
+    }
+
+    input, select {
+      width: 250px;
+      height: 25px;
+      border: 1px solid $LG-Grey;
+      font-size: 16px;
+    }
+
+    input:focus {
+      outline: none;
+    }
+  }
+
+  button {
+    height: 30px;
+    border: 1px solid $LG-Grey;
+    border-radius: 3px;
+    padding: 5px 10px;
+    width: 100px;
+    margin: auto;
+    cursor: pointer;
+
+    &:hover {
+      opacity: 0.8;
+    }
+  }
+}
+
+.pricing-modal {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol" !important;
+  width: fit-content !important;
+  height: fit-content !important;
+
+  @media screen and (max-width: $tablet-width) {
+    width: 100% !important;
+  }
+
+  .pricing-wrapper {
+    margin: 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .pricing-header {
+    font-size: 1.5em;
+    text-align: center;
+    color: black;
+    margin-bottom: 0px;
+  }
+
+  .pricing-details {
+    font-size: 1.1em;
+    font-weight: bold;
+    text-align: center;
+  }
+
+  p {
+    color: black;
+  }
+
+  button {
+    height: 30px;
+    border: 1px solid $LG-Grey;
+    border-radius: 3px;
+    padding: 5px 10px;
+    width: 100px;
+    text-align: center;
+    margin-top: 10px;
+
+    &:hover:enabled {
+      opacity: 0.8;
+      cursor: pointer;
+    }
+  }
+}

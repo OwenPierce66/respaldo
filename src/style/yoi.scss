@@ -1,0 +1,273 @@
+.YOI-wrapper {
+  height: 100%;
+  width: 100%;
+  padding: 5px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  .top-container {
+    width: 100%;
+    height: auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    @media only screen and (max-width: 600px) {
+      grid-template-columns: 1fr;
+      grid-template-rows: 1fr 1fr;
+    }
+
+    .left {
+      padding: 0px 15px;
+      display: flex;
+      flex-direction: column;
+      // align-items: center;
+
+      .title {
+        font-size: 55px;
+        margin-bottom: 20px;
+        font-weight: 700;
+
+        @media only screen and (max-width: 600px) {
+          font-size: 36px;
+          text-align: center;
+        }
+      }
+
+      .sub-title {
+        font-weight: 500;
+        font-size: 22px;
+        text-align: center;
+        margin-bottom: 30px;
+
+        @media only screen and (max-width: 600px) {
+          font-size: 20px;
+        }
+      }
+
+      button {
+        width: 80%;
+        height: 35px;
+        line-height: 35px;
+        background-color: $LG-AccentBlue-2;
+        color: white;
+        font-size: 20px;
+        transition: 0.2s all ease;
+        margin-bottom: 10px;
+        text-transform: capitalize;
+        text-align: start;
+        font-weight: 500;
+        letter-spacing: 1px;
+        text-decoration: none;
+        border-radius: 5px;
+        cursor: pointer;
+
+        @media only screen and (max-width: 600px) {
+          width: 90%;
+        }
+
+        &:hover {
+          opacity: 0.7;
+        }
+      }
+
+      .secondary {
+        background-color: lightgray;
+        color: black;
+        text-align: start;
+        border-radius: 5px;
+      }
+
+      @media (max-width: 470px) {
+        .secondary {
+          font-weight: bold;
+          font-size: 15px;
+        }
+      }
+    }
+
+    .right {
+      img {
+        width: 100%;
+        height: auto;
+        max-height: 450px;
+        object-fit: contain;
+
+        @media only screen and (max-width: 600px) {
+          max-height: 250px;
+        }
+      }
+    }
+  }
+
+  .container {
+    padding: 25px;
+    margin: 20px;
+    height: auto;
+    width: calc(100% - 40px);
+
+    button {
+      width: 100%;
+      height: 35px;
+      background-color: $LG-AccentBlue-2;
+    }
+  }
+}
+
+.assistantForm {
+  width: 100%;
+  height: 100%;
+  padding: 25px;
+  display: flex;
+  justify-content: center;
+  background-color: rgb(225, 225, 225);
+
+  @media only screen and (max-width: 600px) {
+    padding: 10px;
+  }
+
+  .formWrapper {
+    width: 100%;
+    max-width: 900px;
+    height: auto;
+    background-color: white;
+    padding: 25px 50px;
+
+    @media only screen and (max-width: 600px) {
+      padding: 25px 20px;
+    }
+
+    .row {
+      margin: 5px;
+
+      p {
+        font-size: 18px;
+      }
+
+      .pageHeader {
+        font-size: 32px;
+        font-weight: 600;
+        text-align: center;
+      }
+
+      @media only screen and (max-width: 600px) {
+        ol {
+          padding-left: 10px;
+        }
+      }
+
+      .formList {
+        font-size: 18px;
+
+        li {
+          margin-bottom: 20px;
+          .inputWrapper {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 5px;
+
+            label {
+              font-weight: 500;
+            }
+
+            input,
+            select {
+              height: 25px;
+              border: none;
+              border-bottom: 1px solid black;
+              font-size: 16px;
+            }
+
+            ol {
+              li {
+                margin-bottom: 5px;
+
+                input,
+                select {
+                  width: 100%;
+                  height: 25px;
+                  border: none;
+                  border-bottom: 1px solid black;
+                  font-size: 16px;
+                }
+              }
+            }
+          }
+        }
+      }
+
+      .sectionHeader {
+        font-size: 18px;
+        font-weight: 700;
+      }
+
+      .quoteBox {
+        border: 1px solid black;
+        box-sizing: border-box;
+        padding: 10px;
+
+        p {
+          text-align: center;
+          font-style: italic;
+          font-size: 18px;
+        }
+      }
+
+      .agreement {
+        .input,
+        .date {
+          display: flex;
+          margin-bottom: 5px;
+          label {
+            font-size: 18px;
+            font-weight: 600;
+            margin-right: 10px;
+          }
+          input {
+            height: 25px;
+            border: none;
+            border-bottom: 1px solid black;
+            font-size: 16px;
+            width: 60%;
+
+            @media only screen and (max-width: 600px) {
+              width: 100%;
+            }
+          }
+        }
+      }
+
+      .submitButton {
+        display: flex;
+        justify-content: flex-end;
+
+        button {
+          width: 25%;
+          height: 35px;
+          background-color: $LG-AccentBlue-2;
+          color: white;
+          font-size: 18px;
+          border-radius: 5px;
+          margin-top: 10px;
+        }
+      }
+    }
+  }
+}
+
+.error {
+  text-align: center;
+  color: red;
+  font-size: 18px;
+}
+.success {
+  width: 100%;
+  height: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  p {
+    font-size: 42px;
+    color: $LG-AccentGreen-2;
+  }
+}

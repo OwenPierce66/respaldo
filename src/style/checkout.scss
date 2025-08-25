@@ -1,0 +1,332 @@
+$color-grey: #f1f1f1;
+$color-blue: #007bff;
+
+.checkout-wrapper {
+  width: 100%;
+  min-height: 100%;
+  height: fit-content;
+  background-color: $color-grey;
+
+  .checkout {
+    margin: 0px 50px 25px 50px;
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+
+    @media (max-width: 44em) {
+      grid-template-columns: none;
+
+      margin: 0px 20px;
+    }
+
+    .left-side,
+    .right-side {
+      margin: 15px;
+
+      .card-title {
+        text-transform: uppercase;
+        color: $color-blue;
+        font-size: 12px;
+        font-weight: 500;
+      }
+
+      .card {
+        width: 100%;
+        background-color: #ffffff;
+        border: 1 solid #eeeeee;
+        border-radius: 5px;
+        margin-bottom: 15px;
+        transition: 1s ease-in-out;
+
+        .card-item {
+          display: grid;
+          grid-template-columns: 3fr 1fr;
+          grid-template-rows: 1fr 1fr;
+          padding: 15px;
+
+          .desc {
+            grid-column: 1;
+            grid-row: 2;
+            font-size: 14px;
+            color: gray;
+          }
+
+          .item-price {
+            display: flex;
+            justify-self: flex-end;
+          }
+
+          .item-quantity {
+            grid-column: 2;
+            grid-row: 2;
+            grid-gap: 5px;
+            display: flex;
+            justify-content: flex-end;
+
+            .item-qty-input {
+              width: 30%;
+            }
+          }
+        }
+
+        .card-header {
+          height: 5vh;
+          display: flex;
+          align-items: center;
+          .round {
+            width: 1.3em;
+            height: 1.3em;
+            margin-right: 10px;
+            margin-left: 10px;
+            background-color: white;
+            border-radius: 50%;
+            vertical-align: middle;
+            border: 1px solid #ddd;
+            appearance: none;
+            -webkit-appearance: none;
+            outline: none;
+            cursor: pointer;
+
+            &:checked {
+              background-color: grey;
+            }
+          }
+        }
+
+        .card-body {
+          margin: 10px;
+          height: 0;
+          -webkit-transition: 0.5s;
+          -moz-transition: 0.5s;
+          -o-transition: 0.5s;
+          transition: 0.5s;
+          transition-delay: 0s, 0.2s;
+          transition-property: height, opacity;
+          opacity: 0;
+          visibility: hidden;
+        }
+
+        .card-body.show {
+          height: 425px;
+          opacity: 1;
+          visibility: visible;
+
+          @media (max-width: 44em) {
+            height: 560px;
+          }
+        }
+      }
+
+      .card.summary {
+        .card-header {
+          height: 60px;
+
+          .title {
+            display: flex;
+            justify-content: center;
+            align-content: center;
+            height: 40px;
+            width: 100%;
+            margin: 10px;
+            font-size: 20px;
+            font-weight: 600;
+            background-color: $color-grey;
+          }
+        }
+
+        .card-main {
+          margin: 10px;
+          display: grid;
+          grid-template-rows: 1fr 1fr 1fr 2fr;
+
+          .price,
+          .date,
+          .time,
+          .total {
+            display: flex;
+            justify-content: space-between;
+          }
+
+          .cart {
+            padding-bottom: 15px;
+            .cart-items {
+              display: flex;
+              flex-direction: row;
+              flex-wrap: wrap;
+              .item {
+                width: 100%;
+                margin-left: 15px;
+              }
+            }
+          }
+
+          .total {
+            padding-bottom: 10px;
+          }
+        }
+      }
+    }
+  }
+}
+
+.card-wrapper {
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+
+  @media (max-width: 44em) {
+    grid-template-rows: 3fr 1fr;
+  }
+
+  .card-payment-button {
+    display: flex;
+    justify-self: flex-end;
+    justify-content: center;
+    align-items: center;
+    width: 30%;
+    height: 40px;
+    border-radius: 5px;
+
+    padding: 0.75em;
+    font-size: 16px;
+    background-color: $color-blue;
+    color: white;
+
+    &:hover {
+      opacity: 0.8;
+    }
+
+    @media (max-width: 44em) {
+      width: fit-content;
+      margin: auto;
+    }
+  }
+}
+
+.user-info {
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+  border-bottom: 1px solid $color-grey;
+  margin-bottom: 15px;
+
+  .info-input {
+    display: grid;
+    grid-template-rows: 1fr 1fr;
+    margin: 0px 10px 10px 10px;
+    label {
+      font-size: 13.5px;
+    }
+
+    input {
+      width: 100%;
+      padding: 0.25em 0;
+
+      font-size: 13.5px;
+
+      border: none;
+      border-bottom: 1px solid black;
+
+      outline: none;
+    }
+  }
+
+  .double {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+
+    select {
+      outline: none;
+      border: 1px solid $color-blue;
+      border-radius: 3px;
+      padding: 0.3em;
+    }
+  }
+}
+
+.card-info {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  padding-bottom: 20px;
+
+  @media (max-width: 44em) {
+    grid-template-columns: none;
+    grid-template-rows: 1fr 1fr 1fr;
+
+    padding-bottom: 7.5px;
+  }
+
+  .card-element {
+    display: grid;
+    grid-template-rows: 1fr 1fr;
+
+    @media (max-width: 44em) {
+      padding: 0.25em;
+
+      label {
+        margin-bottom: 5px;
+      }
+    }
+  }
+}
+
+// Confirmation Page Styles
+.confirmation {
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  .card {
+    width: 50%;
+    height: 400px;
+    border: 1px solid black;
+    background-color: $color-grey;
+    border-radius: 5px;
+    display: grid;
+    grid-template-rows: 1fr 2fr 1fr;
+
+    .header {
+      display: flex;
+      justify-content: center;
+
+      p {
+        font-size: 28px;
+        display: flex;
+        justify-self: center;
+      }
+    }
+
+    .body {
+      display: flex;
+      align-items: center;
+      flex-direction: column;
+
+      p {
+        font-size: 20px;
+      }
+    }
+
+    .footer {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+
+      a {
+        width: 33%;
+        height: 50%;
+        font-size: 30px;
+        border-radius: 30px;
+        color: $color-blue;
+        background-color: white;
+        border: 2px solid $color-blue;
+        text-decoration: none;
+        text-align: center;
+        transition: 0.3s ease-in-out;
+
+        &:hover {
+          border: 2px solid white;
+          background-color: $color-blue;
+          color: white;
+        }
+      }
+    }
+  }
+}

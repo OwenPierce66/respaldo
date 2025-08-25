@@ -1,0 +1,351 @@
+.forumWrapper {
+  display: flex;
+  justify-content: center;
+}
+
+.forum {
+  padding: 5px;
+  width: 100%;
+  max-width: 1000px;
+  @media only screen and (max-width: 600px) {
+    width: 100vw;
+    padding: 5px;
+  }
+  
+  .forumHeader {
+    display: flex;
+    justify-content: space-between;
+
+    .pageTitle {
+      font-size: 24px;
+      font-weight: 600;
+    }
+
+    button {
+      background-color: $LG-AccentBlue-2;
+      color: white;
+      width: 100px;
+      height: 35px;
+      border-radius: 5px;
+    }
+  }
+
+  .forumBody {
+    padding-top: 25px;
+
+    .postWrapper {
+      a {
+        text-decoration: none;
+        color: black;
+      }
+      .post {
+        border-bottom: 1px solid lightgray;
+        transition: all ease 0.3s;
+
+        &:hover {
+          background-color: lightgray;
+        }
+
+        .postTitle {
+          width: 80%;
+          padding-left: 45px;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          font-size: 18px;
+          font-weight: 500;
+        }
+
+        .postDetails {
+          margin-top: 5px;
+          display: flex;
+          justify-content: space-between;
+
+          .creator {
+            display: flex;
+            align-items: center;
+            padding: 5px;
+
+            .img {
+              width: 35px;
+              height: 35px;
+              background-color: gray;
+              border: transparent;
+              border-radius: 50%;
+              margin-right: 5px;
+            }
+            .name {
+              font-weight: 400;
+            }
+          }
+
+          .created {
+            padding: 5px;
+            display: flex;
+            align-items: center;
+          }
+        }
+      }
+    }
+  }
+}
+
+.forumPostWrapper {
+  display: flex;
+  justify-content: center;
+  height: calc(100vh - 70px);
+  overflow-y: scroll;
+
+  .forumPost {
+    width: 100%;
+    height: 100%;
+    max-width: 800px;
+
+    @media only screen and (max-width: 600px) {
+      width: 100vw;
+      padding: 5px;
+    }
+
+    .forumPostHeader {
+      margin-bottom: 20px;
+      .forumPostTitle {
+        font-size: 42px;
+        font-weight: 700;
+        margin-bottom: 10px;
+
+        @media only screen and (max-width: 600px) {
+          font-size: 30px;
+        }
+      }
+      .forumPostOptions {
+        a {
+          text-decoration: none;
+          font-weight: 500;
+          font-size: 18px;
+          color: $LG-AccentBlue-2;
+        }
+
+        button {
+          margin-left: 5px;
+          background-color: transparent;
+          border: none;
+          font-size: 18px;
+          color: gray;
+          text-decoration: underline;
+        }
+      }
+    }
+
+    .forumPostBody {
+      .forumPostMain {
+        display: grid;
+        grid-template-columns: 60px 1fr;
+
+        .userImage {
+          display: flex;
+          justify-content: center;
+          img {
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+          }
+        }
+
+        .postDetails {
+          font-size: 18px;
+
+          .detailsWrapper {
+            display: flex;
+            font-size: 16px;
+
+            .postDate {
+              color: gray;
+              margin-left: 5px;
+            }
+          }
+        }
+      }
+
+      .forumPostComment {
+        display: grid;
+        grid-template-columns: 60px 1fr;
+        margin-top: 35px;
+
+        .userImage {
+          display: flex;
+          justify-content: center;
+          img {
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+          }
+        }
+
+        .commentArea {
+          display: flex;
+          flex-direction: column;
+
+          .commentInput {
+            width: 450px;
+            height: 125px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+            border: 1px solid lightgray;
+
+            @media only screen and (max-width: 600px) {
+              width: 300px;
+              height: 100px;
+            }
+          }
+
+          button {
+            margin-top: 10px;
+            height: 25px;
+            width: 200px;
+            color: white;
+            border-radius: 15px;
+            background-color: $LG-AccentBlue-2;
+            @media only screen and (max-width: 600px) {
+              width: 150px;
+            }
+          }
+        }
+      }
+
+      .forumCommentsContainer {
+        margin-top: 25px;
+        padding-bottom: 70px;
+        .commentsHeader {
+          font-size: 20px;
+          font-weight: 700;
+        }
+
+        .commentsContainer {
+          .comment {
+            margin-left: 15px;
+            margin-top: 15px;
+
+            .commentor {
+              display: flex;
+              align-items: center;
+              img {
+                border-radius: 50%;
+                width: 35px;
+                height: 35px;
+              }
+
+              .commentorName {
+                margin-left: 5px;
+                font-weight: 600;
+              }
+
+              .commentedAt {
+                margin-left: 5px;
+                color: gray;
+              }
+            }
+
+            .replyButton,
+            .collapseTree,
+            .deleteButton {
+              background-color: transparent;
+              border: none;
+              width: auto;
+              color: gray;
+              cursor: pointer;
+            }
+
+            .replyButton {
+              color: $LG-AccentBlue-2;
+            }
+
+            .deleteButton {
+              color: red;
+            }
+
+            .commentArea {
+              display: flex;
+              flex-direction: column;
+
+              .commentInput {
+                width: 380px;
+                height: 80px;
+                background-color: #f0f0f0;
+                border-radius: 5px;
+                border: 1px solid lightgray;
+
+                @media only screen and (max-width: 600px) {
+                  width: 300px;
+                  height: 80px;
+                }
+              }
+
+              button {
+                margin-top: 10px;
+                height: 25px;
+                width: 200px;
+                color: white;
+                border-radius: 15px;
+                background-color: $LG-AccentBlue-2;
+                @media only screen and (max-width: 600px) {
+                  width: 150px;
+                }
+              }
+
+              &.hidden {
+                height: 0px;
+                opacity: 0;
+              }
+            }
+
+            .replies {
+              &.hidden {
+                height: 0px;
+                opacity: 0;
+              }
+            }
+
+            &.hidden {
+              height: 0px;
+              opacity: 0;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+.forumEdit {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+  .input-container {
+    display: grid;
+    grid-template-rows: 27px auto;
+    margin-bottom: 15px;
+    label {
+      font-size: 22px;
+    }
+
+    input {
+      height: 35px;
+      font-size: 18px;
+    }
+  }
+
+  .buttonContainer {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 15px;
+    button {
+      width: 300px;
+      height: 35px;
+      font-size: 20px;
+      background-color: $LG-AccentBlue-2;
+      color: white;
+      border-radius: 5px;
+    }
+  }
+}

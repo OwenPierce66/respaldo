@@ -1,0 +1,516 @@
+.section-container {
+    margin: 20px 0;
+}
+
+.titulo-task,
+.titulo-factor,
+.titulo-fuente {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.task-item,
+.factor-item,
+.fuente-item {
+    margin-bottom: 15px;
+}
+
+.file-label {
+    display: inline-block;
+    margin-top: 5px;
+    cursor: pointer;
+}
+
+.preview-image,
+.preview-video {
+    margin-top: 10px;
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+}
+
+/* Estilos para el componente de comentarios */
+.comment-container {
+    border-radius: 10px;
+    margin: 11px;
+    padding: 6px;
+    background-color: white;
+
+    .comment-container2 {
+
+        border: 1px solid lightblue;
+        border-top: none;
+        border-right: none;
+        border-bottom: none;
+        border-radius: 16px;
+    }
+}
+
+.anivelar {
+    display: flex;
+    justify-content: center;
+    height: calc(100vh - 70px);
+    overflow-y: scroll;
+
+    .anivelar2 {
+        display: flex;
+        justify-content: center;
+        width: 100vw;
+        overflow-y: scroll;
+    }
+
+}
+
+.bottomLinks {
+    display: flex;
+}
+
+.lineaaa {
+    background-color: black;
+    height: 5px;
+    margin-bottom: 10px;
+}
+
+.comment-content {
+    padding: 6px;
+}
+
+.comment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.comment-usuario {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.user-infoImage {
+    display: flex;
+    align-items: center;
+}
+
+.image-container {
+    margin-right: 10px;
+}
+
+.circle-image {
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+}
+
+.username {
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.comment-icons {
+    display: flex;
+}
+
+.icon1,
+.icon2 {
+    margin-left: 10px;
+}
+
+.perfilFavorito {
+    cursor: pointer;
+}
+
+.comment-text {
+    margin-bottom: 10px;
+}
+
+.comment-title {
+    font-size: 16px;
+}
+
+.comment-image {
+    height: 100px;
+    width: 100px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+.comment-section-buttons {
+    display: flex;
+    gap: 10px;
+    margin: 10px 0;
+}
+
+.comment-section-button {
+    padding: 5px 15px;
+    border: 1px solid #007bff;
+    border-radius: 5px;
+    background-color: white;
+    color: #007bff;
+    cursor: pointer;
+    transition: background-color 0.3s, color 0.3s;
+
+    &:hover {
+        background-color: #007bff;
+        color: white;
+    }
+
+    &.selected {
+        background-color: black;
+        color: white;
+    }
+}
+
+.hole {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+
+/* Estilos para los botones de sección en comentarios */
+.section-buttons {
+    display: flex;
+    gap: 10px;
+    margin: 10px 0;
+
+    .section-button {
+        padding: 5px 15px;
+        border: 1px solid #007bff;
+        border-radius: 5px;
+        background-color: white;
+        color: #007bff;
+        cursor: pointer;
+        transition: background-color 0.3s, color 0.3s;
+
+        &:hover {
+            background-color: #007bff;
+            color: white;
+        }
+
+        &.selected {
+            background-color: black;
+            color: white;
+        }
+    }
+}
+
+.commentor-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.comment-username {
+    color: black;
+    font-family: "Franklin Gothic Medium", "Arial Narrow", Arial, sans-serif;
+}
+
+.comment-time {
+    color: #999;
+}
+
+.comment-text {
+    margin-bottom: 10px;
+}
+
+.comment-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.comment-reply-button {
+    padding: 5px 10px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+
+    &:hover {
+        background-color: #0056b3;
+    }
+}
+
+.likes {
+    font-size: 26px;
+    // margin-left: 189px;
+    display: grid;
+    // grid-template-rows: 100px 100px;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-gap: 15px;
+    justify-content: space-around;
+    align-items: center;
+    // margin-top: 10px;
+}
+
+.nombreFecha {
+    margin-left: 5px;
+
+    .postDate {
+        font-size: .6em;
+        font-weight: lighter;
+    }
+}
+
+.comment-like {
+    display: flex;
+    align-items: center;
+}
+
+.comment-like-count {
+    padding-left: 8px;
+    color: black;
+    font-weight: 500;
+}
+
+.comment-image {
+    height: 100px;
+    width: 100px;
+    cursor: pointer;
+}
+
+.comment-subtasks,
+.comment-subfactores,
+.comment-subfuentes {
+    display: flex;
+    overflow-x: auto;
+    gap: 10px;
+}
+
+.comment-subtask,
+.comment-subfactor,
+.comment-subfuente {
+    flex: 0 0 auto;
+}
+
+.comment-subtask-text,
+.comment-subfactor-text,
+.comment-subfuente-text {
+    margin-bottom: 5px;
+}
+
+.comment-video,
+.comment-subtask-video,
+.comment-subfactor-video,
+.comment-subfuente-video {
+    width: 100%;
+    height: auto;
+}
+
+
+.line-down-comment {
+    display: flex;
+
+    padding: 0 16px;
+    background-color: #865ef3;
+    border-radius: 16px;
+    width: 333px;
+}
+
+.comment-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 0;
+    font-size: 1.6em;
+}
+
+.comment-reply-link {
+    background-color: transparent;
+    border: 1px solid white;
+    color: white;
+    font-size: 22px;
+    border-radius: 11px;
+    cursor: pointer;
+    padding: 5px 10px;
+    transition: color 0.3s;
+
+    &:hover {
+        color: #54afff;
+    }
+}
+
+.comment-like {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-right: 6px;
+}
+
+.comment-like-count {
+    font-weight: lighter;
+    color: white;
+    padding: 0 8px;
+    cursor: pointer;
+    font-size: 1.1em;
+}
+
+.comment-like div {
+    cursor: pointer;
+    transition: color 0.3s;
+
+    &:hover {
+        color: #54afff;
+    }
+}
+
+.comment-toggle-link {
+    padding: 5px 11px;
+    border: 1px solid #007bff;
+    border-radius: 5px;
+    background-color: #2699fb;
+    color: #007bff;
+    cursor: pointer;
+    transition: background-color 0.3s, color 0.3s;
+
+    &:hover {
+        background-color: #007bff;
+        color: white;
+    }
+}
+
+.commentedAt {
+    color: #999;
+    font-size: 14px;
+    margin-top: 5px; // Espacio debajo del nombre
+}
+
+.mostrar {
+    padding: 5px;
+    display: flex;
+    margin-top: 3px;
+}
+
+.line-container {
+    background-color: #aad5ff;
+    // margin-top: 60px;
+    display: flex;
+    // height: 93px;
+    align-items: center;
+    border-radius: 10px;
+    width: 100%;
+    justify-content: space-between;
+}
+
+.interaction-container {
+    font-size: 36px;
+    // margin-left: 500px;
+    display: flex;
+    width: 100%;
+    justify-content: space-around;
+    // position: absolute;
+    // margin-bottom: 9px;
+}
+
+.reply-link {
+    padding: 3px 9px;
+    margin-bottom: 7px;
+    margin-top: 7px;
+    border-radius: 10px;
+    text-decoration: none;
+    margin-left: 6px;
+    border: solid 1px white;
+    color: black !important;
+    font-size: 22px;
+    transition: all 0.3s ease;
+
+    &:hover {
+        background-color: black;
+        color: white !important;
+    }
+}
+
+.reply-link-selected {
+    background-color: black;
+    color: white !important;
+    transform: scale(1.05);
+}
+
+.like-container {
+    display: flex;
+    color: white;
+}
+
+.like-count {
+    padding-left: 8px;
+    color: black;
+    font-weight: 500;
+    padding-right: 9px;
+}
+
+.share-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.share-count {
+    padding-right: 9px;
+    padding-bottom: 3px;
+    color: gray;
+}
+
+.share-icon {
+    cursor: pointer;
+}
+
+
+.nuevo-usuario {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.nuevo-user-infoImage {
+    display: flex;
+    align-items: center;
+}
+
+.nuevo-image-container {
+    margin-right: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nuevo-circle-image {
+    border: 1px solid black;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.nuevo-user-infoImageIcon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    border: 1px solid black;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.adjuntar {
+    display: flex;
+    flex-direction: column;
+
+}
+
+.nuevo-username {
+    font-weight: bold;
+    margin-left: 8px;
+}
+
+.nuevo-titulo {
+    margin-left: 16px;
+    font-size: 16px;
+    color: #333;
+}

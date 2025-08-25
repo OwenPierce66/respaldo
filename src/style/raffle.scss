@@ -1,0 +1,422 @@
+.raffleCheckout-wrapper {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+
+  //   @media only screen and (max-width: 600px) {
+  //       width: 100vw;
+  //   }
+
+  .raffleCheckout {
+    max-width: 1000px;
+    display: grid;
+    grid-template-rows: 50px 200px 400px;
+    padding-top: 10px;
+
+    @media only screen and (max-width: 600px) {
+      max-width: 95vw;
+      grid-template-rows: auto auto;
+    }
+
+    .container {
+      .details {
+        background-color: #ffffff;
+        border: 2px solid lightgray;
+        border-radius: 5px;
+        margin-bottom: 15px;
+
+        .title {
+          margin: 10px;
+          font-size: 22px;
+          font-weight: 600;
+        }
+
+        .description {
+          margin: 10px;
+          font-size: 18px;
+        }
+      }
+
+      .options {
+        display: flex;
+        justify-content: space-evenly;
+        @media only screen and (max-width: 600px) {
+          flex-wrap: wrap;
+        }
+
+        .option {
+          background-color: #ffffff;
+          border: 2px solid lightgray;
+          border-radius: 5px;
+          margin-bottom: 15px;
+          width: 350px;
+          height: 400px;
+          padding: 50px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: space-between;
+
+          .title {
+            font-size: 26px;
+            font-weight: 600;
+            text-align: center;
+          }
+
+          button {
+            width: 100%;
+            height: 35px;
+            border: 1px solid transparent;
+            border-radius: 5px;
+            color: white;
+            font-size: 18px;
+            background-color: $LG-AccentGreen-2;
+          }
+        }
+      }
+    }
+  }
+}
+
+.raffle {
+  display: grid;
+  // grid-template-rows: 1fr 2fr;
+  grid-template-columns: 55% 45%;
+  height: 100%;
+  max-height: 100%;
+  text-transform: uppercase;
+  font-family: "Roboto Condensed", sans-serif;
+  padding: 5px;
+
+  .left-side {
+    display: grid;
+    grid-template-rows: 1fr 2fr;
+    .header {
+      .title {
+        font-size: 60px;
+        line-height: 1.5;
+        font-weight: 700;
+        letter-spacing: -2px;
+      }
+      .sub-title {
+        font-size: 35px;
+        line-height: 1.5;
+        font-weight: 700;
+        letter-spacing: -2px;
+        color: lightgray;
+      }
+
+      @media only screen and (max-width: 1007px) {
+        .title {
+          font-size: 42px;
+        }
+        .sub-title {
+          font-size: 28px;
+        }
+      }
+
+      @media only screen and (max-width: 641px) {
+        .title {
+          font-size: 22px;
+        }
+        .sub-title {
+          font-size: 15px;
+        }
+      }
+    }
+
+    .body {
+      height: auto;
+      .text {
+        display: grid;
+        grid-template-rows: 1fr 1fr 1fr;
+
+        .text-1 {
+          font-size: 22px;
+        }
+
+        .text-2 {
+          align-self: flex-end;
+          font-size: 22px;
+        }
+
+        .button-container {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+        }
+
+        @media only screen and (max-width: 1007px) {
+          .text-1 {
+            font-size: 15px;
+          }
+
+          .text-2 {
+            align-self: flex-end;
+            font-size: 15px;
+          }
+        }
+      }
+    }
+  }
+
+  .right-side {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    .images {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+
+      .image-1 {
+        height: 250px;
+        width: 250px;
+        padding: 15px;
+      }
+
+      @media only screen and (max-width: 1007px) {
+        .image-1 {
+          height: 250px;
+          width: 250px;
+        }
+      }
+
+      @media only screen and (max-width: 641px) {
+        .image-1 {
+          height: 150px;
+          width: 150px;
+        }
+      }
+    }
+  }
+}
+
+//Colors
+
+.draw {
+  background: none;
+  border: 0;
+  box-sizing: border-box;
+  margin: 1em;
+  padding: 1em 2em;
+  text-decoration: none;
+
+  // Using inset box-shadow instead of border for sizing simplicity
+  box-shadow: inset 0 0 0 2px black;
+  color: black;
+  font-size: 22px;
+  font-weight: 700;
+
+  @media only screen and (max-width: 641px) {
+    font-size: 15px;
+  }
+
+  // Required, since we're setting absolute on pseudo-elements
+  position: relative;
+  vertical-align: middle;
+
+  &::before,
+  &::after {
+    box-sizing: inherit;
+    content: "";
+    position: absolute;
+    width: 100%;
+    height: 100%;
+  }
+  transition: color 0.25s;
+
+  &::before,
+  &::after {
+    // Set border to invisible, so we don't see a 4px border on a 0x0 element before the transition starts
+    border: 2px solid transparent;
+    width: 0;
+    height: 0;
+  }
+
+  // This covers the top & right borders (expands right, then down)
+  &::before {
+    top: 0;
+    left: 0;
+  }
+
+  // And this the bottom & left borders (expands left, then up)
+  &::after {
+    bottom: 0;
+    right: 0;
+  }
+
+  // Hover styles
+  &:hover::before,
+  &:hover::after {
+    width: 100%;
+    height: 100%;
+  }
+
+  &:hover::before {
+    border-top-color: red; // Make borders visible
+    border-right-color: red;
+    transition: width 0.25s ease-out,
+      // Width expands first
+      height 0.25s ease-out 0.25s; // And then height
+  }
+
+  &:hover::after {
+    border-bottom-color: red; // Make borders visible
+    border-left-color: red;
+    transition: border-color 0s ease-out 0.5s,
+      // Wait for ::before to finish before showing border
+      width 0.25s ease-out 0.5s,
+      // And then exanding width
+      height 0.25s ease-out 0.75s; // And finally height
+  }
+}
+
+// Inherits from .draw
+.meet {
+  // Start ::after in same position as ::before
+  &::after {
+    top: 0;
+    left: 0;
+  }
+
+  // Change colors
+  &:hover::before {
+    border-top-color: red;
+    border-right-color: red;
+  }
+
+  &:hover::after {
+    border-bottom-color: red;
+    border-left-color: red;
+    transition: // Animate height first, then width
+      height 0.25s ease-out, width 0.25s ease-out 0.25s;
+  }
+}
+
+@media only screen and (max-width: 641px) {
+  .raffle {
+    display: grid;
+    // grid-template-rows: 1fr 2fr;
+    grid-template-columns: 60% 40%;
+    text-transform: uppercase;
+    font-family: "Roboto Condensed", sans-serif;
+    padding: 5px;
+
+    .left-side {
+      display: grid;
+      grid-template-rows: 8% 1fr;
+      .header {
+        .title {
+          font-size: 24px;
+        }
+        .sub-title {
+          font-size: 18px;
+        }
+      }
+
+      .body {
+        height: 80%;
+        .text {
+          height: 100%;
+          display: grid;
+          grid-template-rows: 1fr 1fr 1fr;
+
+          .text-1 {
+            font-size: 18px;
+          }
+
+          .text-2 {
+            align-self: flex-end;
+            font-size: 18px;
+          }
+
+          .button-container {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+          }
+        }
+      }
+    }
+
+    .right-side {
+      .images {
+        .image-1 {
+          height: 150px;
+          width: 150px;
+          padding: 25px;
+        }
+      }
+    }
+  }
+}
+
+.my-tickets-button{
+  width: fit-content;
+  height: fit-content;
+  padding: 10px 25px;
+  border: 1px solid $LG-AccentBlue-2;
+  color: $LG-AccentBlue-2;
+  transition: .3s ease all;
+  text-decoration: none;
+  font-weight: 700;
+  margin-bottom: 10px;
+
+  &:hover{
+    background-color: $LG-AccentBlue-2;
+    color: white;
+  }
+}
+
+@media (max-width: 800px) {
+  .my-raffle-tickets{
+    .raffle-tickets{
+      .ticket-wrapper {
+        margin-left: 40px;
+      }
+    }
+  }
+}
+
+.my-raffle-tickets {
+  .raffle-tickets {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-auto-rows: auto;
+    grid-gap: 25px;
+    justify-items: center;
+
+    .ticket-wrapper {
+      background-color: $LG-AccentBlue-1;
+      width: 250px;
+      height: 100px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      .ticket {
+        padding: 15px;
+        border: 1px solid black;
+        width: 225px;
+        height: 85px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-evenly;
+
+        .title {
+          text-align: center;
+          font-size: 24px;
+          font-weight: 700;
+        }
+
+        .ticket-number {
+          text-align: center;
+          font-size: 16px;
+          font-weight: 500;
+        }
+      }
+    }
+  }
+}

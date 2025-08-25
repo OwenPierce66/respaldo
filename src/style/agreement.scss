@@ -1,0 +1,51 @@
+.agreements-container {
+  display: flex;
+  justify-content: center;
+  .agreement {
+    width: 50%;
+    min-width: 300px;
+    .header {
+      font-size: 25px;
+      display: flex;
+      justify-content: center;
+      margin-bottom: 15px;
+    }
+    .body {
+      .alert{
+        text-align: center;
+        height: 50px;
+        font-size: 25px;
+      }
+
+      .agreement-checkbox {
+        height: 50px;
+        margin: 15px;
+        display: grid;
+        align-content: center;
+        grid-template-columns: 20px 1fr;
+        input {
+          margin: 5px 0px 0px 5px;
+        }
+        label {
+          margin-left: 5px;
+        }
+      }
+      .agreement-submission {
+        margin-left: 15px;
+        button {
+          width: 130px;
+          height: 45px;
+          border: 1px transparent;
+          border-radius: 3px;
+          font-size: 20px;
+          background-color: #50666B;
+          color: white;
+
+          &:disabled{
+            opacity: 50%;
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,184 @@
+.childFormContainer {
+  display: flex;
+  justify-content: center;
+  background-color: #e1e1e1;
+  padding: 25px;
+  height: 100%;
+
+  @media only screen and (max-width: 600px) {
+    width: 100vw;
+  }
+
+  .childForm {
+    width: 100%;
+    max-width: 900px;
+    background-color: white;
+    padding: 15px;
+
+    .formHeader {
+      text-align: center;
+      font-size: 32px;
+      font-weight: 600;
+    }
+
+    .registerAgainDisclaimer {
+      color: red;
+
+      .form-link-to-registrations {
+        font-weight: bold;
+        // text-decoration: none;
+        color: #1e266d;
+      }
+    }
+
+    .child {
+      margin-top: 25px;
+      border-top: 1px solid black;
+      padding: 5px;
+      box-sizing: border-box;
+      display: flex;
+      flex-wrap: wrap;
+
+      .removeChild {
+        margin-top: 20px;
+        margin-bottom: 20px;
+        width: 100%;
+        display: flex;
+        justify-content: flex-start;
+
+        button {
+          cursor: pointer;
+          width: auto;
+          height: 35px;
+          font-size: 15px;
+          background-color: #FF0000;
+          border-radius: 5px;
+          color: white;
+        }
+      }
+
+      .inputWrapper {
+        width: 425px;
+        display: grid;
+        grid-template-rows: auto 1fr;
+        margin-bottom: 10px;
+
+        label {
+          font-size: 18px;
+          font-weight: 500;
+        }
+
+        input,
+        select {
+          width: 90%;
+          height: 30px;
+          margin-bottom: 10px;
+
+          &:focus {
+            outline: none;
+          }
+        }
+
+        .error-message {
+          width: 90%;
+          font-size: 14px;
+          margin: 0px;
+          margin-bottom: 10px;
+          color: red;
+        }
+      }
+    }
+
+    .buttonContainer {
+      display: flex;
+      justify-content: space-between;
+
+      button {
+        width: 150px;
+        height: 35px;
+        font-size: 15px;
+      }
+
+      .addChild {
+        margin-top: 20px;
+        margin-bottom: 20px;
+        width: auto;
+        background-color: rgb(152, 251, 152);
+        color: black;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+
+      .submitButton {
+        background-color: $LG-AccentBlue-2;
+        color: white;
+      }
+    }
+
+    .pricing {
+      margin-top: 15px;
+      .pricingTitle {
+        font-size: 22px;
+        font-weight: 600;
+      }
+
+      .totalWrapper {
+        display: flex;
+        justify-content: space-between;
+        margin: 10px;
+        font-size: 18px;
+        font-weight: 600;
+      }
+
+      .buttonWrapper {
+        display: flex;
+        justify-content: flex-end;
+
+        .submitButton {
+          width: 150px;
+          height: 35px;
+          font-size: 18px;
+          background-color: $LG-AccentBlue-2;
+          color: white;
+          cursor: pointer;
+          border-radius: 5px;
+        }
+
+        .submitButton:disabled {
+          cursor: not-allowed;
+          background-color: $LG-Grey;
+        }
+      }
+
+      .warning {
+        margin-bottom: 10px;
+      }
+
+      .transportationConfirmation {
+        display: flex;
+        align-items: center;
+        margin-bottom: 20px;
+
+        input {
+          margin-right: 8px;
+        }
+
+        label, input {
+          cursor: pointer;
+        }
+      }
+    }
+  }
+}
+
+.childFormSuccess {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  p {
+    font-size: 34px;
+    font-weight: 600;
+    color: $LG-AccentGreen-2;
+  }
+}

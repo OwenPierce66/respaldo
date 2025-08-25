@@ -1,0 +1,13 @@
+.breadcrumbs {
+  display: flex;
+  row-gap: 2px;
+
+  .separator {
+    margin-left: 4px;
+    margin-right: 4px;
+  }
+
+  p {
+    margin: 0px;
+  }
+}

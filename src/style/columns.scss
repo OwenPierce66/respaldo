@@ -1,0 +1,129 @@
+.columns-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  .button-container {
+    h3 {
+      text-align: center;
+    }
+  }
+
+  .column-wrapper {
+    text-align: justify;
+
+    padding: 10px;
+  }
+}
+
+.title-column {
+  color: #d2cdc6;
+  background-color: #2c4e2d;
+  font-size: 15px;
+  width: 100px;
+  height: 30px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: 200;
+
+  margin-bottom: -35px;
+  z-index: 1;
+}
+
+.button-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.tempColumn-wrapper {
+  background-color: #2c4e2d;
+
+  background-image: url(https://encrypted-tbn0.gstatic.com/images?q=tbn%3AANd9GcTqPlWE5cJzaLzJrDe2nbgBnWUUC1vttRATAQ&usqp=CAU);
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+
+  width: 100%;
+  height: calc(100vh - 70px);
+  padding-top: 30px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+} 
+
+.columns-link {
+  margin-bottom: 10px;
+  background-color: rgb(184, 183, 183); // 2c4e2d 30903a d2cdc6
+  width: 300px;
+  padding: 20px;
+  font-size: 18px;
+  text-decoration: none; 
+  height: 90px;
+  color: #222;
+  font-weight: 700;
+  transition: 0.5s;
+
+  .columns-content {
+    margin-top: 5px;
+    color: #39393A;
+    font-size: 12px;
+    font-weight: 500;
+    transition: 0.5s;
+  }
+}
+
+.columns-link:hover {
+  background-color: #2c4e2d;
+  color: #eee; 
+
+  .columns-content {
+    color: #E6E6E6;
+  }
+}
+
+
+
+.columns-title {
+  text-align: center;
+  font-size: 30px;
+  margin: 20px;
+  padding-top: 50px;
+}
+
+.columns-divider {
+  height: 40px;
+}
+
+.news-para-wrapper {
+  padding: 20px;
+}
+
+.news-para {
+  padding: 10px;
+  margin-bottom: 20px;
+  letter-spacing: 1px;
+}
+
+.news-para-link {
+  text-decoration: none;
+  color: blue;
+  transition: 0.4s;
+}
+
+.news-para-link:hover {
+  text-decoration: underline;
+  letter-spacing: 0.4px;
+}
+
+.column-link {
+  color: blue;
+  text-decoration: none;
+}
+
+.column-link:hover {
+  border-bottom: 1px solid #111;
+}

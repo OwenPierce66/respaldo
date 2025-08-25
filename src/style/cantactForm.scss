@@ -1,0 +1,113 @@
+.CF-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+.CF-pageTitle {
+    margin: 30px;
+    font-size: 30px;
+}
+
+.CF-formWrapper {
+    background-color: #707070;
+    width: 500px;
+    height: fit-content;
+    padding-bottom: 20px;
+    border-radius: 10px;
+    @media only screen and (max-width: 600px) {
+        width: 99vw;
+        margin-bottom: 9px;
+    }
+}
+
+.CF-form {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+.CF-input {
+    margin: 3px;
+    padding: 5px;
+    border-radius: 10px;
+    width: 95%;
+    height: 40px;
+    font-size: 20px;
+    border: none;
+    outline: none;
+    background-color: #d4d4d4;
+}
+
+.CF-textarea {
+    width: 95%;
+    height: 100px;
+    border-radius: 10px;
+    border: none;
+    outline: none;
+    background-color: white;
+    resize: none;
+    font-size: 15px;
+    padding: 5px;
+}
+
+.CF-label {
+    font-size: 20px;
+    color: black;
+}
+
+.CF-labelWrapper {
+    width: 95%;
+    display: flex;
+    justify-content: left;
+    align-items: flex-start;
+    margin-top: 10px;
+}
+
+.CF-formTitleWapper {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 25px;
+    @media only screen and (max-width: 600px) {
+        font-size: 21.9px;
+    }
+}
+
+.CF-formTitle {
+    color: white;
+}
+
+.CF-buttonWrapper {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+     margin-top: 10px;
+}
+
+.CF-button {
+    width: 95%;
+    height: 40px;
+    background-color: rgb(26, 173, 26);
+    border: none;
+    outline: none;
+    border-radius: 10px;
+    transition: 0.3s;
+    cursor: pointer;
+}
+
+.CF-button:hover {
+    background-color: blue;
+    color: invert($color: #000000);
+}
+
+.messageOverMessage {
+    color: white;
+    margin-top: 10px;
+    text-align: center;
+    font-size: 17px;
+}

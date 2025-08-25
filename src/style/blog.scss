@@ -1,0 +1,214 @@
+.blog {
+
+  .blog-header{
+    display: flex;
+    justify-content: center;
+    align-content: center;
+    height: 91px;
+ 
+    .title {
+      align-self: center;
+      color: black;
+      font-size: 2em;
+      font-weight: bold;
+      width: auto;
+    }
+
+    @media only screen and (max-width: 500px){
+      .title{
+        font-size: 20.7px;
+      }
+    }
+  }
+
+  @media only screen and (max-width: 500px){
+    .blog-header{
+      height: 39px;
+    }
+  }
+
+  .blog-body {
+    display: flex;
+    justify-content: center;
+
+    .blog-container {
+      display: flex;
+      justify-content: space-evenly;
+      flex-flow: row;
+      flex-wrap: wrap;
+      max-width: 1200px;
+    }
+  }
+
+  .blog-footer {
+    margin: 15px;
+    display: flex;
+    justify-content: center;
+
+    .load-more-button {
+      height: 41px;
+      width: 100px;
+      transition: 0.3s all ease;
+      margin-bottom: 15px;
+      background-color: black;
+      color: white;
+      cursor: pointer;
+    }
+  }
+}
+
+.blog-item {
+  position: relative;
+  border: 1px solid lightgray;
+  border-bottom-width: 3px;
+  border-radius: 5px;
+  margin: 10px;
+  height: 330px;
+  width: 300px;
+  max-width: 400px;
+  max-height: 400px;
+  display: grid;
+  grid-template-rows: 1fr 2fr;
+
+  .header {
+    display: flex;
+    justify-content: center;
+    height: 180px;
+    background-color: white;
+    padding: 5px;
+
+    img {
+      width: 80%;
+      height: auto;
+      max-height: 160px;
+      object-fit: cover;
+      // WARNING: SAFARI DON'T LIKE FLEXBOX. THIS MIGHT BREAK ON IPHONES IN PRODUCITON.
+    }
+  }
+
+  .body {
+    height: 100%;
+    padding: 5px;
+    border-radius: 0 0 5px 5px;
+    display: grid;
+    grid-template-rows: 25px 25px auto;
+    grid-template-columns: 1fr;
+
+    .date {
+      color: gray;
+      font-weight: 300;
+      text-align: center;
+    }
+
+    .title {
+      font-size: 20px;
+      font-weight: 500;
+      text-align: center;
+      overflow: hidden;
+    }
+  }
+
+  @media only screen and (max-width: 600px){
+    .body{
+      background-color: white;
+    }
+  }
+
+  .blog-button {
+    z-index: 1;
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    text-align: center;
+    width: 100%;
+    height: 25px;
+    font-weight: 700;
+    text-decoration: none;
+    color: #2c4e2d;
+  }
+}
+
+.blogDetail-container {
+  display: flex;
+  justify-content: center;
+
+  .blogDetail {
+    min-height: 95.5vh;
+    width: 100%;
+    display: grid;
+    grid-template-rows: auto 1fr;
+    grid-row-gap: 10px;
+    position: relative;
+    -webkit-box-shadow: 0px 0px 7px 0px rgba(0, 0, 0, 0.75);
+    -moz-box-shadow: 0px 0px 7px 0px rgba(0, 0, 0, 0.75);
+    box-shadow: 0px 0px 7px 0px rgba(0, 0, 0, 0.75);
+
+    .header-wrapper {
+      margin: 0 20px;
+      padding: 0 5px;
+      border-bottom: 1px solid black;
+
+      .header {
+        width: 100%;
+        margin: auto;
+        display: flex;
+        justify-self: center;
+        flex-direction: column;
+
+        .img-wrapper {
+          width: 80%;
+          align-self: center;
+          display: flex;
+          justify-content: center;
+
+          img {
+            width: 100%;
+            max-width: fit-content;
+            height: auto;
+            max-height: 350px;
+          }
+        }
+
+        .title,
+        .summary {
+          text-align: center;
+          width: 100%;
+        }
+
+        .title {
+          font-size: 45px;
+          top: 20%;
+          text-align: center;
+        }
+      }
+    }
+
+    .body {
+      width: 90%;
+      display: flex;
+      justify-self: center;
+
+      .content-wrapper {
+        .author {
+          font-size: 18px;
+          color: gray;
+        }
+        .text-body {
+          margin-top: 15px;
+          font-size: 18px;
+
+          li {
+            list-style-position: inside;
+          }
+        }
+      }
+    }
+  }
+}
+
+.summary {
+  font-size: 15px;
+  top: 50%;
+  text-align: center;
+  margin-top: 10px;
+}
