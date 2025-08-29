@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 
 const ChatAssistant = () => {
+    
     const [messages, setMessages] = useState([]);
     const [userInput, setUserInput] = useState('');
     const [isSending, setIsSending] = useState(false); // Controlar si la solicitud está en curso
