@@ -1,3 +1,6 @@
+@use "variables" as *;
+@use "mixin" as m;
+
 .business-page-container {
   display: flex;
   justify-content: center;
@@ -231,7 +234,7 @@
       height: auto;
       max-height: 280px;
 
-      @include desktop {
+      @include m.desktop {
         max-height: 400px;
       }
     }
@@ -369,7 +372,7 @@
   @import url("https://fonts.googleapis.com/css2?family=Inconsolata&display=swap");
   font-family: "Inconsolata", serif;
 
-  @include desktop {
+  @include m.desktop {
     height: 1000px;
     max-height: 80%;
     width: 600px;

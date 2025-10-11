@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import Axios from "axios";
-import ReactHtmlParser from "react-html-parser";
+import parse from "html-react-parser";
 import { Link } from "react-router-dom";
 
 class BlogDetails extends Component {
@@ -48,7 +48,7 @@ class BlogDetails extends Component {
                   {this.state.post.createdBy.last_name}
                 </p>
                 <div className="text-body">
-                  {ReactHtmlParser(this.state.post.content)}
+                  {parse(this.state.post.content)}
                 </div>
               </div>
             </div>

@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from "react";
 import Axios from "axios";
-import { useParams, useHistory } from "react-router-dom";
+import { Link, useNavigate } from 'react-router-dom';
 import moment from "moment";
 import Modal from "react-modal";
 
 const NewForum = () => {
   const { userId } = useParams();
-  const history = useHistory();
+  const navigate = useNavigate();
+
   const [posts, setPosts] = useState([]);
   const [modalIsOpen, setIsOpen] = useState(false);
   const [postTitle, setPostTitle] = useState("");
@@ -83,10 +84,10 @@ const NewForum = () => {
       console.log("Fetched posts for user:", selectedUser);
     });
   };
-
-  const navigateToUserForum = (userId) => {
-    history.push(`/dashboard/newcommunity/${userId}`);
-  };
+  
+const navigateToUserForum = (userId) => {
+    navigate(`/dashboard/newcommunity/${userId}`);
+};
 
   if (!usuario) {
     return <div>Loading...</div>; // Renderiza un mensaje de carga mientras se obtiene el usuario
@@ -102,22 +103,23 @@ const NewForum = () => {
         <div className="forumBody">
           <div className="postWrapper">
             {posts.map((post) => (
-              <a href={`/dashboard/newcommunityPost/${post.id}`} key={post.id}>
-                <div className="post">
-                  <div className="postTitle">{post.title}</div>
-                  <div className="postDetails">
-                    <div className="creator">
-                      <div className="img"></div>
-                      <div className="name">
-                        {post.createdBy.first_name + " " + post.createdBy.last_name}
-                      </div>
-                    </div>
-                    <div className="created">
-                      {moment(post.createdAt).format("LLL")}
-                    </div>
-                  </div>
-                </div>
-              </a>
+           <Link to={`/dashboard/newcommunityPost/${post.id}`} key={post.id}>
+  <div className="post">
+    <div className="postTitle">{post.title}</div>
+    <div className="postDetails">
+      <div className="creator">
+        <div className="img"></div>
+        <div className="name">
+          {post.createdBy.first_name + " " + post.createdBy.last_name}
+        </div>
+      </div>
+      <div className="created">
+        {moment(post.createdAt).format("LLL")}
+      </div>
+    </div>
+  </div>
+</Link>
+
             ))}
           </div>
         </div>

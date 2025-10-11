@@ -13,15 +13,18 @@ import {
   faStoreAlt,
   faUsers,
 } from "@fortawesome/free-solid-svg-icons";
-import { Link } from "react-router-dom";
 import { useSelector } from "react-redux";
-
-
+import { Link, useMatch, useResolvedPath } from "react-router-dom";
 
 const Sidebar = (props) => {
   const user = useSelector((state) => state.auth.user)
-  const { path, url } = props.match;
+ // Esto te da la base "/dashboard"
+ // Detecta si estás dentro de /dashboard/*
+const resolved = useResolvedPath("");
+  const match = useMatch("/dashboard/*");
+  const url = match ? match.pathnameBase : resolved.pathname;
 
+  // Si no hay match, fallback a "/dashboard"
   if (user) {
     return (
       <div

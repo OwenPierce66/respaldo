@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import moment from "moment";
 import { useSelector } from "react-redux";
-import ReactHtmlParser from "react-html-parser";
+import parse from "html-react-parser";
 import NewPeticionComments from "./newPeticionComennt"; // Asegúrate de que este componente está bien importado
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faImage, faHeart, faTrash, faMinus, faPlus, faUser, faUsers } from "@fortawesome/free-solid-svg-icons";

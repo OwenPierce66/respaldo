@@ -6,7 +6,7 @@ import {
   faUser,
   faPhone,
 } from "@fortawesome/free-solid-svg-icons";
-import ReactTooltip from "react-tooltip";
+import { Tooltip } from "react-tooltip";  // ✅ nueva forma de importarlo
 import Axios from "axios";
 
 const GroupParticipants = (props) => {
@@ -14,9 +14,7 @@ const GroupParticipants = (props) => {
   const user = props.user;
 
   const makeUserLeader = (member) => {
-    if (
-      confirm(`Confirm you want to make ${member.usernamer} the group leader?`)
-    )
+    if (confirm(`Confirm you want to make ${member.username} the group leader?`))
       Axios.post(
         `http://127.0.0.1:8000/api/my_group/`,
         {
@@ -60,50 +58,46 @@ const GroupParticipants = (props) => {
   const handleMembers = () => {
     return group.members.map((member) => {
       if (member.id === group.leader.id) {
-        return;
+        return null;
       } else {
         return (
-          <div className="participant">
+          <div className="participant" key={member.id}>
             <FontAwesomeIcon icon={faUser} className="icon" />
             <p className="name">
               {member.first_name} {member.last_name}
             </p>
             {user.id === group.leader.id ? (
               <div className="adminOptions">
+                {/* 📞 Contact Info */}
                 <FontAwesomeIcon
                   icon={faPhone}
-                  data-tip
-                  data-for="contactInfo"
+                  data-tooltip-id="contactInfo"
+                  data-tooltip-content={`Contact Info: Phone # : ${
+                    member.profile.phone_number || "Not Available"
+                  }`}
                   className="icon"
                 />
-                <ReactTooltip id="contactInfo" place="top" effect="solid">
-                  Contact Info: Phone # :{" "}
-                  {member.profile.phone_number
-                    ? member.profile.phone_number
-                    : "Not Available"}
-                </ReactTooltip>
+                <Tooltip id="contactInfo" place="top" />
 
+                {/* 🗑 Remove User */}
                 <FontAwesomeIcon
                   icon={faTrash}
-                  data-tip
-                  data-for="deleteTip"
+                  data-tooltip-id="deleteTip"
+                  data-tooltip-content="Remove User From Group"
                   className="icon"
                   onClick={() => removeUser(member)}
                 />
-                <ReactTooltip id="deleteTip" place="top" effect="solid">
-                  Remove User From Group
-                </ReactTooltip>
+                <Tooltip id="deleteTip" place="top" />
 
+                {/* 👑 Make Leader */}
                 <FontAwesomeIcon
                   icon={faCrown}
-                  data-tip
-                  data-for="makeLeaderTip"
+                  data-tooltip-id="makeLeaderTip"
+                  data-tooltip-content="Make Group Leader"
                   className="icon"
                   onClick={() => makeUserLeader(member)}
                 />
-                <ReactTooltip id="makeLeaderTip" place="top" effect="solid">
-                  Make Group Leader
-                </ReactTooltip>
+                <Tooltip id="makeLeaderTip" place="top" />
               </div>
             ) : null}
           </div>
@@ -111,6 +105,7 @@ const GroupParticipants = (props) => {
       }
     });
   };
+
   return (
     <div className="participants">
       <div className="participant">

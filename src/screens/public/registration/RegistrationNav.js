@@ -1,19 +1,21 @@
 import React from 'react';
-import { Route, Switch } from 'react-router';
+import { Route, Routes } from 'react-router-dom'; // ✅ Switch → Routes
 import Registration from './Registration';
 import Subscription from './Subscription';
 import SubscriptionSuccess from './SubscriptionSuccess';
 
-const RegistrationNav = ({ match }) =>{
-  const { path, url } = match;
+const RegistrationNav = ({ match }) => {
+  const { path } = match;
 
-  return <div>
-    <Switch>
-      <Route exact path={`${path}`} component={Registration} />
-      <Route path={`${path}/subscription/:accountId`} component={Subscription} />
-      <Route path={`${path}/subscriptionSuccess`} component={SubscriptionSuccess} />
-    </Switch>
-  </div>
-}
+  return (
+    <div>
+      <Routes>
+        <Route path={`${path}`} element={<Registration />} />
+        <Route path={`${path}/subscription/:accountId`} element={<Subscription />} />
+        <Route path={`${path}/subscriptionSuccess`} element={<SubscriptionSuccess />} />
+      </Routes>
+    </div>
+  );
+};
 
 export default RegistrationNav;

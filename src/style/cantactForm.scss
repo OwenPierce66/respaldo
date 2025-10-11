@@ -1,3 +1,6 @@
+@use "sass:color";
+@use "variables" as v;
+
 .CF-container {
     display: flex;
     justify-content: center;
@@ -102,7 +105,7 @@
 
 .CF-button:hover {
     background-color: blue;
-    color: invert($color: #000000);
+    color: color.invert(#000000);
 }
 
 .messageOverMessage {

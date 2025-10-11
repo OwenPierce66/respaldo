@@ -67,8 +67,8 @@ export default class HomePrivate extends Component {
   render() {
     const backgroundImageUrl = "../../../static/assets/images/image2.jpg";
 
-    const inspirationalImageUrl =
-      "../../../static/assets/images/lg-tree-transparent.svg";
+    // const inspirationalImageUrl =
+    //   "../../../static/assets/images/lg-tree-transparent.svg";
 
     return (
       <div className="landing">
@@ -161,10 +161,10 @@ export default class HomePrivate extends Component {
         </div>
 
         <div className="landing-footer">
-          <img
+          {/* <img
             className="landing-grid-square footer-logo"
             src="assets/images/lg-tree-transparent.svg"
-          />
+          /> */}
           <div className="landing-grid">
             <div className="landing-grid-square footer-contact">
               <div className="landing-grid-square-header">Contact us</div>

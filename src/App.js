@@ -1,57 +1,71 @@
-import React, { Component } from "react";
-import { BrowserRouter, Redirect, Route, Switch } from "react-router-dom";
+import React, { useEffect } from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
+import * as authActions from "./store/actions/auth";
+
+// Componentes
 import Dashboard from "./screens/private/Dashboard";
 import Landing from "./screens/public/Landing";
-import requireAuth from "./components/HOC/requireAuth";
-import { connect } from "react-redux";
-import * as authActions from "./store/actions/auth";
 import RegistrationNav from "./screens/public/registration/RegistrationNav";
+import Admin from "./screens/private/Admin/Admin";
 
-class App extends Component {
-  constructor(props) {
-    super(props);
+// HOCs
+import RequireAuth from "./components/HOC/requireAuth";
+import RequireAdmin from "./components/HOC/requireAdmin";
+
+const App = () => {
+  const dispatch = useDispatch();
+  const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
+
+  useEffect(() => {
+    dispatch(authActions.autoLogin());
+  }, [dispatch]);
+
+  return (
+    <Routes>
+      {/* Redirección de la raíz */}
+      <Route
+        path="/"
+        element={
+          isAuthenticated ? (
+            <Navigate to="/dashboard" replace />
+          ) : (
+            <Navigate to="/app" replace />
+          )
+        }
+      />
+
+      {/* Pantallas públicas */}
+      <Route path="/app/*" element={<Landing />} />
+      <Route path="/registration" element={<RegistrationNav />} />
+
+      {/* Pantallas privadas */}
+<Route
+  path="/dashboard/*"
+  element={
+    <RequireAuth>
+      <Dashboard />
+    </RequireAuth>
   }
+/>
 
-  componentWillMount() {
-    this.props.autoLogin();
-  }
 
-  render() {
-    const isAuthenticated = localStorage.getItem("userTokenLG");
+      {/* Rutas de Admin */}
+      <Route
+        path="/dashboard/admin/*"
+        element={
+          <RequireAdmin>
+            <Admin />
+          </RequireAdmin>
+        }
+      />
 
-    return (
-      <BrowserRouter>
-        <Switch>
-          <Route
-            exact
-            path="/"
-            render={() => {
-              return isAuthenticated ? (
-                <Redirect to="/dashboard" />
-              ) : (
-                <Redirect to="/app" />
-              );
-            }}
-          />
-          <Route path="/app" component={Landing} />
-          <Route path="/dashboard" component={Dashboard} />
-          <Route path="/registration" component={RegistrationNav} />
-        </Switch>
-      </BrowserRouter>
-    );
-  }
-}
 
-function mapStateToProps(state) {
-  return {
-    isAuthenticated: state.auth.isAuthenticated,
-  };
-}
+{/* Fallback */}
+<Route path="*" element={<Navigate to="/app" replace />} />
 
-const mapDispatchToProps = (dispatch) => {
-  return {
-    autoLogin: () => dispatch(authActions.autoLogin()),
-  };
+    </Routes>
+  );
 };
 
-export default connect(mapStateToProps, mapDispatchToProps)(App);
+export default App;

@@ -1,32 +1,56 @@
-import { AUTHENTICATE, UPDATE_SUBSCRIPTION, UPDATE_USER } from '../actions/auth';
+import { AUTHENTICATE, UPDATE_SUBSCRIPTION, UPDATE_USER, LOGOUT } from '../actions/auth';
 
 const initialState = {
-  isAuthenticated: false,
+  token: localStorage.getItem("userTokenLG") || null,
+  isAuthenticated: !!localStorage.getItem("userTokenLG"), // true si hay token guardado
   subscriptionStatus: null,
-  user: {}
-}
+  user: JSON.parse(localStorage.getItem("userData")) || null, // opcional
+};
 
-export default(state = initialState, action) => {
-  switch(action.type){
+export default (state = initialState, action) => {
+  switch (action.type) {
     case AUTHENTICATE:
+      // Guardamos token y user en localStorage
+      if (action.token) {
+        localStorage.setItem("userTokenLG", action.token);
+      }
+      if (action.user) {
+        localStorage.setItem("userData", JSON.stringify(action.user));
+      }
       return {
+        ...state,
+        token: action.token || state.token,
         isAuthenticated: action.isAuthenticated,
         subscriptionStatus: action.subscriptionStatus,
-        user: action.user
-      }
+        user: action.user || state.user,
+      };
+
     case UPDATE_SUBSCRIPTION:
       return {
-        isAuthenticated: state.isAuthenticated,
+        ...state,
         subscriptionStatus: action.subscriptionStatus,
-        user: state.user
-      }
+      };
+
     case UPDATE_USER:
-      return {
-        isAuthenticated: state.isAuthenticated,
-        subscriptionStatus: state.subscriptionStatus,
-        user: action.user
+      if (action.user) {
+        localStorage.setItem("userData", JSON.stringify(action.user));
       }
+      return {
+        ...state,
+        user: action.user,
+      };
+
+    case LOGOUT:
+      localStorage.removeItem("userTokenLG");
+      localStorage.removeItem("userData");
+      return {
+        token: null,
+        isAuthenticated: false,
+        subscriptionStatus: null,
+        user: null,
+      };
+
     default:
-      return state
+      return state;
   }
-}
+};

@@ -2,14 +2,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import Select from 'react-select';
-import { useParams, useHistory } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom'; // useNavigate v6
 import '../owenscss/groupmessaging.scss';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faImage, faVideo, faUsers, faUserPlus, faUserMinus, faCrown } from '@fortawesome/free-solid-svg-icons';
+import { faImage, faVideo } from '@fortawesome/free-solid-svg-icons';
 
 const GroupMessaging = () => {
     const { groupId } = useParams();
-    const history = useHistory();
+    const navigate = useNavigate(); // v6
     const [groups, setGroups] = useState([]);
     const [messages, setMessages] = useState([]);
     const [selectedGroup, setSelectedGroup] = useState(null);
@@ -49,12 +49,9 @@ const GroupMessaging = () => {
         try {
             const token = localStorage.getItem("userTokenLG");
             const response = await axios.get('http://127.0.0.1:8000/api/get-user/', {
-                headers: {
-                    Authorization: `Token ${token}`,
-                },
+                headers: { Authorization: `Token ${token}` },
             });
-            const userDetails = response.data;
-            setUsuario(userDetails.user.id);
+            setUsuario(response.data.user.id);
         } catch (error) {
             console.error('Error fetching user details:', error);
         }
@@ -94,23 +91,21 @@ const GroupMessaging = () => {
                 const formData = new FormData();
                 formData.append('content', messageContent);
 
-                if (selectedImage) {
-                    formData.append('image', selectedImage);
-                }
+                if (selectedImage) formData.append('image', selectedImage);
+                if (selectedVideo) formData.append('video', selectedVideo);
 
-                if (selectedVideo) {
-                    formData.append('video', selectedVideo);
-                }
-
-                const response = await axios.post(`http://127.0.0.1:8000/massaging/groupss/${selectedGroup.value}/send_message/`, formData, {
-                    headers: {
-                        Authorization: `Token ${token}`,
-                        'Content-Type': 'multipart/form-data'
+                const response = await axios.post(
+                    `http://127.0.0.1:8000/massaging/groupss/${selectedGroup.value}/send_message/`,
+                    formData,
+                    {
+                        headers: {
+                            Authorization: `Token ${token}`,
+                            'Content-Type': 'multipart/form-data'
+                        }
                     }
-                });
+                );
 
-                const newMessage = response.data;
-                setMessages(prevMessages => [newMessage, ...prevMessages]);
+                setMessages(prev => [response.data, ...prev]);
                 setMessageContent('');
                 setSelectedImage(null);
                 setSelectedVideo(null);
@@ -126,7 +121,7 @@ const GroupMessaging = () => {
 
     const handleGroupChange = (group) => {
         setSelectedGroup(group);
-        history.push(`/dashboard/groupmessaging/${group.value}`);
+        navigate(`/dashboard/groupmessaging/${group.value}`); // v6
     };
 
     const handleFileChange = (e) => {
@@ -138,14 +133,12 @@ const GroupMessaging = () => {
         if (fileType === 'image') {
             setSelectedImage(file);
             setSelectedVideo(null);
-            const imageURL = URL.createObjectURL(file);
-            setSelectedImagePreview(imageURL);
+            setSelectedImagePreview(URL.createObjectURL(file));
             setVideoPreview(null);
         } else if (fileType === 'video') {
             setSelectedVideo(file);
             setSelectedImage(null);
-            const videoURL = URL.createObjectURL(file);
-            setVideoPreview(videoURL);
+            setVideoPreview(URL.createObjectURL(file));
             setSelectedImagePreview(null);
         }
     };
@@ -176,44 +169,31 @@ const GroupMessaging = () => {
                         value={selectedGroup}
                     />
                 )}
-                {selectedGroup && (
-                    <p>Chateando en: {selectedGroup.label}</p>
-                )}
+                {selectedGroup && <p>Chateando en: {selectedGroup.label}</p>}
             </div>
 
             <div className="messages" ref={messagesContainerRef}>
                 {loadingMessages ? (
                     <p>Cargando mensajes...</p>
                 ) : (
-                    messages.length > 0 ? (
-                        messages.map((message) => (
-                            <div key={message.id} className={`message ${message.sender.id === usuario ? 'sent' : 'received'}`}>
-                                <p><strong>{message.sender.username}:</strong> {message.content}</p>
-                                {message.image && (
-                                    <img src={message.image} alt="Imagen" style={{ height: "100px", width: "100px" }} />
-                                )}
-                                {message.video && (
-                                    <video controls style={{ height: "100px", width: "100px" }}>
-                                        <source src={message.video} type="video/mp4" />
-                                        Your browser does not support the video tag.
-                                    </video>
-                                )}
-                            </div>
-                        ))
-                    ) : (
-                        <p>No hay mensajes para mostrar</p>
-                    )
+                    messages.length > 0 ? messages.map((message) => (
+                        <div key={message.id} className={`message ${message.sender.id === usuario ? 'sent' : 'received'}`}>
+                            <p><strong>{message.sender.username}:</strong> {message.content}</p>
+                            {message.image && <img src={message.image} alt="Imagen" style={{ height: "100px", width: "100px" }} />}
+                            {message.video && (
+                                <video controls style={{ height: "100px", width: "100px" }}>
+                                    <source src={message.video} type="video/mp4" />
+                                </video>
+                            )}
+                        </div>
+                    )) : <p>No hay mensajes para mostrar</p>
                 )}
                 <div ref={messagesEndRef} />
             </div>
 
             <div className="input-container">
-                {selectedImagePreview && (
-                    <img src={selectedImagePreview} alt="Imagen seleccionada" style={{ height: "100px", width: "100px" }} />
-                )}
-                {videoPreview && (
-                    <video src={videoPreview} controls style={{ height: "100px", width: "100px" }} />
-                )}
+                {selectedImagePreview && <img src={selectedImagePreview} alt="Imagen seleccionada" style={{ height: "100px", width: "100px" }} />}
+                {videoPreview && <video src={videoPreview} controls style={{ height: "100px", width: "100px" }} />}
                 <textarea
                     value={messageContent}
                     onChange={(e) => setMessageContent(e.target.value)}
@@ -232,7 +212,9 @@ const GroupMessaging = () => {
                         <FontAwesomeIcon icon={faVideo} />
                     </div>
                 </label>
-                <button onClick={handleSendMessage} disabled={!messageContent.trim() && !selectedImage && !selectedVideo}>Send</button>
+                <button onClick={handleSendMessage} disabled={!messageContent.trim() && !selectedImage && !selectedVideo}>
+                    Send
+                </button>
             </div>
         </div>
     );

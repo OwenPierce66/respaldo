@@ -65,10 +65,10 @@ export default class Home extends Component {
   }
 
   render() {
-    const backgroundImageUrl = "../../../static/assets/images/image2.jpg";
+    // const backgroundImageUrl = "../../../static/assets/images/image2.jpg";
 
-    const inspirationalImageUrl =
-      "../../../static/assets/images/lg-tree-transparent.svg";
+    // const inspirationalImageUrl =
+    //   "../../../static/assets/images/lg-tree-transparent.svg";
 
     return (
       <div className="landing">
@@ -120,7 +120,7 @@ export default class Home extends Component {
 
         <div
           className="landing-blog-container"
-          style={{ backgroundImage: `url(${backgroundImageUrl})` }}
+          // style={{ backgroundImage: `url(${backgroundImageUrl})` }}
         >
           <div className="landing-blog-header">Recent Posts</div>
 
@@ -228,11 +228,10 @@ export default class Home extends Component {
           </div>
         </div> */}
 
-        <img
-          // Try to use pngs with transparent backgrounds ?
+        {/* <img
           className="landing-inspirational-image"
           src={inspirationalImageUrl}
-        />
+        /> */}
 
         <div className="detailed-links-grid">
           <div className="detailed-links-square">
@@ -287,10 +286,10 @@ export default class Home extends Component {
         </div>
 
         <div className="landing-footer">
-          <img
+          {/* <img
             className="landing-grid-square footer-logo"
             src="assets/images/lg-tree-transparent.svg"
-          />
+          /> */}
           <div className="landing-grid">
             <div className="landing-grid-square footer-contact">
               <div className="landing-grid-square-header">Contact us</div>

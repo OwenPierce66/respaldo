@@ -9,7 +9,7 @@ import Button from '@mui/material/Button';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import "../../owenscss/traductor.scss";
-import { Link, useHistory } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const PeticionCard = ({ peticionId, openAddModal }) => {
     const [peticion, setPeticion] = useState(null);
@@ -270,15 +270,16 @@ const PeticionCard = ({ peticionId, openAddModal }) => {
         return peticion.like_set && peticion.like_set.some(like => like.user.id === userId);
     }
 
-    const history = useHistory();
+    const navigate = useNavigate();
 
-    const navigateToUserMesseges = (userId) => {
-        history.push(`/dashboard/direcmassaging/${userId}`);
-    };
+const navigateToUserMesseges = (userId) => {
+    navigate(`/dashboard/direcmassaging/${userId}`);
+};
 
-    const navigateToUserForum = (userId) => {
-        history.push(`/dashboard/newcommunity/${userId}`);
-    };
+const navigateToUserForum = (userId) => {
+    navigate(`/dashboard/newcommunity/${userId}`);
+};
+
 
     const handleToggleLink = (subtaskId) => {
         setShowLink(prevState => ({

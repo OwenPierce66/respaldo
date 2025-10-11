@@ -1,9 +1,9 @@
 import React, { Component } from "react";
-import { Link, Redirect } from "react-router-dom";
+import { Navigate } from "react-router-dom"; // ✅ en vez de Redirect
 import Axios from "axios";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import Modal from "react-modal";
-import ReactTooltip from "react-tooltip";
+import { Tooltip } from "react-tooltip";
 import AdminDirectoryCreate from "./AdminDirectoryCreate";
 
 class AdminDirectory extends Component {
@@ -30,7 +30,7 @@ class AdminDirectory extends Component {
   handleRedirect() {
     if (this.state.redirect) {
       return (
-        <Redirect
+        <Navigate
           to={`/dashboard/admin/businessPage/${this.state.redirectId}`}
         />
       );
@@ -241,9 +241,9 @@ class AdminDirectory extends Component {
                       this.handleOpenModal("Edit");
                     }}
                   />
-                  <ReactTooltip id="editTip" place="top" effect="solid">
+                  <Tooltip   id="editTip" place="top" effect="solid">
                     Edit
-                  </ReactTooltip>
+                  </Tooltip >
                   <FontAwesomeIcon
                     data-tip
                     data-for="deleteTip"
@@ -251,9 +251,9 @@ class AdminDirectory extends Component {
                     icon="trash"
                     onClick={this.handleDelete}
                   />
-                  <ReactTooltip id="deleteTip" place="top" effect="solid">
+                  <Tooltip  id="deleteTip" place="top" effect="solid">
                     Delete
-                  </ReactTooltip>
+                  </Tooltip >
                   <FontAwesomeIcon
                     data-tip
                     data-for="businessPage"
@@ -261,9 +261,9 @@ class AdminDirectory extends Component {
                     icon="building"
                     onClick={this.handleBusinessPage}
                   />
-                  <ReactTooltip id="businessPage" place="top" effect="solid">
+                  <Tooltip  id="businessPage" place="top" effect="solid">
                     Go To Business Page
-                  </ReactTooltip>
+                  </Tooltip >
                 </div>
                 <div className="search">
                   <label>Search:</label>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import ReactFlow, { MiniMap, Controls, Background } from 'react-flow-renderer';
+import ReactFlow, { MiniMap, Controls, Background } from 'reactflow';
 
 const nodeTypes = {
     // Define custom nodes if necessary

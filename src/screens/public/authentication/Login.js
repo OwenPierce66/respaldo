@@ -1,40 +1,70 @@
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUser, faTimes, faEye } from "@fortawesome/free-solid-svg-icons";
 import Slideshow from "../../../components/misc/Slideshow";
 import * as authActions from '../../../store/actions/auth';
 import { useDispatch } from "react-redux";
 
-const Login = (props) => {
+const Login = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
+
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [invalidCredentialsOpen, setInvalidCredentialsOpen] = useState(false);
 
-  function showAuthenticationError() {
-    const isAuthenticated = localStorage.getItem("userTokenLG");
-    if (!isAuthenticated) {
-      setInvalidCredentialsOpen(true)
-      setTimeout(() => setInvalidCredentialsOpen(false), 11000)
-    }
+useEffect(() => {
+  const token = localStorage.getItem("userTokenLG");
+  if (token) {
+    // Verificamos si el token es válido y a dónde debe ir
+    fetch("http://127.0.0.1:8000/api/get-user/", {
+      headers: { Authorization: `Token ${token}` }
+    })
+      .then(res => res.json())
+      .then(data => {
+        console.log("User details:", data);
+        if (data.user?.is_admin) {
+          navigate("/dashboard/admin");
+        } else if (!data.subscriptionStatus?.active) {
+          navigate("/dashboard/manage");
+        } else {
+          navigate("/dashboard/home");
+        }
+      })
+      .catch(err => {
+        console.error("Token inválido:", err);
+        localStorage.removeItem("userTokenLG");
+      });
   }
+}, [navigate]);
+
 
   const handleSubmit = (e) => {
+    e.preventDefault();
     if (username && password) {
+      // login() guardará el token en localStorage
       dispatch(authActions.login(username, password));
-      setTimeout(showAuthenticationError, 3000)
+      // darle chance a que Redux/acción asíncrona guarde token
+      setTimeout(() => {
+        const token = localStorage.getItem("userTokenLG");
+        if (token) {
+          navigate("/dashboard");
+        } else {
+          setInvalidCredentialsOpen(true);
+          setTimeout(() => setInvalidCredentialsOpen(false), 5000);
+        }
+      }, 1000);
     } else {
       setInvalidCredentialsOpen(true);
-      setTimeout(() => setInvalidCredentialsOpen(false), 11000)
+      setTimeout(() => setInvalidCredentialsOpen(false), 5000);
     }
-    e.preventDefault()
-  }
+  };
 
   return (
     <div className="login-grid">
-      {invalidCredentialsOpen === true ? (
+      {invalidCredentialsOpen && (
         <div className="login-form-bad-request">
           <div className="login-form-bad-request-text">
             Error: Invalid credentials
@@ -46,10 +76,10 @@ const Login = (props) => {
             X
           </button>
         </div>
-      ) : null}
+      )}
 
-      <form onSubmit={(e) => handleSubmit(e)} className="login-form-wrapper">
-        <button type="button" onClick={props.history.goBack} className="close-me">
+      <form onSubmit={handleSubmit} className="login-form-wrapper">
+        <button type="button" onClick={() => navigate(-1)} className="close-me">
           <FontAwesomeIcon icon={faTimes} />
         </button>
 
@@ -58,8 +88,7 @@ const Login = (props) => {
 
           <div className="form-input-container stacked-inputs">
             <div className="form-input-wrapper">
-              <FontAwesomeIcon className="form-icon " icon={faUser} />
-
+              <FontAwesomeIcon className="form-icon" icon={faUser} />
               <input
                 className="form-input"
                 type="text"
@@ -76,7 +105,6 @@ const Login = (props) => {
                 icon={faEye}
                 onClick={() => setShowPassword(!showPassword)}
               />
-
               <input
                 className="form-input"
                 type={showPassword ? "text" : "password"}
@@ -91,9 +119,6 @@ const Login = (props) => {
           <div className="form-bottom-wrapper">
             <div className="form-bottom-left">
               <Link to="../registration">Register Now</Link>
-
-              {/* <Link to="/app/forgotpassword">Did you forget your password?</Link> */}
-
               <h3 style={{ color: 'red' }}>
                 Did you forget your username or password? <br />
                 <a
@@ -104,37 +129,29 @@ const Login = (props) => {
                   Contact Hector Sanchez <i className="fab fa-whatsapp"></i>
                 </a>
               </h3>
-
             </div>
             <div className="btn-wrapper">
-              <button className="btn" type="submit" >
-                Login
-              </button>
+              <button className="btn" type="submit">Login</button>
             </div>
           </div>
         </div>
-
-        {/* <div className="divider" />
-
-        <div className="google-button"></div> */}
-      </form >
+      </form>
+    const backgroundImageUrl = "../../../static/assets/images/image2.jpg";
 
       <Slideshow
         interval={5000}
         images={[
-          "../assets/images/alma.png",
-          "../assets/images/scenery-1.png",
-          "../assets/images/scenery-2.png",
-          "../assets/images/scenery-3.png",
-          "../assets/images/scenery-4.png",
-          "../assets/images/scenery-5.png",
-          "../assets/images/scenery-6.png",
-          "../assets/images/scenery-4.png",
+          "../../../static/assets/images/scenery-1.png",
+          "../../../static/assets/images/scenery-2.png",
+          "../../../static/assets/images/scenery-3.png",
+          "../../../static/assets/images/scenery-4.png",
+          "../../../static/assets/images/scenery-5.png",
+          "../../../static/assets/images/scenery-6.png",
+          "../../../static/assets/images/scenery-4.png",
         ]}
       />
-    </div >
-
-  )
-}
+    </div>
+  );
+};
 
 export default Login;

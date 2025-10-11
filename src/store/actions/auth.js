@@ -3,6 +3,7 @@ import Axios from "axios";
 export const AUTHENTICATE = "AUTHENTICATE";
 export const UPDATE_SUBSCRIPTION = "UPDATE_SUBSCRIPTION";
 export const UPDATE_USER = "UPDATE_USER";
+export const LOGOUT = "LOGOUT"; // 👈 nuevo
 
 const uri = "http://127.0.0.1:8000/api/";
 
@@ -21,16 +22,18 @@ export const autoLogin = () => {
 
 export const login = (username, password) => {
   return async (dispatch) => {
-    const response = await Axios.post(uri + "login/", {
-      username: username,
-      password: password,
-    });
-
-    const resData = await response.data.token;
-    saveDataToStorage(resData);
-    dispatch(getUser(resData));
+    try {
+      const response = await Axios.post(uri + "login/", { username, password });
+      const resData = response.data.token;
+      saveDataToStorage(resData);
+      dispatch(getUser(resData));
+    } catch (err) {
+      console.error("Login failed:", err.response?.data || err.message);
+      throw err; // para que el componente pueda mostrar el error
+    }
   };
 };
+
 
 export const getUser = (token) => {
   return async (dispatch) => {
@@ -53,10 +56,14 @@ const saveUserDetailsToStorage = (user) => {
   localStorage.setItem("userDetails", JSON.stringify(user));
 };
 
+
 export const logout = () => {
-  return async (dispatch) => {
+  return (dispatch) => {
+    // Limpia el token del localStorage
     localStorage.removeItem("userTokenLG");
-    dispatch(authenticate(null, null, false));
+
+    // Limpia Redux
+    dispatch({ type: LOGOUT });
   };
 };
 

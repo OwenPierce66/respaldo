@@ -1,9 +1,12 @@
+@use "variables" as v;
+@use "mixin" as m;
+
 .admin {
   .adminHeader {
     height: 100px;
     padding: 15px;
     padding-bottom: 0;
-    border-bottom: 1px solid $LG-Grey;
+    border-bottom: 1px solid v.$LG-Grey;
     display: grid;
     grid-template-rows: 1fr 1fr;
 
@@ -34,7 +37,7 @@
 
       .nav-button.active {
         opacity: 1;
-        border-bottom: 2px solid $LG-AccentGreen-2;
+        border-bottom: 2px solid v.$LG-AccentGreen-2;
       }
     }
   }
@@ -78,7 +81,7 @@
   max-width: 1200px;
 
   width: 100%;
-  border: 1px solid $LG-Grey;
+  border: 1px solid v.$LG-Grey;
   border-radius: 5px;
   .adminTableHeader {
     background-color: #f4f5fa;
@@ -98,7 +101,7 @@
       height: 30px;
       width: 200px;
       border-radius: 5px;
-      border: 1px solid $LG-Grey;
+      border: 1px solid v.$LG-Grey;
 
       &:focus {
         outline: none;
@@ -126,13 +129,13 @@
       overflow-x: scroll;
 
       tr:nth-child(odd) {
-        background-color: $LG-White;
+        background-color: v.$LG-White;
       }
 
       tr {
         background-color: #f4f5fa;
         height: 50px;
-        border-bottom: 1px solid $LG-Grey;
+        border-bottom: 1px solid v.$LG-Grey;
       }
 
       td {
@@ -143,7 +146,7 @@
       .rowButton {
         width: 75px;
         height: 30px;
-        border: 1px solid $LG-Grey;
+        border: 1px solid v.$LG-Grey;
         border-radius: 3px;
 
         &:hover {
@@ -202,7 +205,7 @@
     width: 150px;
     height: 35px;
     border-radius: 3px;
-    background-color: $LG-AccentGreen-2;
+    background-color: v.$LG-AccentGreen-2;
     font-size: 16px;
     color: #f4f5fa;
     transition: 0.2s ease all;
@@ -244,7 +247,7 @@
     max-width: 800px;
 
     .successful {
-      color: $LG-AccentGreen-2;
+      color: v.$LG-AccentGreen-2;
       font-size: 24px;
       width: 100%;
       text-align: center;
@@ -290,7 +293,7 @@
       width: 50%;
       min-width: 250px;
       border-radius: 5px;
-      background-color: $LG-AccentGreen-2;
+      background-color: v.$LG-AccentGreen-2;
       color: white;
       font-size: 18px;
 
@@ -351,7 +354,7 @@
       height: 40px;
       width: 50%;
       border-radius: 5px;
-      background-color: $LG-AccentGreen-2;
+      background-color: v.$LG-AccentGreen-2;
       color: white;
       font-size: 18px;
     }
@@ -654,7 +657,7 @@
     max-height: 300px;
     overflow-y: auto;
 
-    @include desktop {
+    @include m.desktop {
       max-height: 475px;
     }
 

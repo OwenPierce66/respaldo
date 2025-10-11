@@ -1,28 +1,23 @@
 import React from "react";
-import ReactDOM from "react-dom";
+import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
-import App from "./App";
 import { Provider } from "react-redux";
-import { combineReducers, createStore, applyMiddleware } from "redux";
-import ReduxThunk from "redux-thunk";
-import authReducer from "./store/reducers/auth";
+import App from "./App";
+import { store } from "./components/Dashboard/traductor/feed/store";
 
 import "./style/main.scss";
 import "react-datetime/css/react-datetime.css";
 
-
-const rootReducer = combineReducers({
-  auth: authReducer,
-});
-
-const store = createStore(rootReducer, applyMiddleware(ReduxThunk));
-
 function main() {
-  ReactDOM.render(
+  const container = document.querySelector(".app-wrapper");
+  const root = createRoot(container);
+
+  root.render(
     <Provider store={store}>
-      <App />
-    </Provider>,
-    document.querySelector(".app-wrapper")
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <App />
+      </BrowserRouter>
+    </Provider>
   );
 }
 

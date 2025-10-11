@@ -1,34 +1,30 @@
-import React, {Component} from 'react';
-import { connect } from 'react-redux';
-import { withRouter } from 'react-router-dom';
+// src/components/HOC/RequireAdmin.js
+import React from "react";
+import { useSelector } from "react-redux";
+import { Navigate, useLocation } from "react-router-dom";
 
-export default function(ComponentToBeRendered) {
+const RequireAdmin = ({ children }) => {
+  const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
+  const user = useSelector((state) => state.auth.user);
+  const location = useLocation();
 
-  class RequireAdmin extends Component {
-    componentWillMount() {
-      if (this.props.user.profile.role !== "Admin") {
-        this.props.history.push('/dashboard');
-      }
-    }
-
-    componentWillUpdate(nextProps) {
-      if (!nextProps.user.profile.role !== "Admin") {
-        this.props.history.push('/dashboard');
-      }
-    }
-
-    render() {
-      return (
-        <ComponentToBeRendered {...this.props} />
-      );
-    }
+  if (isAuthenticated === null) {
+    // 🚀 aún cargando
+    return null;
   }
 
-  function mapStateToProps(state) {
-    return {
-      user: state.auth.user
-    };
+  if (!isAuthenticated) {
+    // 🚨 no autenticado → mandar a login
+    return <Navigate to="/app/login" state={{ from: location }} replace />;
   }
 
-  return withRouter(connect(mapStateToProps)(RequireAdmin));
-}
+  if (!user || !user.isAdmin) {
+    // 🚨 autenticado pero no admin → mandar al dashboard o donde quieras
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  // ✅ autenticado y admin
+  return children;
+};
+
+export default RequireAdmin;

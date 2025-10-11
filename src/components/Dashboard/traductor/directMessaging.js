@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import Select from 'react-select';
-import { useParams, useHistory } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import '../owenscss/directmessagingg.scss';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faImage, faHeart } from '@fortawesome/free-solid-svg-icons';
 
 const DirectMessaging = () => {
     const { userId } = useParams();
-    const history = useHistory();
+    const navigate = useNavigate();
     const [users, setUsers] = useState([]);
     const [messages, setMessages] = useState([]);
     const [filteredMessages, setFilteredMessages] = useState([]);
@@ -202,10 +202,11 @@ const DirectMessaging = () => {
         }
     };
 
-    const handleUserChange = (user) => {
-        setSelectedUser(user);
-        history.push(`/dashboard/direcmassaging/${user.value}`);
-    };
+const handleUserChange = (user) => {
+    setSelectedUser(user);
+    navigate(`/dashboard/direcmassaging/${user.value}`);
+};
+
 
     const handleFileChange = (e) => {
         const file = e.target.files[0];

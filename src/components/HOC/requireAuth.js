@@ -1,34 +1,24 @@
-import React, {Component} from 'react';
-import { connect } from 'react-redux';
-import { withRouter } from 'react-router-dom';
+// src/components/HOC/RequireAuth.js
+import React from "react";
+import { useSelector } from "react-redux";
+import { Navigate, useLocation } from "react-router-dom";
 
-export default function(ComponentToBeRendered) {
+const RequireAuth = ({ children }) => {
+  const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
+  const location = useLocation();
 
-  class Authenticate extends Component {
-    componentWillMount() {
-      if (!this.props.isAuthenticated) {
-        this.props.history.push('/app/login');
-      }
-    }
-
-    componentWillUpdate(nextProps) {
-      if (!nextProps.isAuthenticated) {
-        this.props.history.push('/app/login');
-      }
-    }
-
-    render() {
-      return (
-        <ComponentToBeRendered {...this.props} />
-      );
-    }
+  if (isAuthenticated === null) {
+    // aún cargando (spinner opcional)
+    return null;
   }
 
-  function mapStateToProps(state) {
-    return {
-      isAuthenticated: state.auth.isAuthenticated
-    };
+  if (!isAuthenticated) {
+    // 🚨 no autenticado → mandar a login y recordar dónde estaba
+    return <Navigate to="/app/login" state={{ from: location }} replace />;
   }
 
-  return withRouter(connect(mapStateToProps)(Authenticate));
-}
+  // ✅ autenticado → renderiza lo que envuelvas
+  return children;
+};
+
+export default RequireAuth;

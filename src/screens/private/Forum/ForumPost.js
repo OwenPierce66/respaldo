@@ -5,8 +5,8 @@ import Comments from "../../../components/Forum/Comments";
 import { useSelector } from "react-redux";
 import Modal from "react-modal";
 import RichTextEditor from "../../../components/misc/RichTextEditor";
-import ReactHtmlParser from "react-html-parser";
-import { Redirect } from "react-router";
+import parse from "html-react-parser";
+import { Navigate } from "react-router-dom";
 
 const ForumPost = (props) => {
   const postId = props.match.params.postId;
@@ -118,9 +118,10 @@ const ForumPost = (props) => {
     return <div></div>;
   }
 
-  if (back == "back") {
-    return <Redirect to={{ pathname: "/dashboard/community" }} />;
-  }
+if (back === "back") {
+  return <Navigate to="/dashboard/community" replace />;
+}
+
 
   return (
     <div className="forumPostWrapper">
@@ -147,7 +148,7 @@ const ForumPost = (props) => {
                   {moment(post.createdAt).fromNow()}
                 </div>
               </div>
-              <div className="postText">{ReactHtmlParser(post.text)}</div>
+              <div className="postText">{parse(post.text)}</div>
             </div>
           </div>
           <div className="forumPostComment">

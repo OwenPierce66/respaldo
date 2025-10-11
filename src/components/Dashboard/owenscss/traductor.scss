@@ -145,13 +145,26 @@
     font-size: 2em;
   }
 
-  .contenido-pagin {
-    width: 100vw !important;
-    width: 100%;
+.contenido-pagin {
+    /* Evita 100vw: genera scroll horizontal por el ancho de la barra */
+    width: 100% !important;
     margin: 0;
     padding: 0;
     box-sizing: border-box;
     margin-top: 11px;
+
+    /* CLAVE para infinite scroll con root: scrollRootRef */
+    overflow-y: auto;
+    /* Ajusta el alto a tu layout (resta lo que ocupa la cabecera/controles) */
+    max-height: calc(100vh - 220px);
+
+    /* UX mejor en móviles/trackpads */
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+
+    /* Para que el sentinel se vea antes del fondo */
+    padding-bottom: 120px;
+    outline: 2px dashed hotpink;
   }
 
 
@@ -1279,12 +1292,19 @@
     margin-bottom: 9px;
   }
 
-  .contenido-pagin {
-    // display: grid;
-    // grid-template-columns: repeat(1, 1fr);
-    // grid-gap: 20px;
-    width: 100vw;
+.contenido-pagin {
+    width: 100%;
     margin-top: 11px;
+
+    overflow-y: auto;
+    /* usa 100dvh en móviles modernos para evitar barras dinámicas */
+    max-height: calc(100dvh - 240px);
+
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+
+    padding-bottom: 100px;
+    outline: 2px dashed hotpink;
   }
 
   .category-menu {

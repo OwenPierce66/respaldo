@@ -1,99 +1,62 @@
-const path = require('path');
-const webpackMerge = require('webpack-merge');
-const webpackCommon = require('./common.config');
+const path = require("path");
+const HtmlWebpackPlugin = require("html-webpack-plugin");
+const { CleanWebpackPlugin } = require("clean-webpack-plugin");
+const webpack = require("webpack");
 
-const env = require('../env');
-const proxyRules = require('../proxy/rules');
-
-// webpack plugins
-const HtmlWebpackPlugin = require('html-webpack-plugin');
-const DefinePlugin = require('webpack/lib/DefinePlugin');
-const HotModuleReplacementPlugin = require('webpack/lib/HotModuleReplacementPlugin');
-
-module.exports = webpackMerge(webpackCommon, {
-
-  devtool: 'inline-source-map',
-  mode: 'development',
+module.exports = {
+  mode: "development",
+  entry: "./src/index.js",
   output: {
-
-    path: path.resolve(__dirname, '../static/dist'),
-
-    filename: '[name].js',
-
-    sourceMapFilename: '[name].map',
-
-    chunkFilename: '[id]-chunk.js',
-
-    publicPath: '/'
-
+    path: path.resolve(__dirname, "../dist"),
+    filename: "bundle.js",
+    publicPath: "/",
   },
-
+  devtool: "eval-source-map",
+  devServer: {
+    static: {
+      directory: path.resolve(__dirname, "../dist"),
+    },
+    port: 3000,
+    historyApiFallback: true,
+    hot: true,
+    open: true,
+  },
   module: {
-
     rules: [
       {
-        test: /\.s?css$/,
-        use: [
-          {
-            loader: 'style-loader'
-          },
-          {
-            loader: 'css-loader',
-            options: {
-              importLoaders: 2
-            }
-          },
-          {
-            loader: 'sass-loader',
-            options: {
-              outputStyle: 'expanded',
-              sourceMap: true,
-              sourceMapContents: true
-            }
-          }
-        ]
+        test: /\.(js|jsx)$/,
+        exclude: /node_modules/,
+        use: "babel-loader",
       },
       {
-        test: /\.mjs$/,
-        include: /node_modules/,
-        type: 'javascript/auto',
-      }
-    ]
+        test: /\.(css|scss)$/,
+        use: ["style-loader", "css-loader", "sass-loader"],
+      },
+      {
+        test: /\.html$/i,
+        loader: "raw-loader",
+        exclude: path.resolve(__dirname, "../static/index.html"), 
+      },
+      {
+        test: /\.(png|jpe?g|gif|svg)$/i,
+        type: "asset/resource",
+      },
+      {
+        test: /\.(woff(2)?|eot|ttf|otf)$/,
+        type: "asset/resource",
+      },
+
+    ],
   },
-
   plugins: [
-    new DefinePlugin({
-      'process.env': {
-        NODE_ENV: "'development'"
-      }
-    }),
+    new CleanWebpackPlugin(),
     new HtmlWebpackPlugin({
-      inject: true,
-      template: path.resolve(__dirname, '../static/index.html'),
-      favicon: path.resolve(__dirname, '../static/favicon.ico')
+    template: path.resolve(__dirname, "../static/index.html"),
+    favicon: path.resolve(__dirname, "../static/favicon.ico"),
     }),
-    new HotModuleReplacementPlugin()
+    new webpack.HotModuleReplacementPlugin(),
   ],
-
-  devServer: {
-    disableHostCheck: true,
-    host: env.devServer.host || 'localhost',
-    port: env.devServer.port || 3000,
-    contentBase: path.resolve(__dirname, '../static'),
-    watchContentBase: true,
-    compress: true,
-    hot: true,
-    historyApiFallback: {
-      disableDotRule: true
-    },
-    watchOptions: {
-      ignored: /node_modules/
-    },
-    overlay: {
-      warnings: true,
-      errors: true
-    },
-    proxy: proxyRules
-  }
-
-});
+  resolve: {
+    extensions: [".js", ".jsx"],
+  },
+};

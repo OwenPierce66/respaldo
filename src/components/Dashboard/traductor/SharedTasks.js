@@ -1,6 +1,7 @@
 import React from 'react';
 import Modal from 'react-modal';
-import { Link } from "@material-ui/core";
+import Link from "@mui/material/Link";
+
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faHeart, faTrash } from "@fortawesome/free-solid-svg-icons";
 

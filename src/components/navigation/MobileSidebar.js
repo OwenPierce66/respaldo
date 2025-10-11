@@ -1,4 +1,5 @@
 import React from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faBlog,
   faPen,
@@ -11,290 +12,147 @@ import {
   faChild,
   faStoreAlt,
   faUsers,
+  faPhone,
+  faChevronRight,
+  faHome,
 } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 
-const MobileSidebar = (props) => {
+const MobileSidebar = ({ isOpen, handleSidebar }) => {
   const user = useSelector((state) => state.auth.user);
-  const { path, url } = props.match;
+  const { pathname } = useLocation(); // ruta actual
 
   return (
-    <div className={props.isOpen ? "mobileSidebar" : "mobileSidebar collapse"}>
-      <Link
-        to={`${url}`}
-        className="link"
-        onClick={() => props.handleSidebar()}
-      >
-        <FontAwesomeIcon className="link-icon" icon="home" />
+    <div className={isOpen ? "mobileSidebar" : "mobileSidebar collapse"}>
+      {/* Dashboard */}
+      <Link to="/" className="link" onClick={handleSidebar}>
+        <FontAwesomeIcon className="link-icon" icon={faHome} />
         <p className="link-title">Dashboard</p>
-        <FontAwesomeIcon className="link-chev" icon="chevron-right" />
+        <FontAwesomeIcon className="link-chev" icon={faChevronRight} />
       </Link>
 
-      <Link
-        to={`${url}/calendar`}
-        className="link"
-        onClick={() => props.handleSidebar()}
-      >
-        <FontAwesomeIcon className="link-icon" icon={faCalendar} />
-        <p className="link-title">Calendar</p>
-        <FontAwesomeIcon className="link-chev" icon="chevron-right" />
-      </Link>
-
-      <Link
-        to={`${url}/blog`}
-        className="link"
-        onClick={() => props.handleSidebar()}
-      >
-        <FontAwesomeIcon className="link-icon" icon={faBlog} />
-        <p className="link-title">Blog</p>
-        <FontAwesomeIcon className="link-chev" icon="chevron-right" />
-      </Link>
-
-      <Link
-        to={`${url}/classifieds`}
-        className="link"
-        onClick={() => props.handleSidebar()}
-      >
-        <FontAwesomeIcon className="link-icon" icon={faStoreAlt} />
-        <p className="link-title">Classifieds</p>
-        <FontAwesomeIcon className="link-chev" icon="chevron-right" />
-      </Link>
-
-      <Link
-        to={`${url}/petitions`}
-        className="link"
-        onClick={() => props.handleSidebar()}
-      >
-        <FontAwesomeIcon className="link-icon" icon={faPen} />
-        <p className="link-title">Petitions</p>
-        <FontAwesomeIcon className="link-chev" icon="chevron-right" />
-      </Link>
-      <Link
-        to={`${url}/groups`}
-        className="link"
-        onClick={() => props.handleSidebar()}
-      >
-        <FontAwesomeIcon className="link-icon" icon={faUsers} />
-        <p className="link-title">Groups</p>
-        <FontAwesomeIcon className="link-chev" icon="chevron-right" />
-      </Link>
-
-      <Link
-        to={`${url}/directory`}
-        className="link"
-        onClick={() => props.handleSidebar()}
-      >
-        <FontAwesomeIcon className="link-icon" icon={faAddressBook} />
-        <p className="link-title">Directory</p>
-        <FontAwesomeIcon className="link-chev" icon="chevron-right" />
-      </Link>
-
-      <Link
-        to={`${url}/traductor`}
-        className="link"
-        onClick={() => props.handleSidebar()}
-      >
+      {/* Calendar */}
+     <Link
+          to="/dashboard/calendar"
+          className={pathname.includes("/dashboard/calendar") ? "active" : ""}
+          onClick={handleSidebar}
+        >
+          Calendar
+        </Link>
+      {/* Traductor / Peticiones */}
+      <Link to="/traductor" className="link" onClick={handleSidebar}>
         <FontAwesomeIcon className="link-icon" icon={faAddressBook} />
         <p className="link-title">Traductor</p>
-        <FontAwesomeIcon className="link-chev" icon="chevron-right" />
+        <FontAwesomeIcon className="link-chev" icon={faChevronRight} />
       </Link>
 
-      <Link
-        to={`${url}/Diagram`}
-        className="link"
-        onClick={() => props.handleSidebar()}
-      >
-        <FontAwesomeIcon className="link-icon" icon={faAddressBook} />
-        <p className="link-title">Diagram</p>
-        <FontAwesomeIcon className="link-chev" icon="chevron-right" />
+     <Link
+          to="/dashboard/peticiones"
+          className={pathname.includes("/dashboard/peticiones") ? "active" : ""}
+          onClick={handleSidebar}
+        >
+        <FontAwesomeIcon className="link-icon" icon={faPen} />
+        <p className="link-title">Peticiones</p>
+        <FontAwesomeIcon className="link-chev" icon={faChevronRight} />
       </Link>
 
-
-      <Link
-        to={`${url}/peticiones`}
-        className="link"
-        onClick={() => props.handleSidebar()}
-      >
-        <FontAwesomeIcon className="link-icon" icon={faAddressBook} />
-        <p className="link-title">Aportaciones</p>
-        <FontAwesomeIcon className="link-chev" icon="chevron-right" />
-      </Link>
-
-      {/* <Link
-        to={`${url}/aportaciones`}
-        className="link"
-        onClick={() => props.handleSidebar()}
-      >
-        <FontAwesomeIcon className="link-icon" icon={faAddressBook} />
-        <p className="link-title">Aportaciones</p>
-        <FontAwesomeIcon className="link-chev" icon="chevron-right" />
-      </Link> */}
-
-      <Link
-        to={`${url}/nuevaspeticiones`}
-        className="link"
-        onClick={() => props.handleSidebar()}
-      >
-        <FontAwesomeIcon className="link-icon" icon={faAddressBook} />
+      <Link to="/nuevaspeticiones" className="link" onClick={handleSidebar}>
+        <FontAwesomeIcon className="link-icon" icon={faPen} />
         <p className="link-title">NuevasPeticiones</p>
-        <FontAwesomeIcon className="link-chev" icon="chevron-right" />
+        <FontAwesomeIcon className="link-chev" icon={faChevronRight} />
       </Link>
 
-      <Link
-        to={`${url}/perfilesP`}
-        className="link"
-        onClick={() => props.handleSidebar()}
-      >
+      <Link to="/imagen" className="link" onClick={handleSidebar}>
         <FontAwesomeIcon className="link-icon" icon={faAddressBook} />
-        <p className="link-title">PerfilesP</p>
-        <FontAwesomeIcon className="link-chev" icon="chevron-right" />
+        <p className="link-title">Imagen</p>
+        <FontAwesomeIcon className="link-chev" icon={faChevronRight} />
       </Link>
 
-      <Link
-        to={`${url}/favoritos`}
-        className="link"
-        onClick={() => props.handleSidebar()}
-      >
-        <FontAwesomeIcon className="link-icon" icon={faAddressBook} />
-        <p className="link-title">favoritos</p>
-        <FontAwesomeIcon className="link-chev" icon="chevron-right" />
-      </Link>
-
-      <Link
-        to={`${url}/Pfavoritos`}
-        className="link"
-        onClick={() => props.handleSidebar()}
-      >
-        <FontAwesomeIcon className="link-icon" icon={faAddressBook} />
-        <p className="link-title">Pfavoritos</p>
-        <FontAwesomeIcon className="link-chev" icon="chevron-right" />
-      </Link>
-
-
-      <Link
-        to={`${url}/nuevotask`}
-        className="link"
-        onClick={() => props.handleSidebar()}
-      >
-        <FontAwesomeIcon className="link-icon" icon={faAddressBook} />
-        <p className="link-title">nuevotask</p>
-        <FontAwesomeIcon className="link-chev" icon="chevron-right" />
-      </Link>
-
-      <Link
-        to={`${url}/sociales`}
-        className="link"
-        onClick={() => props.handleSidebar()}
-      >
+      <Link to="/sociales" className="link" onClick={handleSidebar}>
         <FontAwesomeIcon className="link-icon" icon={faAddressBook} />
         <p className="link-title">Sociales</p>
-        <FontAwesomeIcon className="link-chev" icon="chevron-right" />
+        <FontAwesomeIcon className="link-chev" icon={faChevronRight} />
       </Link>
 
-      <Link
-        to={`${url}/imagen`}
-        className="link"
-        onClick={() => props.handleSidebar()}
-      >
+      <Link to="/diagram" className="link" onClick={handleSidebar}>
         <FontAwesomeIcon className="link-icon" icon={faAddressBook} />
-        <p className="link-title">imagen</p>
-        <FontAwesomeIcon className="link-chev" icon="chevron-right" />
+        <p className="link-title">Diagram</p>
+        <FontAwesomeIcon className="link-chev" icon={faChevronRight} />
       </Link>
 
-      <Link
-        to={`${url}/exchange`}
-        className="link"
-        onClick={() => props.handleSidebar()}
-      >
+      <Link to="/groupss" className="link" onClick={handleSidebar}>
+        <FontAwesomeIcon className="link-icon" icon={faUsers} />
+        <p className="link-title">Groups Messaging</p>
+        <FontAwesomeIcon className="link-chev" icon={faChevronRight} />
+      </Link>
+
+      <Link to="/addmember" className="link" onClick={handleSidebar}>
+        <FontAwesomeIcon className="link-icon" icon={faUsers} />
+        <p className="link-title">Add Member</p>
+        <FontAwesomeIcon className="link-chev" icon={faChevronRight} />
+      </Link>
+
+      <Link to="/direcmassaging/1" className="link" onClick={handleSidebar}>
+        <FontAwesomeIcon className="link-icon" icon={faUsers} />
+        <p className="link-title">Direct Messaging</p>
+        <FontAwesomeIcon className="link-chev" icon={faChevronRight} />
+      </Link>
+
+      {/* Blog */}
+      <Link to="/blog" className="link" onClick={handleSidebar}>
+        <FontAwesomeIcon className="link-icon" icon={faBlog} />
+        <p className="link-title">Blog</p>
+        <FontAwesomeIcon className="link-chev" icon={faChevronRight} />
+      </Link>
+
+      {/* Classifieds */}
+      <Link to="/classifieds" className="link" onClick={handleSidebar}>
+        <FontAwesomeIcon className="link-icon" icon={faStoreAlt} />
+        <p className="link-title">Classifieds</p>
+        <FontAwesomeIcon className="link-chev" icon={faChevronRight} />
+      </Link>
+
+      {/* Exchange / Contact */}
+      <Link to="/exchange" className="link" onClick={handleSidebar}>
         <FontAwesomeIcon className="link-icon" icon={faMoneyBill} />
         <p className="link-title">Exchange</p>
-        <FontAwesomeIcon className="link-chev" icon="chevron-right" />
+        <FontAwesomeIcon className="link-chev" icon={faChevronRight} />
       </Link>
 
-      <Link
-        to={`${url}/contact`}
-        className="link"
-        onClick={() => props.handleSidebar()}
-      >
-        <FontAwesomeIcon className="link-icon" icon="phone" />
+      <Link to="/contact" className="link" onClick={handleSidebar}>
+        <FontAwesomeIcon className="link-icon" icon={faPhone} />
         <p className="link-title">Contact</p>
-        <FontAwesomeIcon className="link-chev" icon="chevron-right" />
+        <FontAwesomeIcon className="link-chev" icon={faChevronRight} />
       </Link>
 
-
-      <Link to={`${url}/community`} className="link" onClick={() => props.handleSidebar()}>
+      {/* Community / Raffle / YOI */}
+      <Link to="/community" className="link" onClick={handleSidebar}>
         <FontAwesomeIcon className="link-icon" icon={faNewspaper} />
         <p className="link-title">Community</p>
-        <FontAwesomeIcon className="link-chev" icon="chevron-right" />
+        <FontAwesomeIcon className="link-chev" icon={faChevronRight} />
       </Link>
 
-      <Link to={`${url}/newcommunity`} className="link" onClick={() => props.handleSidebar()}>
-        <FontAwesomeIcon className="link-icon" icon={faNewspaper} />
-        <p className="link-title">newcommunity</p>
-        <FontAwesomeIcon className="link-chev" icon="chevron-right" />
-      </Link>
-
-      <Link to={`${url}/direcmassaging`} className="link" onClick={() => props.handleSidebar()}>
-        <FontAwesomeIcon className="link-icon" icon={faNewspaper} />
-        <p className="link-title">direcmassaging</p>
-        <FontAwesomeIcon className="link-chev" icon="chevron-right" />
-      </Link>
-
-      <Link to={`${url}/groupss`} className="link" onClick={() => props.handleSidebar()}>
-        <FontAwesomeIcon className="link-icon" icon={faNewspaper} />
-        <p className="link-title">groupss</p>
-        <FontAwesomeIcon className="link-chev" icon="chevron-right" />
-      </Link>
-
-
-
-      <Link to={`${url}/addmember`} className="link" onClick={() => props.handleSidebar()}>
-        <FontAwesomeIcon className="link-icon" icon={faNewspaper} />
-        <p className="link-title">addmember</p>
-        <FontAwesomeIcon className="link-chev" icon="chevron-right" />
-      </Link>
-      {/* <Link
-        to={`${url}/news`}
-        className="link"
-        onClick={() => props.handleSidebar()}
-      >
-        <FontAwesomeIcon className="link-icon" icon={faNewspaper} />
-        <p className="link-title">News</p>
-        <FontAwesomeIcon className="link-chev" icon="chevron-right" />
-      </Link> */}
-
-      <Link
-        to={`${url}/raffle`}
-        className="link"
-        onClick={() => props.handleSidebar()}
-      >
+      <Link to="/raffle" className="link" onClick={handleSidebar}>
         <FontAwesomeIcon className="link-icon" icon={faTicketAlt} />
         <p className="link-title">Raffle</p>
-        <FontAwesomeIcon className="link-chev" icon="chevron-right" />
-      </Link>
-      <Link
-        to={`${url}/YOI`}
-        className="link"
-        onClick={() => props.handleSidebar()}
-      >
-        <FontAwesomeIcon className="link-icon" icon={faChild} />
-        <p className="link-title">Youth of Israel</p>
-        <FontAwesomeIcon className="link-chev" icon="chevron-right" />
+        <FontAwesomeIcon className="link-chev" icon={faChevronRight} />
       </Link>
 
-      {user.profile.role === "Admin" ? (
-        <Link
-          to={`${url}/admin`}
-          className="link"
-          onClick={() => props.handleSidebar()}
-        >
+      <Link to="/YOI" className="link" onClick={handleSidebar}>
+        <FontAwesomeIcon className="link-icon" icon={faChild} />
+        <p className="link-title">Youth of Israel</p>
+        <FontAwesomeIcon className="link-chev" icon={faChevronRight} />
+      </Link>
+
+      {/* Admin */}
+      {user?.profile?.role === "Admin" && (
+        <Link to="/admin" className="link" onClick={handleSidebar}>
           <FontAwesomeIcon className="link-icon" icon={faUsersCog} />
           <p className="link-title">Admin</p>
-          <FontAwesomeIcon className="link-chev" icon="chevron-right" />
+          <FontAwesomeIcon className="link-chev" icon={faChevronRight} />
         </Link>
-      ) : null}
+      )}
     </div>
   );
 };

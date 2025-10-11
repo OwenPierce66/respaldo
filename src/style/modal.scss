@@ -1,3 +1,6 @@
+@use "variables" as *;
+@use "mixin" as m;
+
 .Modal {
   position: fixed;
   height: 650px;
@@ -21,7 +24,7 @@
   @import url("https://fonts.googleapis.com/css2?family=Inconsolata&display=swap");
   font-family: "Inconsolata", serif;
 
-  @include desktop {
+  @include m.desktop {
     height: 1000px;
     max-height: 80%;
     width: 1800px;
@@ -91,7 +94,7 @@
       max-height: 350px;
     }
 
-    @include desktop {
+    @include m.desktop {
       max-height: 750px;
     }
   }
@@ -154,7 +157,7 @@
   @import url("https://fonts.googleapis.com/css2?family=Inconsolata&display=swap");
   font-family: "Inconsolata", serif;
 
-  @include desktop {
+  @include m.desktop {
     height: auto;
     max-height: 80%;
     width: 500px;
@@ -204,7 +207,7 @@
       max-height: 350px;
     }
 
-    @include desktop {
+    @include m.desktop {
       max-height: 750px;
     }
   }

@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { Link, Redirect } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { ClipLoader } from "react-spinners";
 import AccountDetailsForm from "./AccountDetails";
 import CreateAccount from "./CreateAccount";
@@ -72,10 +72,10 @@ class Registration extends Component {
     });
   }
 
-  render() {
-    if (this.state.redirect) {
-      return <Redirect to={`/registration/subscription/${this.props.user.id}`} />;
-    }
+render() {
+  if (this.state.redirect) {
+    return <Navigate to={`/registration/subscription/${this.props.user.id}`} />;
+  }
 
     return (
       <div className="registration">

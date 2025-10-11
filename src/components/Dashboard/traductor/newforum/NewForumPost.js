@@ -3,9 +3,11 @@ import Axios from "axios";
 import moment from "moment";
 import { useSelector } from "react-redux";
 import Modal from "react-modal";
-import ReactHtmlParser from "react-html-parser";
+import parse from "html-react-parser";
 import { Redirect } from "react-router";
 import NewComments from "./NewComent";
+import { Link } from 'react-router-dom';
+
 
 const NewForumPost = (props) => {
     const postId = props.match.params.postId;
@@ -18,6 +20,10 @@ const NewForumPost = (props) => {
     const [modalIsOpen, setIsOpen] = useState(false);
     const [back, setBack] = useState("false");
 
+
+
+    const navigate = useNavigate();
+    
     function openModal() {
         setIsOpen(true);
     }
@@ -117,9 +123,10 @@ const NewForumPost = (props) => {
         return <div></div>;
     }
 
-    if (back == "back") {
-        return <Redirect to={{ pathname: "/dashboard/newcommunity" }} />;
-    }
+if (back === "back") {
+    navigate("/dashboard/newcommunity");
+    return null;
+}
 
     return (
         <div className="forumPostWrapper">
@@ -146,7 +153,7 @@ const NewForumPost = (props) => {
                                     {moment(post.createdAt).fromNow()}
                                 </div>
                             </div>
-                            <div className="postText">{ReactHtmlParser(post.text)}</div>
+                            <div className="postText">{parse(post.text)}</div>
                         </div>
                     </div>
                     <div className="forumPostComment">

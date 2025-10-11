@@ -1,3 +1,5 @@
+@use "variables" as *;
+
 .sq-form-container{
     display: grid;
     grid-template-columns: 1fr 50% 1fr;

@@ -15,9 +15,6 @@ class Base extends Component {
     };
   }
 
-  handleClick() {
-    this.setState({ open: true });
-  }
   handleWindowSizeChange = () => {
     this.setState({ width: window.innerWidth });
   };
@@ -30,9 +27,14 @@ class Base extends Component {
     window.addEventListener("resize", this.handleWindowSizeChange);
   }
 
+  // --- Logout handler ---
+  handleLogout = () => {
+    localStorage.removeItem("userTokenLG"); // borra token
+    window.location.href = "/app"; // redirige al login/landing
+  };
+
   render() {
     const { width } = this.state;
-    const collapse = width <= 800;
     const isMobile = width <= 500;
 
     if (isMobile) {
@@ -67,26 +69,34 @@ class Base extends Component {
               />
             </div>
           </div>
+
           <div className="body">
+            {/* Opciones (Perfil + Logout) */}
             <div
               className={
                 this.state.optionsOpen ? "options display" : "options hide"
               }
             >
               <div className="options-title">Options</div>
-              <Link to="/user/profile" className="options-link">Profile wtf</Link>
-              <button className="options-link">Logout</button>
+              <Link to="/dashboard/profile" className="options-link">
+                Profile
+              </Link>
+              <button className="options-link" onClick={this.handleLogout}>
+                Logout
+              </button>
             </div>
-            <div className={this.state.menuOpen ? "menu display" : "menu hide"}>
+
+            {/* Menú de navegación */}
+            <div
+              className={this.state.menuOpen ? "menu display" : "menu hide"}
+            >
               <div className="menu-title">Menu</div>
-              <Link className="menu-link">Dashboard</Link>
-
-              <Link className="menu-link">Blog</Link>
-
-              <Link className="menu-link">Petitions</Link>
-
-              <Link className="menu-link">Contact</Link>
+              <Link to="/dashboard" className="menu-link">Dashboard</Link>
+              <Link to="/dashboard/blog" className="menu-link">Blog</Link>
+              <Link to="/dashboard/petitions" className="menu-link">Petitions</Link>
+              <Link to="/dashboard/contact" className="menu-link">Contact</Link>
             </div>
+
             <p>Dashboard</p>
           </div>
         </div>
@@ -94,7 +104,10 @@ class Base extends Component {
     } else {
       return (
         <div className="base-desktop">
-          <div className={this.state.sidebarOpen ? "logo" : "logo collapse"}>Lebaron Galeana</div>
+          <div className={this.state.sidebarOpen ? "logo" : "logo collapse"}>
+            Lebaron Galeana
+          </div>
+
           <div className="header">
             <div className="header-left">
               <FontAwesomeIcon
@@ -102,7 +115,7 @@ class Base extends Component {
                 icon="bars"
                 onClick={() => {
                   this.setState({
-                    sidebarOpen: !this.state.sidebarOpen
+                    sidebarOpen: !this.state.sidebarOpen,
                   });
                 }}
               />
@@ -123,21 +136,26 @@ class Base extends Component {
               )}
             </div>
           </div>
+
           <Sidebar sidebarOpen={this.state.sidebarOpen} />
+
           <div className="body">
             {this.state.optionsOpen ? (
               <div className="">
-                <Link className="options-link">
+                <Link to="/dashboard/profile" className="options-link">
                   <FontAwesomeIcon className="options-icon" icon="user" />
                   Edit Profile
                 </Link>
-                <div className="options-link">
+                <button
+                  className="options-link"
+                  onClick={this.handleLogout}
+                >
                   <FontAwesomeIcon
                     className="options-icon"
                     icon="sign-out-alt"
                   />
                   Logout
-                </div>
+                </button>
               </div>
             ) : null}
             Body

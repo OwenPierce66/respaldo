@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
 import axios from 'axios';
 import "../owenscss/traductor.scss";
-import { Link } from "@material-ui/core";
+import Link from "@mui/material/Link";
+
+
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faBlog,

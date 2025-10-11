@@ -2,7 +2,7 @@ import React, { Component } from "react";
 import PostPicturePlaceholder from "../../../../static/assets/images/Group 2.jpg";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import moment from 'moment';
-import ReactHtmlParser from "react-html-parser";
+import parse from "html-react-parser";
 
 class BusinessPost extends Component {
   constructor(props){
@@ -28,7 +28,7 @@ class BusinessPost extends Component {
         <div className="news-post-body">
           <div className="post-body-title">{post.title}</div>
           <div className="post-body-description">
-            {ReactHtmlParser(post.text.substring(3, 350))}
+            {parse(post.text.substring(3, 350))}
             {post.text.length > 350 ? "......" : null}
           </div>
         </div>

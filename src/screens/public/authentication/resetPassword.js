@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import Axios from "axios";
-import { Redirect } from "react-router";
+import { Navigate } from "react-router-dom"; // ✅ usar Navigate en vez de Redirect
 
 const ResetPassword = (props) => {
   const Token = props.match.params.tokenId;
@@ -9,12 +9,11 @@ const ResetPassword = (props) => {
   const [error, setError] = useState("");
   const [redirect, setRedirect] = useState(false);
 
-
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    if(password !== passwordTwo){
-      setError("Passwords don't match.")
+    if (password !== passwordTwo) {
+      setError("Passwords don't match.");
       return;
     }
 
@@ -27,7 +26,7 @@ const ResetPassword = (props) => {
   };
 
   if (redirect) {
-    return <Redirect to="/app/login" />;
+    return <Navigate to="/app/login" />; // ✅ Aquí cambiamos Redirect por Navigate
   }
 
   return (
@@ -36,12 +35,12 @@ const ResetPassword = (props) => {
       <h3>{error}</h3>
       <form className="forgotPasswordForm" onSubmit={handleSubmit}>
         <div className="inputWrapper">
-          <label htmlFor="">New Password:</label>
-          <input type="password" onChange={(e) => {setPassword(e.target.value)}} />
+          <label>New Password:</label>
+          <input type="password" onChange={(e) => setPassword(e.target.value)} />
         </div>
         <div className="inputWrapper">
-          <label htmlFor="">ConfirmNew Password:</label>
-          <input type="password" onChange={(e) => {setPasswordTwo(e.target.value)}} />
+          <label>Confirm New Password:</label>
+          <input type="password" onChange={(e) => setPasswordTwo(e.target.value)} />
         </div>
         <button className="saveButton">Save</button>
       </form>
