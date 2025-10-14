@@ -69,7 +69,7 @@ getFeed: builder.query({
 
         // Insertar optimista en la PRIMERA página
         const patch = dispatch(
-          feedApi.util.updateQueryData('getFeed', { limit: PAGE_SIZE, offset: 0 }, (draft) => {
+          feedApi.util.updateQueryData('getFeed', { limit: 3, offset: 0 }, (draft) => {
   draft.items.unshift(optimistic);
   if (typeof draft.count === 'number') draft.count += 1;
 })
@@ -79,7 +79,7 @@ getFeed: builder.query({
           const { data } = await queryFulfilled;
           // Reemplazar el optimista por la respuesta real
           dispatch(
-            feedApi.util.updateQueryData('getFeed', { cursor: null }, (draft) => {
+            feedApi.util.updateQueryData('getFeed', { limit: 3, offset: 0 }, (draft) => {
               const i = draft.items.findIndex((t) => t.id === tempId);
               if (i !== -1) draft.items[i] = data;
             })

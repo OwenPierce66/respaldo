@@ -228,25 +228,33 @@ const [feedItems, setFeedItems] = useState([]);
 // RTK query con params
 const { data: page, isLoading, isFetching, isError } = useGetFeedQuery({ limit: PAGE_SIZE, offset });
 
-// puede cargar más?
+
+
 const canLoadMore = !!page?.next;
-
-// memoiza loadMore
-const loadMore = useCallback(() => {
-  if (!isFetching && canLoadMore) setOffset(o => o + PAGE_SIZE);
-}, [isFetching, canLoadMore]);
-
-
 // arriba, con otros hooks
 const loaderRef = useRef(null);
-
 // evita disparos dobles si el observer llama muy seguido
-const requestingMoreRef = useRef(false);
-
-const allowAutoLoadRef = useRef(false);
+// const requestingMoreRef = useRef(false);
+// const allowAutoLoadRef = useRef(true);
 const lastScrollYRef = useRef(0);
 const scrollRootRef = useRef(null);
+const seenIdsRef = useRef(new Set());
+const loadingRef = useRef(false);
+const ioRef = useRef(null);
 
+const loadMore = useCallback(() => {
+  if (loadingRef.current) return;
+  if (isFetching || !canLoadMore) return;
+  loadingRef.current = true;
+  setOffset(o => o + PAGE_SIZE);
+}, [isFetching, canLoadMore]);
+
+useEffect(() => {
+  if (!isFetching) loadingRef.current = false;
+}, [isFetching]);
+
+
+// IntersectionObserver: unobserve al disparar y re-observe luego
 useEffect(() => {
   if (!loaderRef.current || !scrollRootRef.current) return;
 
@@ -256,33 +264,33 @@ useEffect(() => {
   const onIntersect = (entries) => {
     const first = entries[0];
     if (!first.isIntersecting) return;
-    if (!allowAutoLoadRef.current) return;
-    if (requestingMoreRef.current) return;
     if (isFetching) return;
     if (!canLoadMore) return;
 
-    allowAutoLoadRef.current = false; // espera nuevo scroll del usuario
-    requestingMoreRef.current = true;
+    // evita loops: deja de observar antes de pedir más
+    ioRef.current?.unobserve(node);
     loadMore();
-  };
-
+  }; 
   const observer = new IntersectionObserver(onIntersect, {
-    root: rootEl,                       // ⬅️ clave
-    rootMargin: '0px 0px 300px 0px',    // empieza antes del fondo del contenedor
+    root: rootEl,
+    rootMargin: '0px 0px 300px 0px',
     threshold: 0,
   });
 
+  ioRef.current = observer;
   observer.observe(node);
+
   return () => observer.disconnect();
-}, [canLoadMore, isFetching, loadMore, scrollRootRef]);
+}, [canLoadMore, isFetching, loadMore]);
+
 
 
 
 useEffect(() => {
-  if (!isFetching) {
-    requestingMoreRef.current = false;
+  if (!isFetching && canLoadMore && ioRef.current && loaderRef.current) {
+    ioRef.current.observe(loaderRef.current);
   }
-}, [isFetching]);
+}, [isFetching, canLoadMore]);
 
 
 const feedWithLike = useMemo(() => {
@@ -364,18 +372,10 @@ useEffect(() => {
   const el = scrollRootRef.current;
   if (!el) return;
 
-  const SCROLL_DELTA = 30;
-  let lastY = el.scrollTop;
-  lastScrollYRef.current = lastY;
-
-  const onScroll = () => {
-    const y = el.scrollTop;
-    if (Math.abs(y - lastScrollYRef.current) > SCROLL_DELTA) {
-      allowAutoLoadRef.current = true;         // ⬅️ habilita auto-load
-      lastScrollYRef.current = y;
-    }
-  };
-
+ const onScroll = () => {
+   // si más adelante lo usas para algo, lo conservas:
+   lastScrollYRef.current = el.scrollTop;
+ };
   el.addEventListener('scroll', onScroll, { passive: true });
   return () => el.removeEventListener('scroll', onScroll);
 }, []);
@@ -1759,7 +1759,7 @@ return (
           </button>
         )}
 
-            <div className="contenido-pagin" ref={scrollRootRef}>
+            <div className="contenido-pagin" ref={scrollRootRef} style={{ overflowY: 'auto', maxHeight: '80vh' }}>
           {mostrarUsuarios ? (
             <PerfilesP
               cargarFavoritosPerfilesUsuarioSeleccionado={cargarFavoritosPerfilesUsuarioSeleccionado}
@@ -2171,7 +2171,7 @@ return (
               })
           )}
 
-  <div ref={loaderRef} style={{ height: 1 }} />
+  <div ref={loaderRef} style={{ height: 24 }} />
   {canLoadMore && !isFetching && (
   <div style={{textAlign:'center', padding:12}}>
     <button onClick={loadMore}>Cargar más</button>
