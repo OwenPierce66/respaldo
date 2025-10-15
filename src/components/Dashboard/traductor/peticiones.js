@@ -220,17 +220,21 @@ const [peticionajena, setPeticionajena] = useState(null);
   const tareasFavoritosIdsVar = tareasFavoritosIdsDerived;
 
 
-  // estado para offset y acumulado
 const PAGE_SIZE = 3;
 const [offset, setOffset] = useState(0);
-const [feedItems, setFeedItems] = useState([]);
+const [items, setItems] = useState([]);        // Lista de tareas que se van acumulando
+const [page, setPage] = useState(null);        // Página actual devuelta por el backend
+const [isFetching, setIsFetching] = useState(false);
+const [canLoadMore, setCanLoadMore] = useState(true);
+const loadingRef = useRef(false);  // evita cargas duplicadas
+const sentinelRef = useRef(null);
 
 // RTK query con params
-const { data: page, isLoading, isFetching, isError } = useGetFeedQuery({ limit: PAGE_SIZE, offset });
+// const { data: page, isLoading, isFetching, isError } = useGetFeedQuery({ limit: PAGE_SIZE, offset });
 
 
 
-const canLoadMore = !!page?.next;
+// const canLoadMore = !!page?.next;
 // arriba, con otros hooks
 const loaderRef = useRef(null);
 // evita disparos dobles si el observer llama muy seguido
@@ -239,7 +243,6 @@ const loaderRef = useRef(null);
 const lastScrollYRef = useRef(0);
 const scrollRootRef = useRef(null);
 const seenIdsRef = useRef(new Set());
-const loadingRef = useRef(false);
 const ioRef = useRef(null);
 
 const loadMore = useCallback(() => {
@@ -249,39 +252,29 @@ const loadMore = useCallback(() => {
   setOffset(o => o + PAGE_SIZE);
 }, [isFetching, canLoadMore]);
 
+// Cuando cambia `isFetching`, se libera el bloqueo
 useEffect(() => {
   if (!isFetching) loadingRef.current = false;
 }, [isFetching]);
 
 
-// IntersectionObserver: unobserve al disparar y re-observe luego
 useEffect(() => {
-  if (!loaderRef.current || !scrollRootRef.current) return;
-
-  const node = loaderRef.current;
-  const rootEl = scrollRootRef.current;
-
-  const onIntersect = (entries) => {
-    const first = entries[0];
-    if (!first.isIntersecting) return;
-    if (isFetching) return;
-    if (!canLoadMore) return;
-
-    // evita loops: deja de observar antes de pedir más
-    ioRef.current?.unobserve(node);
-    loadMore();
-  }; 
-  const observer = new IntersectionObserver(onIntersect, {
-    root: rootEl,
-    rootMargin: '0px 0px 300px 0px',
-    threshold: 0,
+  const observer = new IntersectionObserver(entries => {
+    if (entries[0].isIntersecting) {
+      loadMore();
+    }
   });
+  const currentSentinel = sentinelRef.current;
+  if (currentSentinel) {
+    observer.observe(currentSentinel);
+  }
+  return () => {
+    if (currentSentinel) {
+      observer.unobserve(currentSentinel);
+    }
+  };
+}, [loadMore]);
 
-  ioRef.current = observer;
-  observer.observe(node);
-
-  return () => observer.disconnect();
-}, [canLoadMore, isFetching, loadMore]);
 
 
 
@@ -293,13 +286,13 @@ useEffect(() => {
 }, [isFetching, canLoadMore]);
 
 
-const feedWithLike = useMemo(() => {
-  const uid = dataa;
-  const liked = (task, userId) =>
-    task.like_set && task.like_set.some((l) => l.user.id === userId);
-  return (feedItems || []).map((t) => ({ ...t, userHasLiked: liked(t, uid) }));
-}, [feedItems, dataa]);
-
+ const feedWithLike = useMemo(() => {
+   const uid = dataa;
+   const liked = (task, userId) =>
+     task?.like_set?.some((l) => l?.user?.id === userId) ?? false;
+   const base = Array.isArray(items) ? items : [];
+   return base.map((t) => ({ ...t, userHasLiked: liked(t, uid) }));
+ }, [items, dataa]);
 
 
 
@@ -386,13 +379,59 @@ useEffect(() => { console.log('page', page); }, [page]);
 
 useEffect(() => {
   if (!page?.items) return;
-  setFeedItems(prev => {
+  setItems(prev => {
     const seen = new Set(prev.map(t => t.id));
     const merged = [...prev];
     for (const it of page.items) if (!seen.has(it.id)) merged.push(it);
     return merged;
   });
 }, [page]);
+
+
+useEffect(() => {
+  const fetchPage = async () => {
+    setIsFetching(true);
+    try {
+      const token = localStorage.getItem("userTokenLG");
+      const { data } = await axios.get(
+        `http://127.0.0.1:8000/api/feed/?limit=${PAGE_SIZE}&offset=${offset}`,
+        { headers: { Authorization: `Token ${token}` } }
+      );
+
+      // DRF: usa `results`; si no existe, cae a `items` o a array “plano”
+      const pageItems = Array.isArray(data?.results)
+        ? data.results
+        : Array.isArray(data?.items)
+        ? data.items
+        : Array.isArray(data)
+        ? data
+        : [];
+
+      if (offset === 0) {
+        setItems(pageItems);
+      } else {
+        setItems(prev => [...prev, ...pageItems]);
+      }
+
+      // Normaliza `page` a un shape uniforme
+      setPage({
+        items: pageItems,
+        next: data?.next ?? null,
+        prev: data?.prev ?? data?.previous ?? null,
+        count: data?.count ?? pageItems.length,
+      });
+
+      setCanLoadMore(Boolean(data?.next));
+    } catch (error) {
+      console.error("Error al cargar feed:", error);
+    } finally {
+      setIsFetching(false);
+    }
+  };
+
+  fetchPage();
+}, [offset]);
+
 
 
 //   useEffect(() => {
@@ -963,10 +1002,11 @@ function userHasLikedTask(task, userId) {
 // }, [feed, dataa]);
 
 const filteredTasks = useMemo(() => {
-  const searchLower = combinedSearchTerm.trim().toLowerCase();
-  const selCatLower = (selectedCategory || "").toLowerCase();
+   const list = Array.isArray(feedWithLike) ? feedWithLike : [];
+   const searchLower = (combinedSearchTerm || "").trim().toLowerCase();
+   const selCatLower = (selectedCategory || "").toLowerCase();
 
-  return feedWithLike.filter((task) => {
+  return list.filter((task) => {
     const cats = task.categories
       ? task.categories.split(",").map((c) => c.trim().toLowerCase())
       : [];
@@ -1250,6 +1290,7 @@ const seleccionarUsuario = async (userId, username) => {
   return `http://127.0.0.1:8000${path}`;          // relativo del backend
 };
 
+const safeItems = Array.isArray(items) ? items : [];
 
 return (
   <div style={{ backgroundColor: backgroundColor, minHeight: '100vh' }}>
@@ -1772,11 +1813,11 @@ return (
               combinedSearchTerm={combinedSearchTerm}
             />
           ) : (
-            filteredTasks
+            safeItems
               .filter(link => link.pch === tema)
               .filter(link =>
                 selectedCategory === "Todas las categorías" ||
-                link.categories.split(',').some(cat => cat.trim() === selectedCategory)
+                (link.categories || "").split(',').some(cat => cat.trim() === selectedCategory)
               )
               .filter(link => {
                 if (usuarioSeleccionado) {
@@ -2177,7 +2218,8 @@ return (
     <button onClick={loadMore}>Cargar más</button>
   </div>
 )}
-                    
+
+  <div ref={sentinelRef} style={{ height: '1px' }}></div>
 {/* Opcional: pequeño estado visual */}
 {isFetching && <div style={{ textAlign:'center', padding: 12 }}>Cargando…</div>}
 {!canLoadMore && <div style={{ textAlign:'center', padding: 12 }}>No hay más</div>}
