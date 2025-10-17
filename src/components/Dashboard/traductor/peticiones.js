@@ -441,10 +441,13 @@ useEffect(() => {
   // ---------------------------
   // Helpers / API wrappers / handlers
   // ---------------------------
+const getMediaUrl = (path) => {
+  if (!path) return '';
+  // No añadir prefijo si ya es una URL completa o un blob
+  if (path.startsWith('http') || path.startsWith('blob:')) return path;
+  return `http://127.0.0.1:8000${path}`;
+};
 
-  const getMediaUrl = (path) => {
-    return path ? `http://127.0.0.1:8000${path}` : '';
-  };
 
   const openShareModal = (task) => {
     setSelectedTask(task);
@@ -1283,14 +1286,56 @@ const seleccionarUsuario = async (userId, username) => {
     }));
   };
 
-  const toSrc = (path) => {
-  if (!path) return '';
-  if (path.startsWith('blob:')) return path;      // preview local
-  if (path.startsWith('http')) return path;       // absoluto
-  return `http://127.0.0.1:8000${path}`;          // relativo del backend
-};
+
 
 const safeItems = Array.isArray(items) ? items : [];
+
+// helpers arriba del componente (o dentro, antes del return)
+const cleanVal = (v) => {
+  if (!v) return null;
+  const s = String(v).trim();
+  if (s === "undefined" || s === "null" || s === "No image available" || s === "") return null;
+  return s;
+};
+
+const first = (...vals) => vals.find(Boolean) || null;
+
+const getFirstImage = (link) => {
+  const subImgs =
+    (link?.subtasks || []).map(s => cleanVal(s.image))
+    .concat((link?.subfactores || []).map(s => cleanVal(s.image)))
+    .concat((link?.subfuentes || []).map(s => cleanVal(s.image)));
+
+  return first(
+    cleanVal(link?.image),
+    cleanVal(link?.image_url),
+    cleanVal(link?.task?.image),
+    cleanVal(link?.task?.image_url),
+    ...subImgs
+  );
+};
+
+const getFirstVideo = (link) => {
+  const subVids =
+    (link?.subtasks || []).map(s => cleanVal(s.video))
+    .concat((link?.subfactores || []).map(s => cleanVal(s.video)))
+    .concat((link?.subfuentes || []).map(s => cleanVal(s.video)));
+
+  return first(
+    cleanVal(link?.video),
+    cleanVal(link?.task?.video),
+    ...subVids
+  );
+};
+
+const toSrc = (path) => {
+  const p = cleanVal(path);
+  if (!p) return "";
+  if (p.startsWith("blob:") || p.startsWith("data:") || /^https?:\/\//i.test(p)) return p;
+  // p.ej. "/media/archivo.jpg"
+  return `http://127.0.0.1:8000${p.startsWith("/") ? p : `/${p}`}`;
+};
+
 
 return (
   <div style={{ backgroundColor: backgroundColor, minHeight: '100vh' }}>
@@ -1399,7 +1444,7 @@ return (
 
                     <div className="user-image-container">
                       {user.user_image && user.user_image !== "No image available" ? (
-                        <img src={getMediaUrl(user.user_image)} alt="Usuario" className="user-circle-image" />
+                        <img src={toSrc(user.user_image)} alt="Usuario" className="user-circle-image" />
                       ) : (
                         <div className="user-icon-placeholder">
                           <FontAwesomeIcon
@@ -1800,7 +1845,7 @@ return (
           </button>
         )}
 
-            <div className="contenido-pagin" ref={scrollRootRef} style={{ overflowY: 'auto', maxHeight: '80vh' }}>
+            <div className="contenido-pagin" ref={scrollRootRef} style={{ overflowY: 'auto', maxHeight: '93vh' }}>
           {mostrarUsuarios ? (
             <PerfilesP
               cargarFavoritosPerfilesUsuarioSeleccionado={cargarFavoritosPerfilesUsuarioSeleccionado}
@@ -1851,6 +1896,9 @@ return (
               .map(link => {
                 const isShared = !!link.shared_by;
 
+const imagePath = getFirstImage(link);
+const videoPath = getFirstVideo(link);
+
                 return (
                   <div key={link.id} style={{ borderRadius: "10px" }} className="comment" >
                     <div className="contentt" style={{ marginRight: "0px", width: "100vw" }}>
@@ -1861,7 +1909,7 @@ return (
                             <div className="user-infoImage">
                               <div className="image-container">
                                 {link.user_image && link.user_image !== "No image available" ? (
-                                  <img src={getMediaUrl(link.user_image)} alt="Imag" className="circle-image" />
+                                  <img src={toSrc(link.user_image)} alt="Imag" className="circle-image" />
                                 ) : (
                                   <div className="user-infoImageIcon">
                                     <FontAwesomeIcon icon={faUser} style={{ color: "grey", cursor: "pointer" }} />
@@ -1963,21 +2011,22 @@ return (
                           </div>
                         </div>
 
-                        {link.video && (
-                          <video controls className="testimonial-video">
-                            <source src={toSrc(link.video)} type="video/mp4" />
-                            Your browser does not support the video tag.
-                          </video>
-                        )}
-                        {link.image && (
-                          <img
-                            src={getMediaUrl(link.image)}
-                            alt="Imagen"
-                            onClick={() => imageSelect(link.image)}
-                            className="imagenPeticion"
-                            style={{ height: "100px", width: "100px" }}
-                          />
-                        )}
+                   {videoPath && (
+  <video controls className="testimonial-video" src={toSrc(videoPath)} />
+)}
+
+{imagePath && (
+  <img
+    src={toSrc(imagePath)}
+    alt="Imagen"
+    onClick={() => imageSelect(imagePath)}
+    className="imagenPeticion"
+    style={{ height: 100, width: 100 }}
+    onError={(e) => console.log("IMG error", { linkId: link.id, imagePath, src:e.currentTarget.src })}
+    onLoad={(e) => console.log("IMG ok", e.currentTarget.naturalWidth, "x", e.currentTarget.naturalHeight)}
+  />
+)}
+
 
                         {/* Subtasks */}
                         {visibleSections[link.id] === 'subtasks' && (
@@ -1987,7 +2036,7 @@ return (
                                 <TextoConVerMas title={subtask.title} description={subtask.description} />
 
                                 {subtask.image ? (
-                                  <img src={getMediaUrl(subtask.image)} className="imagePch" alt="Subtask" />
+                                  <img src={toSrc(subtask.image)} className="imagePch" alt="Subtask" />
                                 ) : subtask.link && subtask.link.trim() !== "" && subtask.link !== "undefined" ? (
                                   <div className="moldeando">
                                     <LinkPreview url={subtask.link} />
@@ -1995,7 +2044,7 @@ return (
                                   </div>
                                 ) : null}
 
-                                {subtask.video && (
+                                {subtask.video  && (
                                   <video controls className="testimonial-video">
                                     <source src={toSrc(subtask.video)} type="video/mp4" />
                                     Your browser does not support the video tag.
@@ -2028,7 +2077,7 @@ return (
                                   <TextoConVerMas title={subfactor.title} description={subfactor.description} />
 
                                   {subfactor.image ? (
-                                    <img src={getMediaUrl(subfactor.image)} className="imagePch" alt="Subfactor" />
+                                    <img src={toSrc(subfactor.image)} className="imagePch" alt="Subfactor" />
                                   ) : subfactor.link && subfactor.link.trim() !== "" && subfactor.link !== "undefined" ? (
                                     <div className="moldeando">
                                       <LinkPreview url={subfactor.link} />
@@ -2036,7 +2085,7 @@ return (
                                     </div>
                                   ) : null}
 
-                                  {subfactor.video && (
+                                  {subfactor.video  && (
                                     <video controls className="testimonial-video">
                                       <source src={toSrc(subfactor.video)} type="video/mp4" />
                                       Your browser does not support the video tag.
@@ -2069,14 +2118,14 @@ return (
                                   <TextoConVerMas title={subfuente.title} description={subfuente.description} tema={tema} />
 
                                   {subfuente.image ? (
-                                    <img src={getMediaUrl(subfuente.image)} className="imagePch" alt="Subfuente" />
+                                    <img src={toSrc(subfuente.image)} className="imagePch" alt="Subfuente" />
                                   ) : subfuente.link && subfuente.link.trim() !== "" && subfuente.link !== "undefined" ? (
                                     <div className="moldeando">
                                       <LinkPreview url={subfuente.link} />
                                     </div>
                                   ) : null}
 
-                                  {subfuente.video && (
+                                  {subfuente.video  && (
                                     <video controls className="testimonial-video">
                                       <source src={toSrc(subfuente.video)} type="video/mp4" />
                                       Your browser does not support the video tag.
@@ -2115,7 +2164,7 @@ return (
                                 <div className="user-info">
                                   <div className="user-image-container">
                                     {user.user_image && user.user_image !== "No image available" ? (
-                                      <img src={getMediaUrl(user.user_image)} alt="Usuario" className="user-circle-image" />
+                                      <img src={toSrc(user.user_image)} alt="Usuario" className="user-circle-image" />
                                     ) : (
                                       <div className="user-icon-placeholder">
                                         <FontAwesomeIcon icon={faUser} style={{ color: "grey", cursor: "pointer" }} />
@@ -2144,7 +2193,7 @@ return (
                           contentLabel="Usuarios que dieron like"
                           style={{ padding: "0px !important" }}
                         >
-                          <img src={getMediaUrl(imagen)} alt="Imagen" onClick={() => setModalOpenImage(false)} className="imagenPeticionModel" />
+                          <img src={toSrc(link.image)} alt="Imagen" onClick={() => setModalOpenImage(false)} className="imagenPeticionModel" />
                           <button onClick={() => setModalOpenImage(false)}>Cerrar</button>
                         </Modal>
 
@@ -2213,15 +2262,15 @@ return (
           )}
 
   <div ref={loaderRef} style={{ height: 24 }} />
-  {canLoadMore && !isFetching && (
+  {/* {canLoadMore && !isFetching && (
   <div style={{textAlign:'center', padding:12}}>
     <button onClick={loadMore}>Cargar más</button>
   </div>
-)}
+)} */}
 
   <div ref={sentinelRef} style={{ height: '1px' }}></div>
 {/* Opcional: pequeño estado visual */}
-{isFetching && <div style={{ textAlign:'center', padding: 12 }}>Cargando…</div>}
+{/* {isFetching && <div style={{ textAlign:'center', padding: 12 }}>Cargando…</div>} */}
 {!canLoadMore && <div style={{ textAlign:'center', padding: 12 }}>No hay más</div>}
 
             
