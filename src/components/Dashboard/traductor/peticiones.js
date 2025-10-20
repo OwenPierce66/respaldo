@@ -47,7 +47,6 @@ import TaskFilterMenu from "./Filtro";
 import PortadaModal from "./PortadaModal";
 import TextoConVerMas from "./TextoConVerMas";
 import PerfilesP from './perfilesP';
-import ChatAssistant from "./ChatIA";
 import SharedTaskModal from "./SharedTaskModal";
 import { useGetFeedQuery, useCreateTaskMutation } from './feed/FeedApi';
 import ReactJoyride from 'react-joyride';
@@ -61,8 +60,8 @@ const Peticiones = (props) => {
   // ---------------------------
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const location = useLocation();
-  const params = useParams();
+  // const location = useLocation();
+  // const params = useParams();
 
   // si usas connect recibirás props.user; también usamos useSelector en muchas partes
   const reduxUser = useSelector((state) => state.auth.user);
@@ -80,16 +79,16 @@ const [createTask] = useCreateTaskMutation();
   // ---------------------------
   // UI / selection
   const [selectedTask, setSelectedTask] = useState(null);
-  const [filter, setFilter] = useState("all");
+  // const [filter, setFilter] = useState("all");
 
   // Modales
   const [isPortadaModalOpen, setIsPortadaModalOpen] = useState(false);
   const [isLikesModalOpen, setIsLikesModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+  // const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [isModalOpen, setModalOpen] = useState(false);
   const [isModalOpenImage, setModalOpenImage] = useState(false);
-  const [modalIsOpen, setModalIsOpen] = useState(false);
+  // const [modalIsOpen, setModalIsOpen] = useState(false);
   const [isModalOpenShare, setModalOpenShare] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
@@ -113,10 +112,10 @@ const [createTask] = useCreateTaskMutation();
 
   // Tasks, feed y normalizados
   const [tasks, setTasks] = useState([]);
-  const [data, setData] = useState([]);
-  const [normalizedTasks, setNormalizedTasks] = useState([]);
-  const [sharedTasks, setSharedTasks] = useState(null);
-  const [tasksArrayStateMarker, setTasksArrayStateMarker] = useState(null); // placeholder if you need
+  // const [data, setData] = useState([]);
+  // const [normalizedTasks, setNormalizedTasks] = useState([]);
+  // const [sharedTasks, setSharedTasks] = useState(null);
+  // const [tasksArrayStateMarker, setTasksArrayStateMarker] = useState(null); // placeholder if you need
 const [categories, setCategories] = useState([]);
 const [likes, setLikes] = useState([]); 
 const [peticionajena, setPeticionajena] = useState(null); 
@@ -176,13 +175,15 @@ const [peticionajena, setPeticionajena] = useState(null);
   const [predefinedCategoriesUserSelect, setPredefinedCategoriesUserSelect] = useState([]);
   const [showLink, setShowLink] = useState({});
   const [imagen, setImagen] = useState("");
-  const [selected, setSelected] = useState(false);
+  // const [selected, setSelected] = useState(false);
   const [anchorEl, setAnchorEl] = useState({});
   const [mostrarModal, setMostrarModal] = useState(false);
   const [translatedText, setTranslatedText] = useState("");
   const [normal, setNormal] = useState("");
-  const [juntar, setJuntar] = useState("");
-  const [mostrar, setMostrar] = useState("");
+  // const [juntar, setJuntar] = useState("");
+  // const [mostrar, setMostrar] = useState("");
+  const [expandedId, setExpandedId] = useState(null);
+  const toggleExpand = (id) => setExpandedId(prev => prev === id ? null : id);
   const [dataa, setDataa] = useState("");
   const [filterLocal, setFilterLocal] = useState(null); // placeholder if needed
 
@@ -242,8 +243,8 @@ const loaderRef = useRef(null);
 // const allowAutoLoadRef = useRef(true);
 const lastScrollYRef = useRef(0);
 const scrollRootRef = useRef(null);
-const seenIdsRef = useRef(new Set());
-const ioRef = useRef(null);
+// const seenIdsRef = useRef(new Set());
+// const ioRef = useRef(null);
 
 const loadMore = useCallback(() => {
   if (loadingRef.current) return;
@@ -279,11 +280,11 @@ useEffect(() => {
 
 
 
-useEffect(() => {
-  if (!isFetching && canLoadMore && ioRef.current && loaderRef.current) {
-    ioRef.current.observe(loaderRef.current);
-  }
-}, [isFetching, canLoadMore]);
+// useEffect(() => {
+//   if (!isFetching && canLoadMore && ioRef.current && loaderRef.current) {
+//     ioRef.current.observe(loaderRef.current);
+//   }
+// }, [isFetching, canLoadMore]);
 
 
  const feedWithLike = useMemo(() => {
@@ -346,7 +347,7 @@ useEffect(() => {
   // getTasks();
   // fetchData();
   cargarFavoritos();
-  getTasksMios();
+  // getTasksMios();
 }, [dataa]);
 
   // load categories once
@@ -432,7 +433,29 @@ useEffect(() => {
   fetchPage();
 }, [offset]);
 
+useEffect(() => {
+  if (usuario?.user?.id) getTasksMios();
+}, [usuario?.user?.id]);
 
+useEffect(() => {
+  if (!Array.isArray(items)) return;
+  setVisibleSections(prev => {
+    const next = { ...prev };
+    items.forEach(it => {
+      if (!(it.id in next)) next[it.id] = 'subtasks';
+    });
+    return next;
+  });
+}, [items]);
+
+useEffect(() => {
+  return () => {
+    [masTasks, masFactores, masFuentes].flat().forEach(t => {
+      if (t?.imagePreview?.startsWith('blob:')) URL.revokeObjectURL(t.imagePreview);
+      if (t?.videoPreview?.startsWith('blob:')) URL.revokeObjectURL(t.videoPreview);
+    });
+  };
+}, []);
 
 //   useEffect(() => {
 //   if (Array.isArray(feed)) setTasks(feed);
@@ -441,12 +464,11 @@ useEffect(() => {
   // ---------------------------
   // Helpers / API wrappers / handlers
   // ---------------------------
-const getMediaUrl = (path) => {
-  if (!path) return '';
-  // No añadir prefijo si ya es una URL completa o un blob
-  if (path.startsWith('http') || path.startsWith('blob:')) return path;
-  return `http://127.0.0.1:8000${path}`;
-};
+// const getMediaUrl = (path) => {
+//   if (!path) return '';
+//   if (path.startsWith('http') || path.startsWith('blob:')) return path;
+//   return `http://127.0.0.1:8000${path}`;
+// };
 
 
   const openShareModal = (task) => {
@@ -454,9 +476,10 @@ const getMediaUrl = (path) => {
     setIsShareModalOpen(true);
   };
 
-  const handleClick = () => {
-    setSelected(!selected);
-  };
+  // const handleClick = () => {
+  //   setSelected(!selected);
+  // };
+  const [selectedReplyId, setSelectedReplyId] = useState(null);
 
   const handleSectionChange = (taskId, section) => {
     setVisibleSections(prevSections => ({
@@ -563,7 +586,7 @@ const getMediaUrl = (path) => {
         },
       });
       setTasks(response.data);
-      setData(response.data);
+      // setData(response.data);
       console.log("tareas con el sharedby", response.data);
     } catch (error) {
       console.error('Error fetching tasks:', error);
@@ -579,7 +602,8 @@ const getMediaUrl = (path) => {
       });
       const updatedTasks = tasks.filter((task) => task.id !== id);
       setTasks(updatedTasks);
-      setData(updatedTasks);
+      // setData(updatedTasks);
+      setItems(prev => prev.filter(t => t.id !== id));
       handleClose(null);
       // fetchData();
     } catch (error) {
@@ -671,10 +695,10 @@ const addOrEditTienda = async () => {
     }
   };
 
-  const juntarTraduccion = (a) => {
-    setJuntar(a);
-    setMostrar(!mostrar);
-  };
+  // const juntarTraduccion = (a) => {
+  //   setJuntar(a);
+  //   setMostrar(!mostrar);
+  // };
 
   // ---------- Likes helpers ----------
 
@@ -723,6 +747,10 @@ const tasksWithLikeInfo = tasks.map(task => ({
   const handleFileChangee = (index, e) => {
     const file = e.target.files[0];
     if (!file) return;
+     // revoca previas anteriores
+ const prev = masTasks[index];
+ if (prev?.imagePreview?.startsWith('blob:')) URL.revokeObjectURL(prev.imagePreview);
+ if (prev?.videoPreview?.startsWith('blob:')) URL.revokeObjectURL(prev.videoPreview);
 
     const fileType = file.type.split('/')[0];
     const updatedTasks = masTasks.map((task, idx) => {
@@ -879,7 +907,7 @@ const tasksWithLikeInfo = tasks.map(task => ({
   // ---------- Background color (UI) ----------
   const backgroundColor = tema === "consejos" ? '#324c56' : tema === "peticiones" ? 'rgb(183 233 248)' : '#FFFFFF';
 
-  const closeModal = () => setModalIsOpen(false);
+  // const closeModal = () => setModalIsOpen(false);
 
   const obtenerLikes = async (userId) => {
     try {
@@ -889,7 +917,7 @@ const tasksWithLikeInfo = tasks.map(task => ({
         },
       });
       setLikes(res.data);
-      setModalIsOpen(true);
+      setIsLikesModalOpen(true);
     } catch (error) {
       console.error(error);
     }
@@ -899,6 +927,10 @@ const tasksWithLikeInfo = tasks.map(task => ({
   const handlePostFileChangeFuente = (index, e) => {
     const file = e.target.files[0];
     if (!file) return;
+
+     const prev = masFuentes[index];
+ if (prev?.imagePreview?.startsWith('blob:')) URL.revokeObjectURL(prev.imagePreview);
+ if (prev?.videoPreview?.startsWith('blob:')) URL.revokeObjectURL(prev.videoPreview);
 
     const fileType = file.type.split('/')[0];
     const updatedTasks = masFuentes.map((task, idx) => {
@@ -929,6 +961,11 @@ const tasksWithLikeInfo = tasks.map(task => ({
   const handlePostFileChangeFactor = (index, e) => {
     const file = e.target.files[0];
     if (!file) return;
+
+     const prev = masFactores[index];
+ if (prev?.imagePreview?.startsWith('blob:')) URL.revokeObjectURL(prev.imagePreview);
+ if (prev?.videoPreview?.startsWith('blob:')) URL.revokeObjectURL(prev.videoPreview);
+
 
     const fileType = file.type.split('/')[0];
     const updatedTasks = masFactores.map((task, idx) => {
@@ -1023,8 +1060,8 @@ const filteredTasks = useMemo(() => {
       username.includes(searchLower) || title.includes(searchLower);
 
     const peticionAjenaMatch = !peticionajena || task.user === peticionajena;
-
-    return categoryMatch && searchMatch && peticionAjenaMatch;
+const temaMatch = task.pch === tema;
+    return categoryMatch && searchMatch && peticionAjenaMatch && temaMatch;
   });
 }, [feedWithLike, selectedCategory, combinedSearchTerm, peticionajena]);
 
@@ -1037,7 +1074,6 @@ const filteredTasks = useMemo(() => {
       const response = await axios.get('http://127.0.0.1:8000/api/portada/', {
         headers: {
           Authorization: `Token ${token}`,
-          'Content-Type': 'multipart/form-data',
         },
       });
       setPortadas(response.data);
@@ -1055,7 +1091,6 @@ const filteredTasks = useMemo(() => {
       const response = await axios.get('http://127.0.0.1:8000/api/imagen-fija/', {
         headers: {
           Authorization: `Token ${token}`,
-          'Content-Type': 'multipart/form-data',
         },
       });
       setImagenFija(response.data.image);
@@ -1072,7 +1107,6 @@ const filteredTasks = useMemo(() => {
       const response = await axios.get(`http://127.0.0.1:8000/api/usuario/${userId}/portadas`, {
         headers: {
           Authorization: `Token ${token}`,
-          'Content-Type': 'multipart/form-data',
         },
       });
       return response.data;
@@ -1089,7 +1123,6 @@ const filteredTasks = useMemo(() => {
       const response = await axios.get(`http://127.0.0.1:8000/api/usuario/${userId}/imagen-fija`, {
         headers: {
           Authorization: `Token ${token}`,
-          'Content-Type': 'multipart/form-data',
         },
       });
       return response.data.image;
@@ -1328,13 +1361,54 @@ const getFirstVideo = (link) => {
   );
 };
 
+
+  const handleListUsers = async (task) => {
+    try {
+      const token = localStorage.getItem("userTokenLG");
+      const { data } = await axios.get(`http://127.0.0.1:8000/api/tasks/${task.id}/likes/`, {
+        headers: { Authorization: `Token ${token}` },
+      });
+      setListUsers(Array.isArray(data) ? data : []);
+      setModalOpen(true);
+    } catch (err) {
+      console.error('Error al listar usuarios que dieron like:', err);
+    }
+  };
+
+  const handleUpdate = async (task) => {
+    try {
+      const token = localStorage.getItem("userTokenLG");
+      const { data } = await axios.post(`http://127.0.0.1:8000/api/tasks/${task.id}/like/`, {}, {
+        headers: { Authorization: `Token ${token}` },
+      });
+      setItems(prev => prev.map(t => {
+        if (t.id !== task.id) return t;
+        const likes_count = typeof data?.likes_count === 'number'
+          ? data.likes_count
+          : (t.userHasLiked ? t.likes_count - 1 : t.likes_count + 1);
+        return { ...t, userHasLiked: !t.userHasLiked, likes_count };
+      }));
+    } catch (err) {
+      console.error('Error al dar/retirar like:', err);
+    }
+  };
+
+
+
+
 const toSrc = (path) => {
   const p = cleanVal(path);
   if (!p) return "";
   if (p.startsWith("blob:") || p.startsWith("data:") || /^https?:\/\//i.test(p)) return p;
-  // p.ej. "/media/archivo.jpg"
   return `http://127.0.0.1:8000${p.startsWith("/") ? p : `/${p}`}`;
 };
+
+
+
+
+
+
+
 
 
 return (
@@ -1390,7 +1464,7 @@ return (
         <div className="portada-modal">
           <PortadaModal
             isOpen={isPortadaModalOpen}
-            onRequestClose={() => setModalOpen(false)}
+            onRequestClose={() => setIsPortadaModalOpen(false)}
             fetchPortadas={fetchPortadas}
             fetchImagenFija={fetchImagenFija}
             imagenFija={usuarioSeleccionado ? imagenFijaUsuarioSeleccionado : imagenFija}
@@ -1744,15 +1818,16 @@ return (
 
             <div className="categoriaBorder">
               <Select
-                isMulti
-                name="colors"
-                options={options}
-                className="basic-multi-select"
-                classNamePrefix="select"
-                onChange={handleChange}
-                value={selectedCategoriess}
-                styles={{ border: "3px solid black" }}
-              />
+  isMulti
+  options={options}
+  value={selectedCategoriess}
+  onChange={handleChange}
+  classNamePrefix="select"
+  styles={{
+    control: (base) => ({ ...base, border: '3px solid black', borderRadius: 12 }),
+  }}
+/>
+
             </div>
 
             <input
@@ -1858,12 +1933,7 @@ return (
               combinedSearchTerm={combinedSearchTerm}
             />
           ) : (
-            safeItems
-              .filter(link => link.pch === tema)
-              .filter(link =>
-                selectedCategory === "Todas las categorías" ||
-                (link.categories || "").split(',').some(cat => cat.trim() === selectedCategory)
-              )
+            filteredTasks
               .filter(link => {
                 if (usuarioSeleccionado) {
                   return true; // No filtramos por peticionajena si hay usuario seleccionado
@@ -1882,7 +1952,7 @@ return (
                   }
                 }
                 if (soloFavoritosTareas) {
-                  return tareasFavoritosIds.includes(link.id);
+                  return pchFavoritos.includes(link.id);
                 }
                 return true;
               })
@@ -1922,7 +1992,7 @@ const videoPath = getFirstVideo(link);
 
                           <div className="iconsPch">
                             <div className="icon1">
-                              <div className="material-iconis" z-index="1">
+                          <div className="material-iconis" style={{ zIndex: 1 }}>
                                 <div
                                   className="perfilFavorito"
                                   onClick={() => handleLikeToggle(link.user)}
@@ -1966,7 +2036,7 @@ const videoPath = getFirstVideo(link);
                                     <FontAwesomeIcon
                                       icon={faHeart}
                                       style={{
-                                        color: tareasFavoritosIds.includes(link.id) ? 'red' : 'grey',
+                                        color: pchFavoritos.includes(link.id) ? 'red' : 'grey',
                                         cursor: 'pointer',
                                       }}
                                     />
@@ -2002,10 +2072,8 @@ const videoPath = getFirstVideo(link);
                           </button>
                         </div>
 
-                        <div className="textol" onClick={() => juntarTraduccion(link.description)}>
-                          {mostrar && link.description === juntar ? (
-                            <div className="titulo1">{link.description}</div>
-                          ) : null}
+                        <div className="textol" onClick={() => toggleExpand(link.id)}>
+                          {expandedId === link.id ? ( <div className="titulo1">{link.description}</div> ) : null}
                           <div className="titulo2" style={{ color: tema === "consejos" ? "white" : "black" }}>
                             {link.title}
                           </div>
@@ -2022,8 +2090,10 @@ const videoPath = getFirstVideo(link);
     onClick={() => imageSelect(imagePath)}
     className="imagenPeticion"
     style={{ height: 100, width: 100 }}
-    onError={(e) => console.log("IMG error", { linkId: link.id, imagePath, src:e.currentTarget.src })}
-    onLoad={(e) => console.log("IMG ok", e.currentTarget.naturalWidth, "x", e.currentTarget.naturalHeight)}
+    onError={(e) => {
+        e.currentTarget.onerror = null;
+        e.currentTarget.src = '/placeholder.png'; // pon aquí tu placeholder estático
+      }}
   />
 )}
 
@@ -2031,7 +2101,7 @@ const videoPath = getFirstVideo(link);
                         {/* Subtasks */}
                         {visibleSections[link.id] === 'subtasks' && (
                           <div className="subtasks-container">
-                            {link.subtasks.map(subtask => (
+                            {(link.subtasks ?? []).map(subtask => (
                               <div key={subtask.id} className="subtask">
                                 <TextoConVerMas title={subtask.title} description={subtask.description} />
 
@@ -2072,7 +2142,7 @@ const videoPath = getFirstVideo(link);
                         {visibleSections[link.id] === 'subFactores' && (
                           <div className="subtasks-container">
                             <div className="subtasks-container-sub">
-                              {link.subfactores.map(subfactor => (
+                              {(link.subfactores ?? []).map(subfactor => (
                                 <div key={subfactor.id} className="subtask">
                                   <TextoConVerMas title={subfactor.title} description={subfactor.description} />
 
@@ -2113,7 +2183,7 @@ const videoPath = getFirstVideo(link);
                         {visibleSections[link.id] === 'subFuentes' && (
                           <div className="subtasks-container">
                             <div className="subtasks-container-sub">
-                              {link.subfuentes.map(subfuente => (
+                              {(link.subfuentes ?? []).map(subfuente => (
                                 <div key={subfuente.id} className="subtask">
                                   <TextoConVerMas title={subfuente.title} description={subfuente.description} tema={tema} />
 
@@ -2187,20 +2257,48 @@ const videoPath = getFirstVideo(link);
                           <button onClick={() => setModalOpen(false)}>Cerrar</button>
                         </Modal>
 
-                        <Modal
-                          isOpen={isModalOpenImage}
-                          onRequestClose={() => setModalOpenImage(false)}
-                          contentLabel="Usuarios que dieron like"
-                          style={{ padding: "0px !important" }}
-                        >
-                          <img src={toSrc(link.image)} alt="Imagen" onClick={() => setModalOpenImage(false)} className="imagenPeticionModel" />
-                          <button onClick={() => setModalOpenImage(false)}>Cerrar</button>
-                        </Modal>
+<Modal
+  isOpen={isModalOpenImage}
+  onRequestClose={() => setModalOpenImage(false)}
+  contentLabel="Imagen"
+>
+  {imagen && (
+    <img
+      src={toSrc(imagen)}
+      alt="Imagen"
+      onClick={() => setModalOpenImage(false)}
+      className="imagenPeticionModel"
+    />
+  )}
+  <button onClick={() => setModalOpenImage(false)}>Cerrar</button>
+</Modal>
+
+{/* debajo del Modal de likes/imagen, por ejemplo */}
+<Modal
+  isOpen={isModalOpenShare}
+  onRequestClose={() => setModalOpenShare(false)}
+  contentLabel="Usuarios que compartieron"
+>
+  <h2>Usuarios que compartieron</h2>
+  <ul>
+    {(sharedUsers || []).map(u => (
+      <li key={u.id} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        {u.user_image && u.user_image !== "No image available"
+          ? <img src={toSrc(u.user_image)} alt="" style={{ width: 32, height: 32, borderRadius: '50%' }} />
+          : <FontAwesomeIcon icon={faUser} />}
+        <span>{u.username}</span>
+      </li>
+    ))}
+  </ul>
+  <button onClick={() => setModalOpenShare(false)}>Cerrar</button>
+</Modal>
+
+
 
                         <div className="line-down">
                           <div className="likes">
                             <div style={{ padding: "5px" }} onClick={() => navigateToPeticionPost(link.id)}>
-                              <div className={`nlink ${selected ? 'nlink-selected' : ''}`} style={{ color: "white" }} onClick={handleClick}>
+                              <div   className={`nlink ${selectedReplyId === link.id ? 'nlink-selected' : ''}`}   onClick={() => setSelectedReplyId(prev => (prev === link.id ? null : link.id))} >
                                 Responder
                               </div>
                             </div>
@@ -2229,9 +2327,9 @@ const videoPath = getFirstVideo(link);
 
                             const yoComparti = sharedByList.some(u => u.username === (usuario.user && usuario.user.username));
 
-                            if (peticionajena === (usuario.user && usuario.user.username) && yoComparti) return "Tú";
-
-                            const personaComparti = sharedByList.find(u => u.username === peticionajena);
+                           if (yoComparti && peticionajena === usuario.user?.id) return "Tú";
+                           const personaComparti = sharedByList.find(u => u.id === peticionajena);
+                           
                             if (personaComparti) return personaComparti.username;
 
                             if (sharedByList.length > 0) {
