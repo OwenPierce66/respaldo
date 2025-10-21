@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { useSelector, useDispatch } from "react-redux";
-import { useNavigate, useParams, useLocation } from "react-router-dom";
+import { useSelector } from "react-redux";
+import { useNavigate} from "react-router-dom";
 import axios from 'axios';
 import "../owenscss/traductor.scss";
 import "../owenscss/portadaStyle.scss";
@@ -9,31 +9,7 @@ import { connect } from "react-redux"; // Importa `connect` para conectar con Re
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faBlog,
-  faPen,
-  faNewspaper,
-  faUsersCog,
-  faAddressBook,
-  faMoneyBill,
-  faCalendar,
-  faTicketAlt,
-  faChild,
-  faStoreAlt,
-  faUsers,
-  faUser,
-  faEnvelope,
-  faHeart,
-  faTrash,
-  faImage,
-  faGlobe,
-  faArrowRight,
-  faBars,
-  faMinus,
-  faPlus,
-  faSearch,
-  faPenToSquare,
-  faUpload
+import { faPen, faUsers, faUser, faEnvelope, faHeart, faTrash, faImage, faGlobe, faArrowRight, faBars, faMinus, faPlus, faSearch,
 } from "@fortawesome/free-solid-svg-icons";
 import Select from 'react-select';
 import Modal from 'react-modal';
@@ -51,25 +27,17 @@ import SharedTaskModal from "./SharedTaskModal";
 import { useGetFeedQuery, useCreateTaskMutation } from './feed/FeedApi';
 import ReactJoyride from 'react-joyride';
 
-// ---------------------------
-// Componente Peticiones - inicio
-// ---------------------------
-const Peticiones = (props) => {
-  // ---------------------------
-  // Router / Redux hooks
-  // ---------------------------
-  const navigate = useNavigate();
-  const dispatch = useDispatch();
-  // const location = useLocation();
-  // const params = useParams();
 
-  // si usas connect recibirás props.user; también usamos useSelector en muchas partes
+const Peticiones = (props) => {
+
+  const navigate = useNavigate();
   const reduxUser = useSelector((state) => state.auth.user);
   const reduxSubscriptionStatus = useSelector((state) => state.auth.subscriptionStatus);
-
   // preferencia: props (connect) > redux hook
   const user = props.user || reduxUser;
   const subscriptionStatus = props.subscriptionStatus || reduxSubscriptionStatus;
+// estado que se liga al input
+// este es el que usas en tus filtros
 
   // RTK Query feed (si existe)
 // const { data: feed = [], isLoading, isError, refetch } = useGetFeedQuery();
@@ -92,6 +60,8 @@ const [createTask] = useCreateTaskMutation();
   const [isModalOpenShare, setModalOpenShare] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
+const [searchInput, setSearchInput] = useState('');
+
   // Search / filtro
   const [combinedSearchTerm, setCombinedSearchTerm] = useState('');
   const [mostrarSoloFavoritos, setMostrarSoloFavoritos] = useState(false);
@@ -111,7 +81,7 @@ const [createTask] = useCreateTaskMutation();
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
 
   // Tasks, feed y normalizados
-  const [tasks, setTasks] = useState([]);
+  // const [tasks, setTasks] = useState([]);
   // const [data, setData] = useState([]);
   // const [normalizedTasks, setNormalizedTasks] = useState([]);
   // const [sharedTasks, setSharedTasks] = useState(null);
@@ -177,7 +147,7 @@ const [peticionajena, setPeticionajena] = useState(null);
   const [imagen, setImagen] = useState("");
   // const [selected, setSelected] = useState(false);
   const [anchorEl, setAnchorEl] = useState({});
-  const [mostrarModal, setMostrarModal] = useState(false);
+  // const [mostrarModal, setMostrarModal] = useState(false);
   const [translatedText, setTranslatedText] = useState("");
   const [normal, setNormal] = useState("");
   // const [juntar, setJuntar] = useState("");
@@ -185,7 +155,19 @@ const [peticionajena, setPeticionajena] = useState(null);
   const [expandedId, setExpandedId] = useState(null);
   const toggleExpand = (id) => setExpandedId(prev => prev === id ? null : id);
   const [dataa, setDataa] = useState("");
-  const [filterLocal, setFilterLocal] = useState(null); // placeholder if needed
+  // const [filterLocal, setFilterLocal] = useState(null); // placeholder if needed
+// const perfilIdActual = usuarioSeleccionado ?? usuario?.user?.id;
+
+
+const favoritosIds = useMemo(
+     () => (Array.isArray(favoritos) ? favoritos.map(f => f.id) : []),
+   [favoritos]
+ ); 
+ const perfilIdActual = usuarioSeleccionado ?? usuario?.user?.id ?? null;
+ const perfilEstaEnFavoritos =
+   perfilIdActual != null && favoritosIds.includes(perfilIdActual);
+
+// const perfilEstaEnFavoritos = favoritosIds.includes(perfilIdActual);
 
   // Joyride (tutorial)
   const [joyrideState, setJoyrideState] = useState({
@@ -213,7 +195,7 @@ const [peticionajena, setPeticionajena] = useState(null);
   // const tasksArrayFromFeed = tasksArray; 
 
   // Preferencia: id list of favoritos de perfiles
-  const favoritosIds = favoritos.map(favorito => favorito.id) || [];
+  // const favoritosIds = favoritos.map(favorito => favorito.id) || [];
 
   // placeholder derived
   const tareasFavoritosIdsDerived = pchFavoritos.map(id => id);
@@ -221,221 +203,141 @@ const [peticionajena, setPeticionajena] = useState(null);
   const tareasFavoritosIdsVar = tareasFavoritosIdsDerived;
 
 
-const PAGE_SIZE = 3;
-const [offset, setOffset] = useState(0);
-const [items, setItems] = useState([]);        // Lista de tareas que se van acumulando
-const [page, setPage] = useState(null);        // Página actual devuelta por el backend
-const [isFetching, setIsFetching] = useState(false);
-const [canLoadMore, setCanLoadMore] = useState(true);
-const loadingRef = useRef(false);  // evita cargas duplicadas
-const sentinelRef = useRef(null);
+// const [page, setPage] = useState(null);    
 
 // RTK query con params
 // const { data: page, isLoading, isFetching, isError } = useGetFeedQuery({ limit: PAGE_SIZE, offset });
 
-
-
-// const canLoadMore = !!page?.next;
-// arriba, con otros hooks
-const loaderRef = useRef(null);
-// evita disparos dobles si el observer llama muy seguido
-// const requestingMoreRef = useRef(false);
-// const allowAutoLoadRef = useRef(true);
-const lastScrollYRef = useRef(0);
-const scrollRootRef = useRef(null);
 // const seenIdsRef = useRef(new Set());
 // const ioRef = useRef(null);
 
+const PAGE_SIZE = 3;
+
+const [offset, setOffset] = useState(0);
+const [items, setItems] = useState([]);     // lista acumulada del feed
+const [canLoadMore, setCanLoadMore] = useState(true);
+
+const loadingRef = useRef(false);
+const sentinelRef = useRef(null);
+const scrollRootRef = useRef(null);
+
+// const [isFetching, setIsFetching] = useState(false);
+const lastScrollYRef = useRef(0);
+
+const {
+  data: page,                 // { items, next, prev, count }
+  isFetching: rtkIsFetching,  // <-- usar este
+  refetch,
+} = useGetFeedQuery({ limit: PAGE_SIZE, offset });
+// const canLoadMore = !!page?.next;
+// arriba, con otros hooks
+// const loaderRef = useRef(null);
+// evita disparos dobles si el observer llama muy seguido
+// const requestingMoreRef = useRef(false);
+// const allowAutoLoadRef = useRef(true);
+
 const loadMore = useCallback(() => {
   if (loadingRef.current) return;
-  if (isFetching || !canLoadMore) return;
+  if (rtkIsFetching || !canLoadMore) return;
   loadingRef.current = true;
   setOffset(o => o + PAGE_SIZE);
-}, [isFetching, canLoadMore]);
+}, [rtkIsFetching, canLoadMore]);
 
-// Cuando cambia `isFetching`, se libera el bloqueo
+// Liberar bandera local cuando RTK termina
 useEffect(() => {
-  if (!isFetching) loadingRef.current = false;
-}, [isFetching]);
-
-
-useEffect(() => {
-  const observer = new IntersectionObserver(entries => {
-    if (entries[0].isIntersecting) {
-      loadMore();
-    }
-  });
-  const currentSentinel = sentinelRef.current;
-  if (currentSentinel) {
-    observer.observe(currentSentinel);
-  }
-  return () => {
-    if (currentSentinel) {
-      observer.unobserve(currentSentinel);
-    }
-  };
-}, [loadMore]);
+  if (!rtkIsFetching) loadingRef.current = false;
+}, [rtkIsFetching]);
 
 
 
+
+
+
+
+
+
+
+
+// const [rawSearch, setRawSearch] = useState('');
+// const debouncedSearch = useMemo(() => {
+//   const h = setTimeout(() => setCombinedSearchTerm(rawSearch), 250);
+//   return () => clearTimeout(h);
+// }, [rawSearch]);
+// useEffect(() => debouncedSearch, [debouncedSearch]);
+
+// input:
 
 
 // useEffect(() => {
-//   if (!isFetching && canLoadMore && ioRef.current && loaderRef.current) {
-//     ioRef.current.observe(loaderRef.current);
-//   }
-// }, [isFetching, canLoadMore]);
-
-
- const feedWithLike = useMemo(() => {
-   const uid = dataa;
-   const liked = (task, userId) =>
-     task?.like_set?.some((l) => l?.user?.id === userId) ?? false;
-   const base = Array.isArray(items) ? items : [];
-   return base.map((t) => ({ ...t, userHasLiked: liked(t, uid) }));
- }, [items, dataa]);
-
-
-
-
-  // ---------------------------
-  // Effects
-  // ---------------------------
-
-  // Log feed when ready
-  // useEffect(() => {
-  //   if (!isLoading && feedData) {
-  //     console.log("Feed cargado:", feedData);
-  //   }
-  // }, [isLoading, feedData]);
-useEffect(() => {
-  // Montaje: obtén usuario una sola vez
-  addOrEditTiendaa();
-}, []); // <-- vacío
-
-  // Inicialización: fetchUserDetails + favoritos + pchFavoritos
-  useEffect(() => {
-    fetchUserDetails();
-    cargarFavoritos();
-    cargarFavoritosDeTareas();
-    // NOTE: not passing dependencies on purpose to run once on mount like original
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // When tasks change, set default visible sections
-  useEffect(() => {
-    const defaultVisibleSections = tasks.reduce((acc, task) => {
-      acc[task.id] = 'subtasks';
-      return acc;
-    }, {});
-    setVisibleSections(defaultVisibleSections);
-  }, [tasks]);
-
-  // When usuario changes, fetch profile-related data
-  useEffect(() => {
-    console.log("Estado de usuario:", usuario);
-    if (usuario && usuario.user && usuario.user.id) {
-      obtenerLikesPerfil();
-      fetchPortadas();
-      fetchImagenFija();
-    }
-  }, [usuario]);
-
-// Cuando YA tienes dataa, entonces cargas demás datos
-useEffect(() => {
-  if (!dataa) return;         // sin id? no hagas nada
-  // getTasks();
-  // fetchData();
-  cargarFavoritos();
-  // getTasksMios();
-}, [dataa]);
-
-  // load categories once
-  useEffect(() => {
-    const loadCategories = async () => {
-      const response = await fetchCategories();
-      if (response.status === 200) {
-        setCategories(response.data);
-      }
-    };
-    loadCategories();
-  }, []);
-
+//   if (!isFetching) loadingRef.current = false;
+// }, [isFetching]);
 
 useEffect(() => {
+  if (!scrollRootRef.current || !sentinelRef.current) return;
+  const observer = new IntersectionObserver(
+    (entries) => {
+      if (entries[0].isIntersecting) loadMore();
+    },
+    { root: scrollRootRef.current, rootMargin: '400px 0px', threshold: 0 }
+  );
+  observer.observe(sentinelRef.current);
+  return () => observer.disconnect();
+}, [loadMore]);
+
+const feedWithLike = useMemo(() => {
+  const uid = dataa;
+  const liked = (task, userId) =>
+    task?.like_set?.some((l) => l?.user?.id === userId) ?? false;
+  const base = Array.isArray(items) ? items : [];
+  return base.map(t => ({ ...t, userHasLiked: liked(t, uid) }));
+}, [items, dataa]);
+
+useEffect(() => {
+  fetchUserDetails();        // mantiene setUsuario y resets
+  cargarFavoritos();         // perfiles favoritos
+  cargarFavoritosDeTareas(); // tareas favoritas
+  // addOrEditTiendaa();
+
+  (async () => {
+    const response = await fetchCategories();
+    if (response?.status === 200) setCategories(response.data);
+  })();
+
   const el = scrollRootRef.current;
-  if (!el) return;
+  const onScroll = () => { if (el) lastScrollYRef.current = el.scrollTop; };
+  el?.addEventListener('scroll', onScroll, { passive: true });
 
- const onScroll = () => {
-   // si más adelante lo usas para algo, lo conservas:
-   lastScrollYRef.current = el.scrollTop;
- };
-  el.addEventListener('scroll', onScroll, { passive: true });
-  return () => el.removeEventListener('scroll', onScroll);
+  return () => {
+    el?.removeEventListener('scroll', onScroll);
+  };
 }, []);
 
-
-
-useEffect(() => { console.log('page', page); }, [page]);
-
 useEffect(() => {
-  if (!page?.items) return;
-  setItems(prev => {
-    const seen = new Set(prev.map(t => t.id));
-    const merged = [...prev];
-    for (const it of page.items) if (!seen.has(it.id)) merged.push(it);
-    return merged;
-  });
-}, [page]);
-
-
-useEffect(() => {
-  const fetchPage = async () => {
-    setIsFetching(true);
-    try {
-      const token = localStorage.getItem("userTokenLG");
-      const { data } = await axios.get(
-        `http://127.0.0.1:8000/api/feed/?limit=${PAGE_SIZE}&offset=${offset}`,
-        { headers: { Authorization: `Token ${token}` } }
-      );
-
-      // DRF: usa `results`; si no existe, cae a `items` o a array “plano”
-      const pageItems = Array.isArray(data?.results)
-        ? data.results
-        : Array.isArray(data?.items)
-        ? data.items
-        : Array.isArray(data)
-        ? data
-        : [];
-
-      if (offset === 0) {
-        setItems(pageItems);
-      } else {
-        setItems(prev => [...prev, ...pageItems]);
-      }
-
-      // Normaliza `page` a un shape uniforme
-      setPage({
-        items: pageItems,
-        next: data?.next ?? null,
-        prev: data?.prev ?? data?.previous ?? null,
-        count: data?.count ?? pageItems.length,
-      });
-
-      setCanLoadMore(Boolean(data?.next));
-    } catch (error) {
-      console.error("Error al cargar feed:", error);
-    } finally {
-      setIsFetching(false);
-    }
-  };
-
-  fetchPage();
-}, [offset]);
-
-useEffect(() => {
-  if (usuario?.user?.id) getTasksMios();
+  const uid = usuario?.user?.id;
+  if (!uid) return;
+  obtenerLikesPerfil();
+  fetchPortadas();
+  fetchImagenFija();
+  getTasksMios();
 }, [usuario?.user?.id]);
+
+useEffect(() => {
+  const pageItems = Array.isArray(page?.items) ? page.items : [];
+  setCanLoadMore(Boolean(page?.next));
+
+  if (!pageItems.length) return;
+
+  setItems(prev => {
+    if (offset === 0) {
+      // reemplazo total en primera página
+      return pageItems;
+    }
+    // append con dedupe preservando orden previo
+    const seen = new Set(prev.map(x => x.id));
+    const toAppend = pageItems.filter(x => !seen.has(x.id));
+    return [...prev, ...toAppend];
+  });
+}, [page, offset]);
 
 useEffect(() => {
   if (!Array.isArray(items)) return;
@@ -457,18 +359,51 @@ useEffect(() => {
   };
 }, []);
 
-//   useEffect(() => {
-//   if (Array.isArray(feed)) setTasks(feed);
-// }, [feed]);
 
-  // ---------------------------
-  // Helpers / API wrappers / handlers
-  // ---------------------------
-// const getMediaUrl = (path) => {
-//   if (!path) return '';
-//   if (path.startsWith('http') || path.startsWith('blob:')) return path;
-//   return `http://127.0.0.1:8000${path}`;
-// };
+useEffect(() => {
+  const id = setTimeout(() => {
+    setCombinedSearchTerm(searchInput.trim());
+  }, 500); // 250ms de espera tras teclear
+  return () => clearTimeout(id);
+}, [searchInput]);
+
+useEffect(() => {
+  if (usuario?.user?.id) setDataa(usuario.user.id);
+}, [usuario?.user?.id]);
+
+
+// useEffect(() => {
+//   const controller = new AbortController();
+//   (async () => {
+//     setIsFetching(true);
+//     try {
+//       const { data } = await api.get(`/feed/?limit=${PAGE_SIZE}&offset=${offset}`, { signal: controller.signal });
+//     } catch (e) {
+//       if (e.name !== 'CanceledError' && e.name !== 'AbortError') console.error(e);
+//     } finally {
+//       setIsFetching(false);
+//     }
+//   })();
+//   return () => controller.abort();
+// }, [offset]);
+
+// useEffect(() => {
+//   const id = setTimeout(() => {
+//     setCombinedSearchTerm(searchInput.trim());
+//   }, 250);
+
+//   return () => clearTimeout(id); // limpia si el usuario vuelve a teclear antes de 250ms
+// }, [searchInput]);
+
+
+
+
+
+
+
+
+
+
 
 
   const openShareModal = (task) => {
@@ -476,9 +411,6 @@ useEffect(() => {
     setIsShareModalOpen(true);
   };
 
-  // const handleClick = () => {
-  //   setSelected(!selected);
-  // };
   const [selectedReplyId, setSelectedReplyId] = useState(null);
 
   const handleSectionChange = (taskId, section) => {
@@ -562,36 +494,36 @@ useEffect(() => {
   };
 
   // ---------- Tasks CRUD / fetch ----------
-  const addOrEditTiendaa = async () => {
-    try {
-      const token = localStorage.getItem("userTokenLG");
-      const response = await axios.get('http://127.0.0.1:8000/api/get-user/', {
-        headers: {
-          Authorization: `Token ${token}`,
-        },
-      });
-      const userDetails = response.data;
-      console.log(userDetails);
-      setDataa(userDetails.user.id);
-    } catch (error) {
-      console.error('Error creating task:', error);
-    }
-  };
+  // const addOrEditTiendaa = async () => {
+  //   try {
+  //     const token = localStorage.getItem("userTokenLG");
+  //     const response = await axios.get('http://127.0.0.1:8000/api/get-user/', {
+  //       headers: {
+  //         Authorization: `Token ${token}`,
+  //       },
+  //     });
+  //     const userDetails = response.data;
+  //     console.log(userDetails);
+  //     setDataa(userDetails.user.id);
+  //   } catch (error) {
+  //     console.error('Error creating task:', error);
+  //   }
+  // };
 
-  const getTasks = async () => {
-    try {
-      const response = await axios.get(`http://127.0.0.1:8000/api/tasks/`, {
-        headers: {
-          Authorization: `Token ${localStorage.getItem("userTokenLG")}`,
-        },
-      });
-      setTasks(response.data);
-      // setData(response.data);
-      console.log("tareas con el sharedby", response.data);
-    } catch (error) {
-      console.error('Error fetching tasks:', error);
-    }
-  };
+  // const getTasks = async () => {
+  //   try {
+  //     const response = await axios.get(`http://127.0.0.1:8000/api/tasks/`, {
+  //       headers: {
+  //         Authorization: `Token ${localStorage.getItem("userTokenLG")}`,
+  //       },
+  //     });
+  //     setTasks(response.data);
+  //     setData(response.data);
+  //     console.log("tareas con el sharedby", response.data);
+  //   } catch (error) {
+  //     console.error('Error fetching tasks:', error);
+  //   }
+  // };
 
   const handleDelete = async (id) => {
     try {
@@ -600,8 +532,8 @@ useEffect(() => {
           Authorization: `Token ${localStorage.getItem("userTokenLG")}`,
         },
       });
-      const updatedTasks = tasks.filter((task) => task.id !== id);
-      setTasks(updatedTasks);
+      // const updatedTasks = tasks.filter((task) => task.id !== id);
+      // setTasks(updatedTasks);
       // setData(updatedTasks);
       setItems(prev => prev.filter(t => t.id !== id));
       handleClose(null);
@@ -648,8 +580,7 @@ const addOrEditTienda = async () => {
     });
 
     // 1) Crear la tarea (optimistic update la verás al instante)
-    const res = await createTask({ userId: dataa, formData }).unwrap();
-
+    const res = await createTask({ formData }).unwrap();
     // 2) (Opcional) Registrar el share con axios si quieres mantener tu contador
     await axios.post(
       'http://127.0.0.1:8000/api/shared-tasks/',
@@ -662,7 +593,18 @@ const addOrEditTienda = async () => {
       }
     );
 
+    refetch();
+
     setIsAddModalOpen(false);
+    setMasTasks([{ title:'', description:'', image:null, video:null, imagePreview:null, videoPreview:null }]);
+setMasFactores([{ title:'', description:'', link:'', image:null, video:null, imagePreview:null, videoPreview:null }]);
+setMasFuentes([{ title:'', description:'', link:'', image:null, video:null, imagePreview:null, videoPreview:null }]);
+setSelectedCategories([]); 
+setSelectedCategoriess([]);
+setHashtags('');
+setTranslatedText('');
+setNormal('');
+
   } catch (error) {
     console.error('Error creating task:', error);
   }
@@ -703,10 +645,10 @@ const addOrEditTienda = async () => {
   // ---------- Likes helpers ----------
 
 
-const tasksWithLikeInfo = tasks.map(task => ({
-  ...task,
-  userHasLiked: userHasLikedTask(task, dataa)
-}));
+// const tasksWithLikeInfo = tasks.map(task => ({
+//   ...task,
+//   userHasLiked: userHasLikedTask(task, dataa)
+// }));
 
 
   const imageSelect = (image) => {
@@ -734,14 +676,18 @@ const tasksWithLikeInfo = tasks.map(task => ({
     }
   };
 
-  // ---------- Select helpers ----------
-  const options = categories.map(cat => ({ value: cat.id, label: cat.name }));
+  const options = useMemo(
+  () => categories.map(cat => ({ value: cat.id, label: cat.name })),
+  [categories]
+);
 
-  const handleChange = (selectedOptions) => {
-    const selectedCategoryNames = selectedOptions.map(option => option.label);
-    setSelectedCategories(selectedCategoryNames);
-    setSelectedCategoriess(selectedOptions);
-  };
+
+const handleChange = (selectedOptions = []) => {
+  const selectedCategoryNames = selectedOptions.map(o => o.label);
+  setSelectedCategories(selectedCategoryNames);
+  setSelectedCategoriess(selectedOptions);
+};
+
 
   // ---------- File inputs for add form ----------
   const handleFileChangee = (index, e) => {
@@ -900,9 +846,10 @@ const tasksWithLikeInfo = tasks.map(task => ({
     setAnchorEl(prevState => ({ ...prevState, [taskId]: event.currentTarget }));
   };
 
-  const handleClose = (taskId) => {
-    setAnchorEl(prevState => ({ ...prevState, [taskId]: null }));
-  };
+const handleClose = (taskId) => {
+  if (taskId == null) { setAnchorEl({}); return; }
+  setAnchorEl(prev => ({ ...prev, [taskId]: null }));
+};
 
   // ---------- Background color (UI) ----------
   const backgroundColor = tema === "consejos" ? '#324c56' : tema === "peticiones" ? 'rgb(183 233 248)' : '#FFFFFF';
@@ -1063,7 +1010,8 @@ const filteredTasks = useMemo(() => {
 const temaMatch = task.pch === tema;
     return categoryMatch && searchMatch && peticionAjenaMatch && temaMatch;
   });
-}, [feedWithLike, selectedCategory, combinedSearchTerm, peticionajena]);
+}, [feedWithLike, selectedCategory, combinedSearchTerm, peticionajena, tema]);
+
 
   // ---------- portadas / imagen fija fetch ----------
   const fetchPortadas = async () => {
@@ -1194,7 +1142,6 @@ const getTasksMios = async () => {
       },
     });
 
-    // Normalizamos la respuesta para que siempre sea un array
     const list = Array.isArray(data)
       ? data
       : Array.isArray(data?.results)
@@ -1202,7 +1149,7 @@ const getTasksMios = async () => {
         : Array.isArray(data?.tasks)
           ? data.tasks
           : (data && typeof data === 'object')
-            ? [data] // si llega un objeto único, lo envolvemos
+            ? [data] 
             : [];
 
     if (!Array.isArray(list)) {
@@ -1321,7 +1268,7 @@ const seleccionarUsuario = async (userId, username) => {
 
 
 
-const safeItems = Array.isArray(items) ? items : [];
+// const safeItems = Array.isArray(items) ? items : [];
 
 // helpers arriba del componente (o dentro, antes del return)
 const cleanVal = (v) => {
@@ -1448,13 +1395,14 @@ return (
       />
       {mostrarBuscar && (
         <div className="buscarCategoria2">
-          <input
-            className="buscarCategoria2Input"
-            placeholder="Buscar por categoría, usuario o título..."
-            type="text"
-            value={combinedSearchTerm}
-            onChange={(e) => setCombinedSearchTerm(e.target.value)}
-          />
+<input
+  className="buscarCategoria2Input"
+  placeholder="Buscar por categoría, usuario o título..."
+  type="text"
+  value={searchInput}
+  onChange={(e) => setSearchInput(e.target.value)}
+/>
+
         </div>
       )}
     </div>
@@ -1491,12 +1439,9 @@ return (
           </div>
         </div>
 
-        <div className="perfilHeart" onClick={() => handleLikeToggle(usuario.user.id)}>
-          <FontAwesomeIcon
-            style={{ color: hasLiked ? "#54afff" : "white" }}
-            icon={faHeart}
-          />
-        </div>
+    <div className="perfilHeart" onClick={() => handleLikeToggle(perfilIdActual)}>
+  <FontAwesomeIcon icon={faHeart} style={{ color: perfilEstaEnFavoritos ? "#54afff" : "white" }} />
+</div>
 
         <div>
           <div style={{ fontSize: "1.6em", marginTop: "-9px" }} onClick={() => obtenerLikes(usuario.user.id)}>
@@ -1875,7 +1820,7 @@ return (
 
         {usuarioSeleccionado && (
           <div className="category-menu" style={{
-            color: tema === "consejos" ? "#3bce0fd" : "black", marginTop: "11px"
+            color: tema === "consejos" ? "#3bce0f" : "black", marginTop: "11px"
           }}>
             <div className="horizontal-scroll">
               <ul>
@@ -2080,7 +2025,8 @@ const videoPath = getFirstVideo(link);
                         </div>
 
                    {videoPath && (
-  <video controls className="testimonial-video" src={toSrc(videoPath)} />
+  <video controls preload="metadata" className="testimonial-video" src={toSrc(videoPath)} />
+
 )}
 
 {imagePath && (
@@ -2220,6 +2166,11 @@ const videoPath = getFirstVideo(link);
                         )}
 
                         <div className="categoriasPCH">{link.categories}</div>
+                        {/* <div className="categoriasPCH">{(link.categories || '')
+    .split(',')
+    .map(c => c.trim())
+    .filter(Boolean)
+    .map(c => <span key={c} className="chip">{c}</span>)}</div> */}
 
                         {/* Modales */}
                         <Modal
@@ -2297,11 +2248,18 @@ const videoPath = getFirstVideo(link);
 
                         <div className="line-down">
                           <div className="likes">
-                            <div style={{ padding: "5px" }} onClick={() => navigateToPeticionPost(link.id)}>
-                              <div   className={`nlink ${selectedReplyId === link.id ? 'nlink-selected' : ''}`}   onClick={() => setSelectedReplyId(prev => (prev === link.id ? null : link.id))} >
-                                Responder
-                              </div>
-                            </div>
+                          <button
+  type="button"
+  className={`nlink ${selectedReplyId === link.id ? 'nlink-selected' : ''}`}
+  onClick={(e) => {
+    e.stopPropagation();
+    setSelectedReplyId(prev => (prev === link.id ? null : link.id));
+  }}
+  aria-pressed={selectedReplyId === link.id}
+>
+  Responder
+</button>
+
 
                             <div className="like">
                               <div className="like_cantidad" onClick={() => handleListUsers(link)}>{link.likes_count}</div>
@@ -2359,7 +2317,7 @@ const videoPath = getFirstVideo(link);
               })
           )}
 
-  <div ref={loaderRef} style={{ height: 24 }} />
+{/* loaderRef  <div ref={} style={{ height: 24 }} /> */}
   {/* {canLoadMore && !isFetching && (
   <div style={{textAlign:'center', padding:12}}>
     <button onClick={loadMore}>Cargar más</button>

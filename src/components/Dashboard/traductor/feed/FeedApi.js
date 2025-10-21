@@ -13,35 +13,34 @@ export const feedApi = createApi({
   }),
   tagTypes: ['Task'],
   endpoints: (builder) => ({
-getFeed: builder.query({
-     query: ({ limit = 3, offset = 0 } = {}) =>
-       `/feed/?limit=${limit}&offset=${offset}`,
-     transformResponse: (resp) => ({
-       items: resp?.results ?? [],
-       next: resp?.next ?? null,
-       prev: resp?.previous ?? null,
-       count: resp?.count ?? 0,
-     }),
-     providesTags: (result) =>
-       result?.items?.length
-         ? [
-             ...result.items.map((it) => ({ type: 'Task', id: it.id })),
-             { type: 'Task', id: 'LIST' },
-           ]
-         : [{ type: 'Task', id: 'LIST' }],
-     // cache key única por limit+offset
-     serializeQueryArgs: ({ endpointName, queryArgs }) =>
-       `${endpointName}-${queryArgs?.limit ?? 3}-${queryArgs?.offset ?? 0}`,
-     refetchOnFocus: true,
-     refetchOnReconnect: true,
-   }),
+    getFeed: builder.query({
+      query: ({ limit = 3, offset = 0 } = {}) =>
+        `/feed/?limit=${limit}&offset=${offset}`,
+      transformResponse: (resp) => ({
+        items: resp?.results ?? [],
+        next: resp?.next ?? null,
+        prev: resp?.previous ?? null,
+        count: resp?.count ?? 0,
+      }),
+      providesTags: (result) =>
+        result?.items?.length
+          ? [
+              ...result.items.map((it) => ({ type: 'Task', id: it.id })),
+              { type: 'Task', id: 'LIST' },
+            ]
+          : [{ type: 'Task', id: 'LIST' }],
+      serializeQueryArgs: ({ endpointName, queryArgs }) =>
+        `${endpointName}-${queryArgs?.limit ?? 3}-${queryArgs?.offset ?? 0}`,
+      refetchOnFocus: true,
+      refetchOnReconnect: true,
+    }),
 
-    // CREAR TAREA (optimista): inserta en la primera página (cursor null)
+    // CREAR TAREA (optimista): POST a /tasks/  (SIN id en la URL)
     createTask: builder.mutation({
-      query: ({ userId, formData }) => ({
-        url: `/tasks/${userId}/`,
+      query: ({ formData }) => ({
+        url: '/tasks/',        // ✅ crear en la colección
         method: 'POST',
-        body: formData,
+        body: formData,        // deja que el fetch ponga el boundary de multipart
       }),
 
       async onQueryStarted({ formData }, { dispatch, queryFulfilled }) {
@@ -67,27 +66,30 @@ getFeed: builder.query({
           user: null,
         };
 
-        // Insertar optimista en la PRIMERA página
+        // Insertar optimista en la PRIMERA página (limit=3, offset=0)
         const patch = dispatch(
           feedApi.util.updateQueryData('getFeed', { limit: 3, offset: 0 }, (draft) => {
-  draft.items.unshift(optimistic);
-  if (typeof draft.count === 'number') draft.count += 1;
-})
+            draft.items.unshift(optimistic);
+            if (typeof draft.count === 'number') draft.count += 1;
+          })
         );
 
         try {
           const { data } = await queryFulfilled;
-          // Reemplazar el optimista por la respuesta real
           dispatch(
             feedApi.util.updateQueryData('getFeed', { limit: 3, offset: 0 }, (draft) => {
               const i = draft.items.findIndex((t) => t.id === tempId);
               if (i !== -1) draft.items[i] = data;
             })
           );
-        } catch {
+        } catch (e) {
+          const err = e?.error || e;
+          console.error('createTask failed', err?.status, err?.data);
           patch.undo();
         }
       },
+      // (opcional) por si quieres forzar refetch en otras páginas
+      invalidatesTags: [{ type: 'Task', id: 'LIST' }],
     }),
   }),
 });
