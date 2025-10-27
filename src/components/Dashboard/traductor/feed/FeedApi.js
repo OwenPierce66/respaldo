@@ -35,12 +35,13 @@ export const feedApi = createApi({
       refetchOnReconnect: true,
     }),
 
-    // CREAR TAREA (optimista): POST a /tasks/  (SIN id en la URL)
+    // ⚠️ Back compat: crear con POST a /tasks/:pathId/
     createTask: builder.mutation({
-      query: ({ formData }) => ({
-        url: '/tasks/',        // ✅ crear en la colección
+      // pasamos pathId dinamicamente
+      query: ({ formData, pathId }) => ({
+        url: `/tasks/${pathId}/`,
         method: 'POST',
-        body: formData,        // deja que el fetch ponga el boundary de multipart
+        body: formData,
       }),
 
       async onQueryStarted({ formData }, { dispatch, queryFulfilled }) {
@@ -66,7 +67,6 @@ export const feedApi = createApi({
           user: null,
         };
 
-        // Insertar optimista en la PRIMERA página (limit=3, offset=0)
         const patch = dispatch(
           feedApi.util.updateQueryData('getFeed', { limit: 3, offset: 0 }, (draft) => {
             draft.items.unshift(optimistic);
@@ -83,12 +83,9 @@ export const feedApi = createApi({
             })
           );
         } catch (e) {
-          const err = e?.error || e;
-          console.error('createTask failed', err?.status, err?.data);
           patch.undo();
         }
       },
-      // (opcional) por si quieres forzar refetch en otras páginas
       invalidatesTags: [{ type: 'Task', id: 'LIST' }],
     }),
   }),

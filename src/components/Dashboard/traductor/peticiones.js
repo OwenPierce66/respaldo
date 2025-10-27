@@ -286,10 +286,13 @@ useEffect(() => {
 
 const feedWithLike = useMemo(() => {
   const uid = dataa;
-  const liked = (task, userId) =>
-    task?.like_set?.some((l) => l?.user?.id === userId) ?? false;
   const base = Array.isArray(items) ? items : [];
-  return base.map(t => ({ ...t, userHasLiked: liked(t, uid) }));
+  return base.map(t => { 
+    const computed = t?.like_set?.some((l) => l?.user?.id === uid) ?? false;
+   // Si ya traigo toggle optimista en items, lo respeto; si no, uso el calculado
+   const userHasLiked = typeof t.userHasLiked === 'boolean' ? t.userHasLiked : computed;
+   return { ...t, userHasLiked };
+   });
 }, [items, dataa]);
 
 useEffect(() => {
@@ -579,9 +582,14 @@ const addOrEditTienda = async () => {
       if (task.video) formData.append(`subfuentes[${index}][video]`, task.video, task.video.name);
     });
 
-    // 1) Crear la tarea (optimistic update la verás al instante)
-    const res = await createTask({ formData }).unwrap();
-    // 2) (Opcional) Registrar el share con axios si quieres mantener tu contador
+    // 👇 usa un id de tarea existente como pathId
+    const fallbackId = 1; // si sabes que existe; cámbialo si no
+    const pathId = (Array.isArray(items) && items.length > 0) ? items[0].id : fallbackId;
+
+    // 1) Crear (mutación RTK, ahora pega a /api/tasks/:pathId/)
+    const res = await createTask({ formData, pathId }).unwrap();
+
+    // 2) (opcional) registrar share
     await axios.post(
       'http://127.0.0.1:8000/api/shared-tasks/',
       { task_id: res.id },
@@ -597,19 +605,18 @@ const addOrEditTienda = async () => {
 
     setIsAddModalOpen(false);
     setMasTasks([{ title:'', description:'', image:null, video:null, imagePreview:null, videoPreview:null }]);
-setMasFactores([{ title:'', description:'', link:'', image:null, video:null, imagePreview:null, videoPreview:null }]);
-setMasFuentes([{ title:'', description:'', link:'', image:null, video:null, imagePreview:null, videoPreview:null }]);
-setSelectedCategories([]); 
-setSelectedCategoriess([]);
-setHashtags('');
-setTranslatedText('');
-setNormal('');
+    setMasFactores([{ title:'', description:'', link:'', image:null, video:null, imagePreview:null, videoPreview:null }]);
+    setMasFuentes([{ title:'', description:'', link:'', image:null, video:null, imagePreview:null, videoPreview:null }]);
+    setSelectedCategories([]); 
+    setSelectedCategoriess([]);
+    setHashtags('');
+    setTranslatedText('');
+    setNormal('');
 
   } catch (error) {
     console.error('Error creating task:', error);
   }
 };
-
 
   const translateText = async (text) => {
     setNormal(text);
@@ -800,7 +807,7 @@ const handleChange = (selectedOptions = []) => {
     }
     console.log("presionado", usuario.user.id);
     try {
-      const res = await axios.get(`http://localhost:8000/api/profiles/${usuario.user.id}/likes/`, {
+      const res = await axios.get(`http://127.0.0.1:8000/api/profiles/${usuario.user.id}/likes/`, {
         headers: {
           Authorization: `Token ${localStorage.getItem("userTokenLG")}`,
         },
@@ -824,7 +831,7 @@ const handleChange = (selectedOptions = []) => {
   // ---------- handleLike ----------
   const handleLike = async (profileId) => {
     try {
-      const response = await axios.post(`http://localhost:8000/api/profiles/${profileId}/like/`, {}, {
+      const response = await axios.post(`http://127.0.0.1:8000/api/profiles/${profileId}/like/`, {}, {
         headers: {
           Authorization: `Token ${localStorage.getItem("userTokenLG")}`,
         },
@@ -858,7 +865,7 @@ const handleClose = (taskId) => {
 
   const obtenerLikes = async (userId) => {
     try {
-      const res = await axios.get(`http://localhost:8000/api/profiles/${userId}/likes/`, {
+      const res = await axios.get(`http://127.0.0.1:8000/api/profiles/${userId}/likes/`, {
         headers: {
           Authorization: `Token ${localStorage.getItem("userTokenLG")}`,
         },
@@ -1081,21 +1088,25 @@ const temaMatch = task.pch === tema;
   };
 
   // ---------- open modal share (shared users list) ----------
-  const openModalShare = async (taskId) => {
-    const token = localStorage.getItem("userTokenLG");
-    try {
-      const response = await axios.get(`http://127.0.0.1:8000/api/tasks/${taskId}/shared-users/`, {
-        headers: {
-          Authorization: `Token ${token}`,
-        },
-      });
-      setSharedUsers(response.data);
-      setModalOpenShare(true);
-    } catch (error) {
-      console.error("Error al obtener usuarios que compartieron la tarea:", error);
-    }
-  };
 
+const openModalShare = async (taskId) => {
+  setModalOpenShare(true);
+  try {
+    const token = localStorage.getItem("userTokenLG");
+    const { data } = await axios.get(
+      `http://127.0.0.1:8000/api/tasks/${taskId}/shared-users/`,
+      { headers: { Authorization: `Token ${token}` } }
+    );
+    const arr =
+      Array.isArray(data) ? data :
+      Array.isArray(data?.results) ? data.results :
+      Array.isArray(data?.users) ? data.users : [];
+    setSharedUsers(arr);
+  } catch (err) {
+    console.error('Error al obtener usuarios que compartieron:', err);
+    setSharedUsers([]);
+  }
+};
   // ---------- toggles / UI ----------
   const toggleMostrarUsuarios = () => {
     setMostrarUsuarios(prevState => !prevState);
@@ -1136,7 +1147,7 @@ const getTasksMios = async () => {
   if (!currentUserId) return;
 
   try {
-    const { data } = await axios.get(`http://127.0.0.1:8000/api/tasks/${currentUserId}`, {
+    const { data } = await axios.get(`http://127.0.0.1:8000/api/tasks_by_user/${currentUserId}/`, {
       headers: {
         Authorization: `Token ${localStorage.getItem("userTokenLG")}`,
       },
@@ -1175,7 +1186,7 @@ const getTasksMios = async () => {
 
   const getTasksUsuarioSeleccionado = async (userId) => {
     try {
-      const response = await axios.get(`http://127.0.0.1:8000/api/tasksUserSelect/${userId}`, {
+      const response = await axios.get(`http://127.0.0.1:8000/api/tasks/user/${userId}/`, {
         headers: {
           Authorization: `Token ${localStorage.getItem("userTokenLG")}`,
         },
@@ -1268,14 +1279,42 @@ const seleccionarUsuario = async (userId, username) => {
 
 
 
-// const safeItems = Array.isArray(items) ? items : [];
+// --- helpers robustos ---
+// antes (rompe en Vite/webpack5 sin polyfill)
+// const API_BASE = process.env.REACT_APP_API_BASE ?? 'http://127.0.0.1:8000';
 
-// helpers arriba del componente (o dentro, antes del return)
+// después (robusto)
+const API_BASE = 'http://127.0.0.1:8000';
+
+
+
 const cleanVal = (v) => {
   if (!v) return null;
   const s = String(v).trim();
-  if (s === "undefined" || s === "null" || s === "No image available" || s === "") return null;
+  if (s === "" || s === "No image available" || s === "undefined" || s === "null") return null;
   return s;
+};
+
+const toSrc = (path) => {
+  const p = cleanVal(path);
+  if (!p) return "";
+  if (/^https?:\/\//i.test(p) || p.startsWith("blob:") || p.startsWith("data:")) return p;
+  try {
+    return new URL(p.startsWith("/") ? p : `/${p}`, API_BASE).href;
+  } catch {
+    return p;
+  }
+};
+
+// intenta múltiples nombres comunes para avatar/foto de usuario, incluso anidados
+const getUserAvatarSrc = (u) => {
+  const candidates = [
+    u.user_image, u.user_image_url, u.image, u.avatar, u.avatar_url,
+    u.profile_image, u.photo, u.picture,
+    u.user?.user_image, u.user?.image, u.user?.avatar,
+  ];
+  const found = candidates.map(cleanVal).find(Boolean);
+  return found ? toSrc(found) : null;
 };
 
 const first = (...vals) => vals.find(Boolean) || null;
@@ -1309,45 +1348,105 @@ const getFirstVideo = (link) => {
 };
 
 
-  const handleListUsers = async (task) => {
-    try {
-      const token = localStorage.getItem("userTokenLG");
-      const { data } = await axios.get(`http://127.0.0.1:8000/api/tasks/${task.id}/likes/`, {
-        headers: { Authorization: `Token ${token}` },
-      });
-      setListUsers(Array.isArray(data) ? data : []);
-      setModalOpen(true);
-    } catch (err) {
-      console.error('Error al listar usuarios que dieron like:', err);
+const handleListUsers = async (taskOrId) => {
+  const taskId = typeof taskOrId === 'object' ? taskOrId.id : taskOrId;
+  setModalOpen(true);
+  try {
+    const token = localStorage.getItem("userTokenLG");
+    const { data } = await axios.get(
+      `http://127.0.0.1:8000/api/tasks/${taskId}/users_who_liked/`,
+      { headers: { Authorization: `Token ${token}` } }
+    );
+    const arr =
+      Array.isArray(data) ? data :
+      Array.isArray(data?.results) ? data.results :
+      Array.isArray(data?.users) ? data.users : [];
+    setListUsers(arr);
+  } catch (err) {
+    console.error('Error al listar usuarios que dieron like:', err);
+    setListUsers([]); // evita crash de render
+  }
+};
+
+
+const handleUpdate = async (task) => {
+  try {
+    await axios.put(`http://127.0.0.1:8000/api/tasks/${task.id}/`, task, {
+      headers: { Authorization: `Token ${localStorage.getItem("userTokenLG")}` },
+    });
+    // Si usas RTK Query:
+    refetch();
+// O actualiza tu estado local 'items' de forma optimista:
+    // setItems(prev => prev.map(t => t.id === task.id ? {...t, ...task} : t));    
+  } catch (error) {
+    console.error('Error updating task:', error.response || error);
+  }
+};
+
+
+const toggleLike = async (task) => {
+  const token = localStorage.getItem("userTokenLG");
+  const url = `http://127.0.0.1:8000/api/tasks/${task.id}/likes/`;
+  try {
+    if (!task.userHasLiked) {
+      const { data } = await axios.post(url, {}, { headers: { Authorization: `Token ${token}` }});
+      // optimistic update
+      setItems(prev => prev.map(t =>
+        t.id === task.id ? { ...t, userHasLiked: true, likes_count: data?.likes_count ?? (t.likes_count + 1) } : t
+      ));
+    } else {
+      const { data } = await axios.delete(url, { headers: { Authorization: `Token ${token}` }});
+      setItems(prev => prev.map(t =>
+        t.id === task.id ? { ...t, userHasLiked: false, likes_count: data?.likes_count ?? (t.likes_count - 1) } : t
+      ));
     }
-  };
+  } catch (err) {
+    console.error('Error al dar/retirar like:', err);
+  }
+};
 
-  const handleUpdate = async (task) => {
-    try {
-      const token = localStorage.getItem("userTokenLG");
-      const { data } = await axios.post(`http://127.0.0.1:8000/api/tasks/${task.id}/like/`, {}, {
-        headers: { Authorization: `Token ${token}` },
-      });
-      setItems(prev => prev.map(t => {
-        if (t.id !== task.id) return t;
-        const likes_count = typeof data?.likes_count === 'number'
-          ? data.likes_count
-          : (t.userHasLiked ? t.likes_count - 1 : t.likes_count + 1);
-        return { ...t, userHasLiked: !t.userHasLiked, likes_count };
-      }));
-    } catch (err) {
-      console.error('Error al dar/retirar like:', err);
-    }
-  };
+// renómbralo si quieres
+const toggleTaskLike = async (task) => {
+  const token = localStorage.getItem("userTokenLG");
+  const url = `http://127.0.0.1:8000/api/tasks/${task.id}/`; // <-- ESTA es la ruta que sí existe (PUT = toggle like)
+  const liked = !!task.userHasLiked;
 
+  // Optimistic update
+  setItems(prev => prev.map(t =>
+    t.id === task.id
+      ? {
+          ...t,
+          userHasLiked: !liked,
+          likes_count: (t.likes_count ?? 0) + (liked ? -1 : 1),
+          like_set: (Array.isArray(t.like_set) ? (
+            liked
+              ? t.like_set.filter(l => l?.user?.id !== dataa)
+              : [...t.like_set, { user: { id: dataa } }]
+          ) : [])
+        }
+      : t
+  ));
 
-
-
-const toSrc = (path) => {
-  const p = cleanVal(path);
-  if (!p) return "";
-  if (p.startsWith("blob:") || p.startsWith("data:") || /^https?:\/\//i.test(p)) return p;
-  return `http://127.0.0.1:8000${p.startsWith("/") ? p : `/${p}`}`;
+  try {
+    await axios.put(url, {}, { headers: { Authorization: `Token ${token}` } });
+  } catch (err) {
+    // Revertir si falla
+    setItems(prev => prev.map(t =>
+      t.id === task.id
+        ? {
+            ...t,
+            userHasLiked: liked,
+            likes_count: (t.likes_count ?? 0) + (liked ? 1 : -1),
+            like_set: (Array.isArray(t.like_set) ? (
+              liked
+                ? [...t.like_set, { user: { id: dataa } }]
+                : t.like_set.filter(l => l?.user?.id !== dataa)
+            ) : [])
+          }
+        : t
+    ));
+    console.error('Error al dar/retirar like:', err);
+  }
 };
 
 
@@ -1439,9 +1538,14 @@ return (
           </div>
         </div>
 
-    <div className="perfilHeart" onClick={() => handleLikeToggle(perfilIdActual)}>
+<div
+  className="perfilHeart"
+  onClick={() => perfilIdActual && handleLikeToggle(perfilIdActual)}
+  aria-disabled={!perfilIdActual}
+>
   <FontAwesomeIcon icon={faHeart} style={{ color: perfilEstaEnFavoritos ? "#54afff" : "white" }} />
 </div>
+
 
         <div>
           <div style={{ fontSize: "1.6em", marginTop: "-9px" }} onClick={() => obtenerLikes(usuario.user.id)}>
@@ -1450,44 +1554,55 @@ return (
         </div>
 
         <div>
-          <Modal
-            isOpen={isLikesModalOpen}
-            onRequestClose={() => setIsLikesModalOpen(false)}
-            contentLabel="Lista de Likes"
-          >
-            <h2>Usuarios que dieron Like</h2>
-            <ul>
-              {likes.map((user) => (
-                <div key={user.id} className="user-info-container">
-                  <div className="user-info">
+        <Modal
+  isOpen={isLikesModalOpen}
+  onRequestClose={() => setIsLikesModalOpen(false)}
+  contentLabel="Lista de Likes"
+>
+  <h2>Usuarios que dieron Like</h2>
 
-                    <div className="user-image-container">
-                      {user.user_image && user.user_image !== "No image available" ? (
-                        <img src={toSrc(user.user_image)} alt="Usuario" className="user-circle-image" />
-                      ) : (
-                        <div className="user-icon-placeholder">
-                          <FontAwesomeIcon
-                            icon={faUser}
-                            style={{ color: "grey", cursor: "pointer" }}
-                          />
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="user-details">
-                      <div className="username-info">{user.username}</div>
-                    </div>
-
-                    <div className="LikeHeart">
-                      <div className="likes-count-info">{user.likes_count}</div>
-                      <FontAwesomeIcon icon={faHeart} style={{ color: "grey", cursor: "pointer" }} />
-                    </div>
-
-                  </div>
+  <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+    {(likes || []).map((u, i) => (
+      <li
+        key={`like-${u.id ?? u.user?.id ?? u.username}-${i}`}
+        className="user-info-container"
+        style={{ marginBottom: 12 }}
+      >
+        <div className="user-info" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div className="user-image-container">
+            {(() => {
+              const avatar = getUserAvatarSrc(u);
+              return avatar ? (
+                <img
+                  src={avatar}
+                  alt={u.username || 'usuario'}
+                  className="user-circle-image"
+                  onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/placeholder.png'; }}
+                />
+              ) : (
+                <div className="user-icon-placeholder">
+                  <FontAwesomeIcon icon={faUser} style={{ color: "grey", cursor: "default" }} />
                 </div>
-              ))}
-            </ul>
-          </Modal>
+              );
+            })()}
+          </div>
+
+          <div className="user-details" style={{ flex: 1 }}>
+            <div className="username-info">{u.username}</div>
+          </div>
+
+          <div className="LikeHeart" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div className="likes-count-info">{u.likes_count ?? 0}</div>
+            <FontAwesomeIcon icon={faHeart} style={{ color: "grey" }} />
+          </div>
+        </div>
+      </li>
+    ))}
+  </ul>
+
+  <button onClick={() => setIsLikesModalOpen(false)}>Cerrar</button>
+</Modal>
+
         </div>
 
         <div className="tema-buttons">
@@ -1899,6 +2014,11 @@ return (
                 if (soloFavoritosTareas) {
                   return pchFavoritos.includes(link.id);
                 }
+                   // si no hay usuario seleccionado y activaste "Perfiles favoritos",
+   // muestra solo tareas cuyos autores están en tus perfiles favoritos
+                if (mostrarSoloFavoritos) {
+                  return favoritosIds.includes(link.user);
+                }
                 return true;
               })
               .sort((a, b) => {
@@ -2173,40 +2293,52 @@ const videoPath = getFirstVideo(link);
     .map(c => <span key={c} className="chip">{c}</span>)}</div> */}
 
                         {/* Modales */}
-                        <Modal
-                          isOpen={isModalOpen}
-                          onRequestClose={() => setModalOpen(false)}
-                          contentLabel="Usuarios que dieron like"
-                        >
-                          <h2>Usuarios que dieron "like" a la tarea:</h2>
-                          <ul>
-                            {listUsers.map(user => (
-                              <div key={user.id} onClick={() => setPeticionajena(user.id)}>
-                                <div className="user-info">
-                                  <div className="user-image-container">
-                                    {user.user_image && user.user_image !== "No image available" ? (
-                                      <img src={toSrc(user.user_image)} alt="Usuario" className="user-circle-image" />
-                                    ) : (
-                                      <div className="user-icon-placeholder">
-                                        <FontAwesomeIcon icon={faUser} style={{ color: "grey", cursor: "pointer" }} />
-                                      </div>
-                                    )}
-                                  </div>
+<Modal
+  isOpen={isModalOpen}
+  onRequestClose={() => setModalOpen(false)}
+  contentLabel="Usuarios que dieron like a la tarea"
+>
+  <h2>Usuarios que dieron "like" a la tarea</h2>
 
-                                  <div className="user-details">
-                                    <div className="username-info">{user.username}</div>
-                                  </div>
+  <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+    {(listUsers || []).map((u, i) => (
+      <li
+        key={`likedby-${u.id ?? u.user?.id ?? u.username}-${i}`}
+        style={{ marginBottom: 12, cursor: 'pointer' }}
+        onClick={() => setPeticionajena && setPeticionajena(u.id)}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div>
+            {(() => {
+              const avatar = getUserAvatarSrc(u);
+              return avatar ? (
+                <img
+                  src={avatar}
+                  alt={u.username || 'usuario'}
+                  className="user-circle-image"
+                  onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/placeholder.png'; }}
+                />
+              ) : (
+                <FontAwesomeIcon icon={faUser} style={{ color: 'grey' }} />
+              );
+            })()}
+          </div>
 
-                                  <div className="LikeHeart">
-                                    <div className="likes-count-info">{user.likes_count}</div>
-                                    <FontAwesomeIcon icon={faHeart} style={{ color: "grey", cursor: "pointer" }} />
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
-                          </ul>
-                          <button onClick={() => setModalOpen(false)}>Cerrar</button>
-                        </Modal>
+          <div style={{ flex: 1 }}>
+            <div className="username-info">{u.username}</div>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div>{u.likes_count ?? 0}</div>
+            <FontAwesomeIcon icon={faHeart} style={{ color: 'grey' }} />
+          </div>
+        </div>
+      </li>
+    ))}
+  </ul>
+
+  <button onClick={() => setModalOpen(false)}>Cerrar</button>
+</Modal>
 
 <Modal
   isOpen={isModalOpenImage}
@@ -2225,30 +2357,48 @@ const videoPath = getFirstVideo(link);
 </Modal>
 
 {/* debajo del Modal de likes/imagen, por ejemplo */}
+
 <Modal
   isOpen={isModalOpenShare}
   onRequestClose={() => setModalOpenShare(false)}
   contentLabel="Usuarios que compartieron"
 >
   <h2>Usuarios que compartieron</h2>
-  <ul>
-    {(sharedUsers || []).map(u => (
-      <li key={u.id} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-        {u.user_image && u.user_image !== "No image available"
-          ? <img src={toSrc(u.user_image)} alt="" style={{ width: 32, height: 32, borderRadius: '50%' }} />
-          : <FontAwesomeIcon icon={faUser} />}
+
+  <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+    {(sharedUsers || []).map((u, i) => (
+      <li
+        key={`shared-${u.id ?? u.user?.id ?? u.username}-${i}`}
+        style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}
+      >
+        {(() => {
+          const avatar = getUserAvatarSrc(u);
+          return avatar ? (
+            <img
+              src={avatar}
+              alt={u.username || ''}
+              style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover' }}
+              onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/placeholder.png'; }}
+            />
+          ) : (
+            <FontAwesomeIcon icon={faUser} />
+          );
+        })()}
         <span>{u.username}</span>
       </li>
     ))}
   </ul>
+
   <button onClick={() => setModalOpenShare(false)}>Cerrar</button>
 </Modal>
 
 
 
+
+
                         <div className="line-down">
                           <div className="likes">
-                          <button
+                          {/* <button
   type="button"
   className={`nlink ${selectedReplyId === link.id ? 'nlink-selected' : ''}`}
   onClick={(e) => {
@@ -2258,12 +2408,30 @@ const videoPath = getFirstVideo(link);
   aria-pressed={selectedReplyId === link.id}
 >
   Responder
+</button> */}
+<button
+  type="button"
+  className={`nlink ${selectedReplyId === link.id ? 'nlink-selected' : ''}`}
+  onClick={(e) => {
+    e.stopPropagation();
+    setSelectedReplyId(prev => (prev === link.id ? null : link.id));
+  }}
+  aria-pressed={selectedReplyId === link.id}
+  aria-controls={`reply-${link.id}`}
+  aria-expanded={selectedReplyId === link.id}
+>
+  Responder
 </button>
 
+{selectedReplyId === link.id && (
+  <div id={`reply-${link.id}`}>
+    {/* tu caja de respuesta aquí */}
+  </div>
+)}
 
                             <div className="like">
-                              <div className="like_cantidad" onClick={() => handleListUsers(link)}>{link.likes_count}</div>
-                              <div onClick={() => handleUpdate(link)}>
+                              <div className="like_cantidad" onClick={() => handleListUsers(link.id)}>{link.likes_count}</div>
+                              <div onClick={() => toggleTaskLike(link)}>
                                 <FontAwesomeIcon style={{ color: link.userHasLiked ? "#54afff" : "white" }} icon={faHeart} />
                               </div>
                             </div>
@@ -2271,7 +2439,7 @@ const videoPath = getFirstVideo(link);
                             <div className="megusta">
                               <div className="compartir">
                                 <div className="compartirNumero" onClick={() => openModalShare(link.id)}>{link.share_count}</div>
-                                <div className="compartirIcon" onClick={() => openShareModal(link)}>
+                                <div className="compartirIcon" onClick={() => openShareModal(link.id)}>
                                   <FontAwesomeIcon icon={faArrowRight} />
                                 </div>
                               </div>
@@ -2304,12 +2472,36 @@ const videoPath = getFirstVideo(link);
                           })()}
                         </div>
 
-                        <SharedTaskModal
-                          isOpen={isShareModalOpen}
-                          taskId={selectedTask ? selectedTask.id : null}
-                          onClose={() => setIsShareModalOpen(false)}
-                          onShared={(nuevoShared) => console.log("Se compartió:", nuevoShared)}
-                        />
+             <SharedTaskModal
+  isOpen={isShareModalOpen}
+  taskId={selectedTask ? selectedTask.id : null}
+  onClose={() => setIsShareModalOpen(false)}
+  onShared={({ server, taskId, description }) => {
+    // 1) Update optimista del item en el feed
+    setItems(prev =>
+      prev.map(t =>
+        t.id === taskId
+          ? {
+              ...t,
+              // si el backend devuelve el contador/lista, úsalo; si no, calcúlalo
+              share_count: server?.share_count ?? ((t.share_count ?? 0) + 1),
+              shared_by_list: server?.shared_by_list ?? [
+                ...(t.shared_by_list || []),
+                { id: usuario.user.id, username: usuario.user.username, description }
+              ]
+            }
+          : t
+      )
+    );
+
+    // 2) Cierra el modal
+    setIsShareModalOpen(false);
+
+    // 3) (Opcional pero recomendado) Refresca del server para dejar todo consistente
+    //    — no bloquea la UI porque ya hicimos el update optimista
+    refetch();
+  }}
+/>
                       </div>
                     </div>
                     </div>

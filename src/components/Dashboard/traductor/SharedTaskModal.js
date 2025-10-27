@@ -21,7 +21,7 @@ const res = await axios.post(
   }
 );
 
-      if (onShared) onShared(res.data); // callback opcional
+      if (onShared) onShared({ server: res.data, taskId, description }); // callback opcional
       setDescription("");
       onClose();
     } catch (error) {

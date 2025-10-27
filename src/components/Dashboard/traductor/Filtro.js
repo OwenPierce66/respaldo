@@ -6,7 +6,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFilter, faClipboardList, faCalendar, faStar, faUser, faHeart, faGlobe, faUsers } from '@fortawesome/free-solid-svg-icons';
 import "../owenscss/traductor.scss";
 
-const TaskFilterMenu = ({ tema, mostrarSoloFavoritos, setSoloFavoritosTareas, cargarFavoritosPerfilesUsuarioSeleccionado, cargarFavoritosUsuarioSeleccionado, mostrarSoloFavoritosUsuarioSeleccionado, setMostrarSoloFavoritosUsuarioSeleccionado, usuarioSeleccionado, setFiltro, soloFavoritosTareas, toggleMostrarFavoritosTareas, mostrarUsuarios, toggleMostrarFavoritos, handleMostrarCompartidos, showMyTasksOnly }) => {
+const TaskFilterMenu = ({ tema, mostrarSoloFavoritos, setSoloFavoritosTareas, cargarFavoritosPerfilesUsuarioSeleccionado, cargarFavoritosUsuarioSeleccionado, mostrarSoloFavoritosUsuarioSeleccionado, setMostrarSoloFavoritosUsuarioSeleccionado, usuarioSeleccionado, setFiltro, soloFavoritosTareas, mostrarUsuarios, toggleMostrarFavoritos, handleMostrarCompartidos, showMyTasksOnly }) => {
     const [anchorEl, setAnchorEl] = useState(null);
     const [filtroSeleccionado, setFiltroSeleccionado] = useState('popularidad'); // Predeterminado por popularidad
 
@@ -38,9 +38,9 @@ const TaskFilterMenu = ({ tema, mostrarSoloFavoritos, setSoloFavoritosTareas, ca
     const handleFilterByFavoritesTareas = () => {
         if (usuarioSeleccionado) {
             cargarFavoritosUsuarioSeleccionado(usuarioSeleccionado);
-            setMostrarSoloFavoritosUsuarioSeleccionado(!mostrarSoloFavoritosUsuarioSeleccionado);
+            setMostrarSoloFavoritosUsuarioSeleccionado(prev => !prev);
         } else {
-            toggleMostrarFavoritosTareas();
+            setSoloFavoritosTareas(prev => !prev); // <— usa el setter que recibes
         }
         handleClose();
     };
@@ -96,8 +96,7 @@ const TaskFilterMenu = ({ tema, mostrarSoloFavoritos, setSoloFavoritosTareas, ca
                     </div>
                 )}
 
-                <MenuItem onClick={() => { setSoloFavoritosTareas(prevState => !prevState), handleClose() }// Alterna el estado de soloFavoritosTareas entre true y false
-                }>
+                <MenuItem onClick={() => { toggleMostrarFavoritos(); handleClose(); }}>
                     <FontAwesomeIcon icon={mostrarSoloFavoritos ? faUsers : faHeart} />
                     <div style={{ paddingLeft: "5px" }}>{mostrarSoloFavoritos ? 'Todos los Perfiles' : 'Perfiles Favoritos'}</div>
                 </MenuItem>

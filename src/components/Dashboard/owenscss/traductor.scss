@@ -1040,7 +1040,7 @@
   .like {
     // margin-left: 40px;
     // margin-right: 40px;
-    margin-top: -9px;
+    margin-top: -3px;
     display: flex;
     color: white;
   }
@@ -1081,14 +1081,14 @@
     width: 100%;
 
     display: flex;
-    margin-top: -7px;
+    // margin-top: -3px;
     justify-content: space-between;
     align-items: center;
   }
 
   .nlink {
     padding: 5px 9px;
-    margin-bottom: 10px;
+    margin-bottom: -3px;
     border-radius: 10px;
     text-decoration: none;
     margin-left: 6px;
@@ -1096,7 +1096,7 @@
     color: black !important;
     font-size: 22px;
     transition: all 0.3s ease; // Para animar la transformación
-
+        background-color: transparent;
     &:hover {
       background-color: black; // Cambia el fondo al pasar el mouse
       color: white !important; // Cambia el color del texto
@@ -1304,7 +1304,7 @@
     overscroll-behavior: contain;
 
     padding-bottom: 100px;
-    outline: 2px dashed hotpink;
+    // outline: 2px dashed hotpink;
   }
 
   .category-menu {
