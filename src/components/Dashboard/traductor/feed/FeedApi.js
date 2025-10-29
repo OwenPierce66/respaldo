@@ -37,7 +37,7 @@ export const feedApi = createApi({
 
     // ⚠️ Back compat: crear con POST a /tasks/:pathId/
     createTask: builder.mutation({
-      // pasamos pathId dinamicamente
+      // pasamos pathId dinamicamente7yyy5
       query: ({ formData, pathId }) => ({
         url: `/tasks/${pathId}/`,
         method: 'POST',

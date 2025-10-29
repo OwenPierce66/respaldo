@@ -36,27 +36,17 @@ const Peticiones = (props) => {
   // preferencia: props (connect) > redux hook
   const user = props.user || reduxUser;
   const subscriptionStatus = props.subscriptionStatus || reduxSubscriptionStatus;
-// estado que se liga al input
-// este es el que usas en tus filtros
 
-  // RTK Query feed (si existe)
-// const { data: feed = [], isLoading, isError, refetch } = useGetFeedQuery();
 const [createTask] = useCreateTaskMutation();
-  // ---------------------------
-  // Hooks - estados (todos top-level)
-  // ---------------------------
-  // UI / selection
+
   const [selectedTask, setSelectedTask] = useState(null);
-  // const [filter, setFilter] = useState("all");
 
   // Modales
   const [isPortadaModalOpen, setIsPortadaModalOpen] = useState(false);
   const [isLikesModalOpen, setIsLikesModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  // const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [isModalOpen, setModalOpen] = useState(false);
   const [isModalOpenImage, setModalOpenImage] = useState(false);
-  // const [modalIsOpen, setModalIsOpen] = useState(false);
   const [isModalOpenShare, setModalOpenShare] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
@@ -80,16 +70,10 @@ const [searchInput, setSearchInput] = useState('');
   const [mostrarUsuarios, setMostrarUsuarios] = useState(false);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
 
-  // Tasks, feed y normalizados
-  // const [tasks, setTasks] = useState([]);
-  // const [data, setData] = useState([]);
-  // const [normalizedTasks, setNormalizedTasks] = useState([]);
-  // const [sharedTasks, setSharedTasks] = useState(null);
-  // const [tasksArrayStateMarker, setTasksArrayStateMarker] = useState(null); // placeholder if you need
 const [categories, setCategories] = useState([]);
 const [likes, setLikes] = useState([]); 
 const [peticionajena, setPeticionajena] = useState(null); 
-  // Formulario de creación
+
   const [masTasks, setMasTasks] = useState([{
     title: '',
     description: '',
@@ -123,9 +107,7 @@ const [peticionajena, setPeticionajena] = useState(null);
   const [favoritosUsuarioSeleccionado, setFavoritosUsuarioSeleccionado] = useState([]);
   const [favoritosPerfilesUsuarioSeleccionado, setFavoritosPerfilesUsuarioSeleccionado] = useState([]);
   const [mostrarSoloFavoritosUsuarioSeleccionado, setMostrarSoloFavoritosUsuarioSeleccionado] = useState(false);
-  const [tareasFavoritosIds, setTareasFavoritosIds] = useState([]); // derived, but keep for clarity
   const [perfilLikesCount, setPerfilLikesCount] = useState(0);
-  const [hasLiked, setHasLiked] = useState(false);
 
   // Portadas / imagen fija
   const [portadas, setPortadas] = useState([]);
@@ -145,20 +127,13 @@ const [peticionajena, setPeticionajena] = useState(null);
   const [predefinedCategoriesUserSelect, setPredefinedCategoriesUserSelect] = useState([]);
   const [showLink, setShowLink] = useState({});
   const [imagen, setImagen] = useState("");
-  // const [selected, setSelected] = useState(false);
   const [anchorEl, setAnchorEl] = useState({});
-  // const [mostrarModal, setMostrarModal] = useState(false);
   const [translatedText, setTranslatedText] = useState("");
   const [normal, setNormal] = useState("");
-  // const [juntar, setJuntar] = useState("");
-  // const [mostrar, setMostrar] = useState("");
   const [expandedId, setExpandedId] = useState(null);
   const toggleExpand = (id) => setExpandedId(prev => prev === id ? null : id);
   const [dataa, setDataa] = useState("");
-  // const [filterLocal, setFilterLocal] = useState(null); // placeholder if needed
-// const perfilIdActual = usuarioSeleccionado ?? usuario?.user?.id;
-
-
+ 
 const favoritosIds = useMemo(
      () => (Array.isArray(favoritos) ? favoritos.map(f => f.id) : []),
    [favoritos]
@@ -167,9 +142,7 @@ const favoritosIds = useMemo(
  const perfilEstaEnFavoritos =
    perfilIdActual != null && favoritosIds.includes(perfilIdActual);
 
-// const perfilEstaEnFavoritos = favoritosIds.includes(perfilIdActual);
 
-  // Joyride (tutorial)
   const [joyrideState, setJoyrideState] = useState({
     run: true,
     steps: [
@@ -189,27 +162,8 @@ const favoritosIds = useMemo(
     stepIndex: 0,
   });
 
-  // ---------------------------
-  // Derived values / small helpers
-  // ---------------------------
-  // const tasksArrayFromFeed = tasksArray; 
-
-  // Preferencia: id list of favoritos de perfiles
-  // const favoritosIds = favoritos.map(favorito => favorito.id) || [];
-
-  // placeholder derived
   const tareasFavoritosIdsDerived = pchFavoritos.map(id => id);
-  // keep also in state if code uses tareasFavoritosIds variable name:
   const tareasFavoritosIdsVar = tareasFavoritosIdsDerived;
-
-
-// const [page, setPage] = useState(null);    
-
-// RTK query con params
-// const { data: page, isLoading, isFetching, isError } = useGetFeedQuery({ limit: PAGE_SIZE, offset });
-
-// const seenIdsRef = useRef(new Set());
-// const ioRef = useRef(null);
 
 const PAGE_SIZE = 3;
 
@@ -221,7 +175,6 @@ const loadingRef = useRef(false);
 const sentinelRef = useRef(null);
 const scrollRootRef = useRef(null);
 
-// const [isFetching, setIsFetching] = useState(false);
 const lastScrollYRef = useRef(0);
 
 const {
@@ -229,12 +182,6 @@ const {
   isFetching: rtkIsFetching,  // <-- usar este
   refetch,
 } = useGetFeedQuery({ limit: PAGE_SIZE, offset });
-// const canLoadMore = !!page?.next;
-// arriba, con otros hooks
-// const loaderRef = useRef(null);
-// evita disparos dobles si el observer llama muy seguido
-// const requestingMoreRef = useRef(false);
-// const allowAutoLoadRef = useRef(true);
 
 const loadMore = useCallback(() => {
   if (loadingRef.current) return;
@@ -243,34 +190,109 @@ const loadMore = useCallback(() => {
   setOffset(o => o + PAGE_SIZE);
 }, [rtkIsFetching, canLoadMore]);
 
+
+
+  // Formulario de creación
+// === DEBUG UTILS (pegar una sola vez, arriba del archivo) ===
+const DEBUG = true;
+
+const dbg = (...args) => { if (DEBUG) console.log(...args); };
+const dgbWarn = (...args) => { if (DEBUG) console.warn(...args); };
+
+const dgbGroup = (label, fn) => {
+  if (!DEBUG) { if (typeof fn === 'function') fn(); return; }
+  console.groupCollapsed(label);
+  try { if (typeof fn === 'function') fn(); }
+  finally { console.groupEnd(); }
+};
+
+// ===== DEBUG helpers extra (añadir una sola vez) =====
+const getNested = (obj, path) =>
+  path.split('.').reduce((o, k) => (o && o[k] !== undefined ? o[k] : undefined), obj);
+
+const inspectUserMedia = (u, label = '[inspectUserMedia]') => {
+  if (!DEBUG) return;
+  try {
+    console.groupCollapsed(`${label} id=${u?.id} username=${u?.username}`);
+    const candidates = [
+      'user_image', 'user_image_url', 'image', 'avatar', 'avatar_url',
+      'profile_image', 'photo', 'picture',
+      'user.user_image', 'user.image', 'user.avatar',
+    ];
+
+    // Tabla con los campos encontrados y su valor bruto
+    const foundPairs = candidates
+      .map(k => [k, getNested(u, k)])
+      .filter(([, v]) => v !== undefined);
+
+    console.table(Object.fromEntries(foundPairs));
+
+    // Mismo cálculo que haría tu getUserAvatarSrc + toSrc, pero inline para debug
+    const raw = foundPairs.find(([, v]) => v && String(v).trim() && v !== 'No image available')?.[1] ?? null;
+    const src = raw
+      ? (/^(https?:\/\/|blob:|data:)/i.test(String(raw)) ? String(raw) : new URL(String(raw).startsWith('/') ? String(raw) : `/${String(raw)}`, 'http://127.0.0.1:8000').href)
+      : null;
+
+    console.log('rawCandidate:', raw);
+    console.log('computed src:', src);
+  } finally {
+    console.groupEnd();
+  }
+};
+
+
+const isObj = (v) => v && typeof v === 'object' && !Array.isArray(v);
+
+const safeUserKey = (u, i = 0) =>
+  (u?.id ?? u?.user?.id ?? u?.pk ?? u?.user_id ?? u?.username ?? `row-${i}`);
+
+const normalizeUsersResponse = (data) => {
+  // Acomoda las 3 formas más comunes de payload
+  let arr = Array.isArray(data) ? data
+    : Array.isArray(data?.results) ? data.results
+    : Array.isArray(data?.users) ? data.users
+    : [];
+
+  // Filtra basura: null/undefined y que no sean objetos
+  arr = arr.filter(isObj);
+
+  // Normaliza campos clave que usas en el render
+  return arr.map((u) => ({
+    id: u?.id ?? u?.user?.id ?? u?.pk ?? u?.user_id ?? null,
+    username: u?.username ?? u?.user?.username ?? '',
+    likes_count: u?.likes_count ?? 0,
+    _orig: u, // conserva el original para getUserAvatarSrc(u)
+  }));
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // Liberar bandera local cuando RTK termina
 useEffect(() => {
   if (!rtkIsFetching) loadingRef.current = false;
 }, [rtkIsFetching]);
 
-
-
-
-
-
-
-
-
-
-
-// const [rawSearch, setRawSearch] = useState('');
-// const debouncedSearch = useMemo(() => {
-//   const h = setTimeout(() => setCombinedSearchTerm(rawSearch), 250);
-//   return () => clearTimeout(h);
-// }, [rawSearch]);
-// useEffect(() => debouncedSearch, [debouncedSearch]);
-
-// input:
-
-
-// useEffect(() => {
-//   if (!isFetching) loadingRef.current = false;
-// }, [isFetching]);
 
 useEffect(() => {
   if (!scrollRootRef.current || !sentinelRef.current) return;
@@ -375,28 +397,14 @@ useEffect(() => {
 }, [usuario?.user?.id]);
 
 
-// useEffect(() => {
-//   const controller = new AbortController();
-//   (async () => {
-//     setIsFetching(true);
-//     try {
-//       const { data } = await api.get(`/feed/?limit=${PAGE_SIZE}&offset=${offset}`, { signal: controller.signal });
-//     } catch (e) {
-//       if (e.name !== 'CanceledError' && e.name !== 'AbortError') console.error(e);
-//     } finally {
-//       setIsFetching(false);
-//     }
-//   })();
-//   return () => controller.abort();
-// }, [offset]);
 
-// useEffect(() => {
-//   const id = setTimeout(() => {
-//     setCombinedSearchTerm(searchInput.trim());
-//   }, 250);
 
-//   return () => clearTimeout(id); // limpia si el usuario vuelve a teclear antes de 250ms
-// }, [searchInput]);
+
+
+
+
+
+
 
 
 
@@ -447,7 +455,7 @@ useEffect(() => {
       const currentUserId = usuario?.user?.id;
       const userHasLiked = response.data.some(like => like.id === currentUserId);
       console.log("Usuario actual:", currentUserId, "Ha dado like:", userHasLiked);
-      setHasLiked(userHasLiked);
+      // setHasLiked(userHasLiked);
     } catch (error) {
       console.error('Error al cargar favoritos:', error);
     }
@@ -496,37 +504,6 @@ useEffect(() => {
     }
   };
 
-  // ---------- Tasks CRUD / fetch ----------
-  // const addOrEditTiendaa = async () => {
-  //   try {
-  //     const token = localStorage.getItem("userTokenLG");
-  //     const response = await axios.get('http://127.0.0.1:8000/api/get-user/', {
-  //       headers: {
-  //         Authorization: `Token ${token}`,
-  //       },
-  //     });
-  //     const userDetails = response.data;
-  //     console.log(userDetails);
-  //     setDataa(userDetails.user.id);
-  //   } catch (error) {
-  //     console.error('Error creating task:', error);
-  //   }
-  // };
-
-  // const getTasks = async () => {
-  //   try {
-  //     const response = await axios.get(`http://127.0.0.1:8000/api/tasks/`, {
-  //       headers: {
-  //         Authorization: `Token ${localStorage.getItem("userTokenLG")}`,
-  //       },
-  //     });
-  //     setTasks(response.data);
-  //     setData(response.data);
-  //     console.log("tareas con el sharedby", response.data);
-  //   } catch (error) {
-  //     console.error('Error fetching tasks:', error);
-  //   }
-  // };
 
   const handleDelete = async (id) => {
     try {
@@ -1307,15 +1284,22 @@ const toSrc = (path) => {
 };
 
 // intenta múltiples nombres comunes para avatar/foto de usuario, incluso anidados
-const getUserAvatarSrc = (u) => {
+const getUserAvatarSrc = (raw) => {
+  // 👇 mira primero en _orig si existe
+  const u = raw?._orig ?? raw;
+
   const candidates = [
-    u.user_image, u.user_image_url, u.image, u.avatar, u.avatar_url,
-    u.profile_image, u.photo, u.picture,
-    u.user?.user_image, u.user?.image, u.user?.avatar,
+    u?.user_image, u?.user_image_url, u?.image, u?.avatar, u?.avatar_url,
+    u?.profile_image, u?.photo, u?.picture,
+    // algunos backends lo traen anidado:
+    u?.user?.user_image, u?.user?.image, u?.user?.avatar,
+    u?.profile?.image, u?.profile?.avatar,
   ];
+
   const found = candidates.map(cleanVal).find(Boolean);
   return found ? toSrc(found) : null;
 };
+
 
 const first = (...vals) => vals.find(Boolean) || null;
 
@@ -1357,16 +1341,24 @@ const handleListUsers = async (taskOrId) => {
       `http://127.0.0.1:8000/api/tasks/${taskId}/users_who_liked/`,
       { headers: { Authorization: `Token ${token}` } }
     );
-    const arr =
-      Array.isArray(data) ? data :
-      Array.isArray(data?.results) ? data.results :
-      Array.isArray(data?.users) ? data.users : [];
-    setListUsers(arr);
+
+    dbg('[LIKES MODAL][raw]', data);
+
+    const normalized = normalizeUsersResponse(data);
+    dbg(`[LIKES MODAL] normalized length=${normalized.length}`);
+    normalized.slice(0, 5).forEach((nu, i) =>
+      typeof inspectUserMedia === 'function'
+        ? inspectUserMedia(nu._orig ?? nu, `[LIKES MODAL] user #${i}`)
+        : null
+    );
+
+    setListUsers(normalized);
   } catch (err) {
     console.error('Error al listar usuarios que dieron like:', err);
-    setListUsers([]); // evita crash de render
+    setListUsers([]); // evita crashear el render
   }
 };
+
 
 
 const handleUpdate = async (task) => {
@@ -1571,7 +1563,9 @@ return (
         <div className="user-info" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div className="user-image-container">
             {(() => {
-              const avatar = getUserAvatarSrc(u);
+              const avatar = u.avatar ? toSrc(u.avatar) : getUserAvatarSrc(u._orig ?? u);
+
+
               return avatar ? (
                 <img
                   src={avatar}
@@ -2439,7 +2433,7 @@ const videoPath = getFirstVideo(link);
                             <div className="megusta">
                               <div className="compartir">
                                 <div className="compartirNumero" onClick={() => openModalShare(link.id)}>{link.share_count}</div>
-                                <div className="compartirIcon" onClick={() => openShareModal(link.id)}>
+                                <div className="compartirIcon" onClick={() => openShareModal(link)}>
                                   <FontAwesomeIcon icon={faArrowRight} />
                                 </div>
                               </div>
