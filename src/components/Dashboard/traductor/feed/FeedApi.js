@@ -13,15 +13,31 @@ export const feedApi = createApi({
   }),
   tagTypes: ['Task'],
   endpoints: (builder) => ({
+
+    // =========================
+    //        GET FEED
+    // =========================
     getFeed: builder.query({
-      query: ({ limit = 3, offset = 0 } = {}) =>
-        `/feed/?limit=${limit}&offset=${offset}`,
+      // ahora acepta ordering y period además de limit/offset
+      // ordering: "-created_at" | "created_at" | "-likes_count" | "likes_count"
+      // period: "day" | "week" | "month" | undefined
+      query: ({ limit = 3, offset = 0, ordering = '-created_at', period } = {}) => {
+        const params = { limit, offset, ordering };
+        if (period) params.period = period;   // solo lo mando si viene
+
+        return {
+          url: '/feed/',
+          params,
+        };
+      },
+
       transformResponse: (resp) => ({
         items: resp?.results ?? [],
         next: resp?.next ?? null,
         prev: resp?.previous ?? null,
         count: resp?.count ?? 0,
       }),
+
       providesTags: (result) =>
         result?.items?.length
           ? [
@@ -29,23 +45,39 @@ export const feedApi = createApi({
               { type: 'Task', id: 'LIST' },
             ]
           : [{ type: 'Task', id: 'LIST' }],
-      serializeQueryArgs: ({ endpointName, queryArgs }) =>
-        `${endpointName}-${queryArgs?.limit ?? 3}-${queryArgs?.offset ?? 0}`,
+
+      // la key del cache ahora depende también de ordering y period
+      serializeQueryArgs: ({ endpointName, queryArgs }) => {
+        const {
+          limit = 3,
+          offset = 0,
+          ordering = '-created_at',
+          period = '',
+        } = queryArgs || {};
+
+        return `${endpointName}-${limit}-${offset}-${ordering}-${period}`;
+      },
+
       refetchOnFocus: true,
       refetchOnReconnect: true,
     }),
 
+    // =========================
+    //      CREATE TASK
+    // =========================
     // ⚠️ Back compat: crear con POST a /tasks/:pathId/
     createTask: builder.mutation({
-      // pasamos pathId dinamicamente7yyy5
+      // pasamos pathId dinámicamente
       query: ({ formData, pathId }) => ({
         url: `/tasks/${pathId}/`,
         method: 'POST',
         body: formData,
       }),
 
+      // optimistic update sobre la PRIMERA página del feed principal
       async onQueryStarted({ formData }, { dispatch, queryFulfilled }) {
         const tempId = `temp-${Date.now()}`;
+
         const optimistic = {
           id: tempId,
           title: formData.get('title') || '',
@@ -67,25 +99,41 @@ export const feedApi = createApi({
           user: null,
         };
 
+        // esta es la queryArgs de la primera página del feed principal
+        const baseArgs = {
+          limit: 3,
+          offset: 0,
+          ordering: '-created_at',
+          // period: undefined
+        };
+
+        // 1) insertar optimista al inicio
         const patch = dispatch(
-          feedApi.util.updateQueryData('getFeed', { limit: 3, offset: 0 }, (draft) => {
+          feedApi.util.updateQueryData('getFeed', baseArgs, (draft) => {
+            if (!draft?.items) return;
             draft.items.unshift(optimistic);
             if (typeof draft.count === 'number') draft.count += 1;
           })
         );
 
         try {
+          // 2) esperar respuesta real del backend
           const { data } = await queryFulfilled;
+
+          // 3) reemplazar el temp por la tarea real
           dispatch(
-            feedApi.util.updateQueryData('getFeed', { limit: 3, offset: 0 }, (draft) => {
+            feedApi.util.updateQueryData('getFeed', baseArgs, (draft) => {
+              if (!draft?.items) return;
               const i = draft.items.findIndex((t) => t.id === tempId);
               if (i !== -1) draft.items[i] = data;
             })
           );
         } catch (e) {
+          // si falla la petición, deshacemos el optimista
           patch.undo();
         }
       },
+
       invalidatesTags: [{ type: 'Task', id: 'LIST' }],
     }),
   }),

@@ -559,14 +559,20 @@ const addOrEditTienda = async () => {
       if (task.video) formData.append(`subfuentes[${index}][video]`, task.video, task.video.name);
     });
 
-    // 👇 usa un id de tarea existente como pathId
-    const fallbackId = 1; // si sabes que existe; cámbialo si no
+    const fallbackId = 1;
     const pathId = (Array.isArray(items) && items.length > 0) ? items[0].id : fallbackId;
 
-    // 1) Crear (mutación RTK, ahora pega a /api/tasks/:pathId/)
+    // CREA LA TAREA EN EL BACK
     const res = await createTask({ formData, pathId }).unwrap();
 
-    // 2) (opcional) registrar share
+    // 🔹 AÑADE LA TAREA NUEVA AL FEED LOCAL
+    setItems(prev => [res, ...prev]);
+    setVisibleSections(prev => ({
+      ...prev,
+      [res.id]: 'subtasks',
+    }));
+
+    // REGISTRA SHARE (si lo quieres)
     await axios.post(
       'http://127.0.0.1:8000/api/shared-tasks/',
       { task_id: res.id },
@@ -578,8 +584,10 @@ const addOrEditTienda = async () => {
       }
     );
 
+    // Opcional: mantener sincronizado el cache de RTK Query
     refetch();
 
+    // Limpieza del formulario
     setIsAddModalOpen(false);
     setMasTasks([{ title:'', description:'', image:null, video:null, imagePreview:null, videoPreview:null }]);
     setMasFactores([{ title:'', description:'', link:'', image:null, video:null, imagePreview:null, videoPreview:null }]);
@@ -594,6 +602,7 @@ const addOrEditTienda = async () => {
     console.error('Error creating task:', error);
   }
 };
+
 
   const translateText = async (text) => {
     setNormal(text);
@@ -2143,7 +2152,7 @@ const videoPath = getFirstVideo(link);
 
 )}
 
-{imagePath && (
+{/* {imagePath && (
   <img
     src={toSrc(imagePath)}
     alt="Imagen"
@@ -2152,10 +2161,10 @@ const videoPath = getFirstVideo(link);
     style={{ height: 100, width: 100 }}
     onError={(e) => {
         e.currentTarget.onerror = null;
-        e.currentTarget.src = '/placeholder.png'; // pon aquí tu placeholder estático
+        e.currentTarget.src = '/placeholder.png'; 
       }}
   />
-)}
+)} */}
 
 
                         {/* Subtasks */}
