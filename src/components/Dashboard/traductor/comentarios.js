@@ -1,702 +1,332 @@
-import React, { useState, useEffect } from "react";
-import axios from 'axios';
-import Axios from "axios";
-import "../owenscss/traductor.scss";
-import { useSelector } from "react-redux";
-import Link from "@mui/material/Link";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faBlog,
-  faPen,
-  faNewspaper,
-  faUsersCog,
-  faAddressBook,
-  faMoneyBill,
-  faCalendar,
-  faTicketAlt,
-  faChild,
-  faStoreAlt,
-  faUsers,
-  faPenToSquare,
-} from "@fortawesome/free-solid-svg-icons";
-import { faHeart, faTrash, faImage } from "@fortawesome/free-solid-svg-icons";
-import PeticionesTwo from "./peticionesTwo";
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import '../owenscss/traductor.scss';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faHeart, faTrash, faImage } from '@fortawesome/free-solid-svg-icons';
 import Modal from 'react-modal';
 
+// RTK Query (nuevo)
+import { useGetTaskCommentsQuery, useCreateCommentMutation, useToggleCommentLikeMutation, useDeleteCommentMutation } from './commentApi';
 
+
+/**
+ * Props esperadas mínimas:
+ * - peticion: { id, user, username, title, description, ... }  => la Tarea (Task)
+ * - usuario:   id de usuario logueado (opcional, pero útil para saber si puede borrar)
+ * - usuarioName: string del username actual (opcional)
+ * - setPeticion?: function para cerrar/volver (opcional)
+ */
 const Comentarios = (props) => {
-  const [translatedText, setTranslatedText] = useState("");
-  const [tasks, setTasks] = useState([]);
-  const [normal, setNormal] = useState("");
-  const [selectedImage, setSelectedImage] = useState(null);
-  const [selectedImagee, setSelectedImagee] = useState(null);
+  const taskId = props?.peticion?.id;
+  const currentUserId = props?.usuario ?? null;
 
-  const [juntar, setJuntar] = useState("");
-  const [data, setData] = useState([]);
-  const [peticionajena, setPeticionajena] = useState("");
-  const [peticionajenaa, setPeticionajenaa] = useState("");
+  // UI local
+  const [text, setText] = useState('');
+  const [selectedImageFile, setSelectedImageFile] = useState(null);
+  const [selectedImagePreview, setSelectedImagePreview] = useState(null);
+  const [parentId, setParentId] = useState(null); // para Responder
+  const [likesModalOpen, setLikesModalOpen] = useState(false);
+  const [likesModalUsers, setLikesModalUsers] = useState([]);
+  const inputRef = useRef(null);
 
-  const [correoUsuario, setCorreoUsuario] = useState(localStorage.getItem("userTokenLG"));
-  const [mostrar, setMostrar] = useState("");
-  const [peticion, setPeticion] = useState("");
-  const [dataa, setDataa] = useState("");
-  const [listUsers, setListUsers] = useState([]);
-  const [isModalOpen, setModalOpen] = useState(false);
-  const [isModalOpenImage, setModalOpenImage] = useState(false);
-  const [imagen, setImagen] = useState("");
-  const [peticionComment, setPeticionComment] = useState(props.peticion);
+  // Data (RTK)
+  const { data: commentsPage, isFetching, refetch } = useGetTaskCommentsQuery(
+    { taskId },
+    { skip: !taskId }
+  );
+  const [createComment, { isLoading: isCreating }] = useCreateCommentMutation();
+  const [toggleLike] = useToggleCommentLikeMutation();
+  const [deleteComment] = useDeleteCommentMutation();
+  // const [triggerGetLikes, likesReq] = useLazyGetCommentLikesQuery(); // si agregas endpoint opcional
 
+  const comments = useMemo(() => commentsPage?.results ?? [], [commentsPage]);
 
-
-
-  const addOrEditTiendaa = async () => {
-    try {
-      const token = localStorage.getItem("userTokenLG");
-      const response = await axios.get('http://127.0.0.1:8000/api/get-user/', {
-        headers: {
-          Authorization: `Token ${token}`,
-        },
-      });
-      const userDetails = response.data;
-      console.log(userDetails);
-      console.log(userDetails.user.id);
-
-      console.log(userDetails.user.email);
-      console.log(userDetails.user.id);
-      //   props.setUsuario(userDetails.user.id);
-      props.setUsuarioName(userDetails.user.username);
-      setDataa(userDetails.user.id);
-      // console.log(user);
-    } catch (error) {
-      console.error('Error creating task:', error);
-    }
-  }
-
-  useEffect(() => {
-    // if(dataa===""){
-    // addOrEditTiendaa();
-    // }else{
-    // getTasks();
-    // }
-    getTasks();
-  }, []);
-
-  const getTasks = async () => {
-    try {
-      const response = await axios.get(`http://127.0.0.1:8000/api/tasks_by_id/${props.peticion.id}/`, {
-        headers: {
-          Authorization: `Token ${localStorage.getItem("userTokenLG")}`,
-        },
-      });
-      setTasks(response.data[0].comments);
-      console.log(response.data[0].comments);
-      setData(response.data[0].comments);
-      setDataa(response.data[0].comments);
-
-    } catch (error) {
-      console.error('Error fetching tasks:', error);
-    }
-  };
-
-  const handleUpdateComment = async (task) => {
-    try {
-      const response = await axios.put(`http://127.0.0.1:8000/api/comments/${task.id}/`, task, {
-        headers: {
-          Authorization: `Token ${localStorage.getItem("userTokenLG")}`,
-        },
-      });
-
-      getTasks();
-
-    } catch (error) {
-      console.error('Error updating task:', error.response);
-
-    }
-  };
-
-  const handleListUsers = async (task) => {
-    try {
-      const response = await axios.get(`http://127.0.0.1:8000/api/tasks/${task.id}/users_who_liked_task_comment/`, {
-        headers: {
-          Authorization: `Token ${localStorage.getItem("userTokenLG")}`,
-        },
-      });
-
-
-      if (Array.isArray(response.data)) {
-        setListUsers(response.data);
-      } else {
-        console.log(`Tarea ID: ${task.id} - No se encontraron usuarios que dieron "like".`);
-      }
-      setModalOpen(true);  // Abrir el modal después de cargar los datos
-
-    } catch (error) {
-      console.error('Error updating task:', error.response);
-
-    }
-  };
-
-  const handleListUserss = async (task) => {
-    try {
-      const response = await axios.get(`http://127.0.0.1:8000/api/tasks/${task.id}/users_who_liked/`, {
-        headers: {
-          Authorization: `Token ${localStorage.getItem("userTokenLG")}`,
-        },
-      });
-
-
-      if (Array.isArray(response.data)) {
-        setListUsers(response.data);
-      } else {
-        console.log(`Tarea ID: ${task.id} - No se encontraron usuarios que dieron "like".`);
-      }
-      setModalOpen(true);  // Abrir el modal después de cargar los datos
-
-    } catch (error) {
-      console.error('Error updating task:', error.response);
-
-    }
-  };
-
-
-  const handleDeletee = async (id) => {
-    props.handleDelete(id);
-    props.setPeticion("");
-  };
-
-  const handleDelete = async (id) => {
-    try {
-      await axios.delete(`http://127.0.0.1:8000/api/comments/${id}/`, {
-        headers: {
-          Authorization: `Token ${localStorage.getItem("userTokenLG")}`,
-        },
-      });
-      const updatedTasks = tasks.filter((task) => task.id !== id);
-      setTasks(updatedTasks);
-      setData(updatedTasks);
-    } catch (error) {
-      console.error('Error deleting task:', error);
-    }
-  };
-
-  const user = useSelector(state => state.auth.isAuthenticated)
-
-  const addComment = async () => {
-    try {
-      const formData = new FormData();
-      //   formData.append('user', props.peticion.user);
-      formData.append('title', normal);
-      formData.append('description', translatedText);
-      formData.append('user', props.peticion.user);
-      formData.append('userId', props.usuario);
-      formData.append('task', props.peticion.id);
-      formData.append('like', 0);
-      // Crear un array de likes (puede ser una lista de IDs de usuarios, por ejemplo)
-      const likesArray = [];
-      formData.append('likes', JSON.stringify(likesArray)); // Convierte a cadena JSON
-      formData.append('username', props.usuarioName);
-      if (selectedImage !== null) {
-        formData.append('image', selectedImage);
-      } else {
-        formData.append('image', "");
-      }
-
-      const response = await axios.post(`http://127.0.0.1:8000/api/comments/`, formData, {
-        headers: {
-          Authorization: `Token ${localStorage.getItem("userTokenLG")}`,
-        },
-      });
-
-      getTasks();
-      setSelectedImagee(null);
-
-    } catch (error) {
-      console.error('Error adding comment:', error);
-      console.error('Error details:', error.response.data[0].comments);
-    }
-  }
-
-  const translateText = async (text) => {
-    setNormal(text);
-    const apiKey = "AIzaSyA1pr1L0zW8cv6TNwadyjFHqUhh11POuAQ"; // Tu clave de API
-    const targetLanguage = "es"; // Idioma objetivo para la traducción
-    const url = `https://translation.googleapis.com/language/translate/v2?key=${apiKey}`;
-
-    try {
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          q: text,
-          target: targetLanguage,
-        }),
-      });
-
-      const data = await response.json();
-      const translatedText = data.data.translations[0].translatedText;
-      setTranslatedText(translatedText);
-      setNormal(text);
-    } catch (error) {
-      console.error("Error al traducir el texto:", error);
-    }
-  };
-
-  const juntarTraduccion = (a) => {
-    // setCam(a);
-    setJuntar(a);
-    if (mostrar === true) {
-      setMostrar(false);
-    } else {
-      setMostrar(true);
-    }
-    // setMas(a);
-  };
-
+  // Helpers
   const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    setSelectedImage(e.target.files[0]);
+    const file = e.target.files?.[0] ?? null;
+    setSelectedImageFile(file);
+    setSelectedImagePreview(file ? URL.createObjectURL(file) : null);
+  };
 
-    if (file) {
-      const imageURL = URL.createObjectURL(file);
-      setSelectedImagee(imageURL);
-    } else {
-      setSelectedImagee(null);
+  const scrollToInput = () => {
+    if (inputRef.current) {
+      inputRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      inputRef.current.focus();
     }
   };
 
-  const sortedData = data.sort((a, b) => b.likes_count - a.likes_count);
+  const onClickReply = (commentId) => {
+    setParentId(commentId);
+    scrollToInput();
+  };
 
-  const tasksWithLikeInfo = sortedData.map(task => ({
-    ...task,
-    userHasLiked: userHasLikedTask(task, dataa)
-  }));
+  const userHasLiked = (comment) => {
+    // comment.like_set viene del serializer NewPeticionCommentSerializer (source="likes")
+    if (!currentUserId || !Array.isArray(comment?.like_set)) return false;
+    return comment.like_set.some((l) => l?.user?.id === currentUserId);
+  };
 
-  function userHasLikedTask(task, dataa) {
-    return task.likecomment_set.some(like => like.user.id === dataa);
-  }
+  const handleAddComment = async () => {
+    if (!taskId || !text.trim()) return;
+
+    const body = new FormData();
+    // El backend setea 'post' (Task) desde la URL; aquí solo mandamos campos del comentario:
+    body.append('text', text.trim());
+    if (parentId) body.append('parent', String(parentId));
+
+    // Si adjuntas imagen, la empujo como subtask[0][image]
+    if (selectedImageFile) {
+      body.append('subtasks[0][title]', '');
+      body.append('subtasks[0][description]', '');
+      body.append('subtasks[0][link]', '');
+      body.append('subtasks[0][image]', selectedImageFile);
+    }
+
+    try {
+      await createComment({ taskId, body }).unwrap();
+      setText('');
+      setSelectedImageFile(null);
+      setSelectedImagePreview(null);
+      setParentId(null);
+    } catch (e) {
+      console.error('Error creando comentario:', e);
+    }
+  };
+
+  const handleToggleLike = async (c) => {
+    try {
+      await toggleLike({ taskId, commentId: c.id }).unwrap();
+    } catch (e) {
+      console.error('Error al dar/ retirar like:', e);
+    }
+  };
+
+  const handleDeleteComment = async (c) => {
+    if (!currentUserId || c?.created_by?.id !== currentUserId) return;
+    try {
+      await deleteComment({ taskId, commentId: c.id }).unwrap();
+    } catch (e) {
+      console.error('Error al borrar comentario:', e);
+    }
+  };
+
+  const openLikesModal = (c) => {
+    // sin endpoint extra, usamos el like_set que ya viene con el comentario
+    setLikesModalUsers(Array.isArray(c?.like_set) ? c.like_set.map(ls => ls.user) : []);
+    setLikesModalOpen(true);
+  };
+
+  const renderComment = (c) => {
+    return (
+      <div key={c.id} className="comment" style={{ borderRadius: 10 }}>
+        <div className="contentt" style={{ marginRight: 0, width: '100%' }}>
+          <div className="redondear">
+            <div className="hole">
+              <div className="icon1">
+                {/* espacio para editar si luego agregas endpoint PUT */}
+              </div>
+              <div className="icon2">
+                {currentUserId && c?.created_by?.id === currentUserId ? (
+                  <button
+                    className="material-iconi"
+                    title="Eliminar"
+                    onClick={() => handleDeleteComment(c)}
+                  >
+                    <FontAwesomeIcon icon={faTrash} />
+                  </button>
+                ) : null}
+              </div>
+            </div>
+
+            <div className="usuario" style={{ height: 20 }}>
+              {c?.created_by?.username ?? 'usuario'}
+            </div>
+
+            <div className="textol">
+              <div className="titulo2">{c?.text}</div>
+            </div>
+
+            {/* Subadjuntos (si los hay) */}
+            {Array.isArray(c?.subtasks) && c.subtasks.length > 0 && (
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 8 }}>
+                {c.subtasks.map((s) => (
+                  <div key={s.id} className="imagenPeticion">
+                    {s.image ? (
+                      <img src={s.image} alt="sub" style={{ width: 100, height: 100, objectFit: 'cover' }} />
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="line-down">
+              <div className="likes">
+                <div style={{ padding: 5 }}>
+                  <button
+                    type="button"
+                    className="nlink"
+                    onClick={() => onClickReply(c.id)}
+                    aria-label={`Responder al comentario ${c.id}`}
+                  >
+                    Responder
+                  </button>
+                </div>
+
+                <div className="megusta">
+                  <div className="like">
+                    <button
+                      type="button"
+                      onClick={() => handleToggleLike(c)}
+                      className="icon-button"
+                      aria-pressed={userHasLiked(c)}
+                      title={userHasLiked(c) ? 'Quitar me gusta' : 'Me gusta'}
+                    >
+                      <FontAwesomeIcon
+                        icon={faHeart}
+                        style={{ color: userHasLiked(c) ? '#54afff' : 'white' }}
+                      />
+                    </button>
+
+                    <button
+                      type="button"
+                      className="like_cantidad"
+                      onClick={() => openLikesModal(c)}
+                      title="Ver quiénes dieron like"
+                    >
+                      {c?.likes_count ?? 0}
+                    </button>
+                  </div>
+                  <div className="unlike">{/* reservado */}</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Hijos (thread) */}
+            {Array.isArray(c?.children) && c.children.length > 0 && (
+              <div style={{ marginLeft: 18, marginTop: 10 }}>
+                {c.children.map((h) => renderComment(h))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  if (!taskId) return null;
 
   return (
     <div>
-
-      {peticionajena === "" ? (
-        <div style={{ paddingTop: "10px" }}>
-          <div className="whatpetition">
-            <div className="whatpetitiontitle">Cual es tu comentario?
-            </div>
-
-
-            <input type="text" onChange={(e) => translateText(e.target.value)} />
-            <p style={{ paddingLeft: "15px", paddingRight: "15px" }}>{translatedText}</p>
-
-            <div className="imagenInput">
-              <label htmlFor="fileInput">
-                <div className="imagenIcon">
-                  <FontAwesomeIcon icon={faImage} />
-                </div>
-              </label>
-              <div>
-                <input
-                  type="file"
-                  id="fileInput" // Agrega un id al input
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  style={{ display: 'none' }} // Oculta el input
-                />
-              </div>
-              <div>
-                {selectedImagee !== null ? (
-                  <img src={selectedImagee} alt="Imagen" icon={faHeart} className="imagenPeticion" style={{ height: "100px", width: "100px" }} />
-                ) : (null)}</div>
-            </div>
-            <div> <button className="btnpetition" onClick={addComment}>
-              Agregar
-            </button></div>
+      {/* Caja para escribir comentario */}
+      <div style={{ paddingTop: 10 }}>
+        <div className="whatpetition">
+          <div className="whatpetitiontitle">
+            {parentId ? 'Respondiendo a un comentario…' : '¿Cuál es tu comentario?'}
           </div>
 
-          <div> <button className="btnpetition" onClick={() => props.setPeticion("")}>
-            volver
-          </button></div>
+          <textarea
+            ref={inputRef}
+            rows={3}
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder="Escribe tu comentario…"
+            className="comentario-input"
+          />
 
-          <div className="contenido-pagin">
-
-            <div key={props.peticion.id} style={{ borderRadius: "10px" }} className="comment" >
-              {correoUsuario === correoUsuario ? (
-                <div
-                  className="contentt"
-                  key={props.peticion.id}
-                  style={{ marginRight: "0px", width: "100vw" }}
-                >
-                  <div className="redondear">
-                    <div className="hole">
-                      <div className="icon1">
-                        <div
-                          className="material-iconis"
-                          // onClick={() => hideModal(link.id)}
-                          onClick={() => handleUpdate(props.peticion)}
-                          z-index="1"
-                        >
-                          {/* <FontAwesomeIcon icon={faPenToSquare} /> */}
-                        </div>
-                      </div>
-                      <div className="icon2" >
-                        <div
-                          className="material-iconi"
-                          onClick={() => handleDeletee(props.peticion.id)}
-                        >
-                          {props.usuario === props.peticion.user ? (<FontAwesomeIcon icon={faTrash} />) : (null)}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="usuario" style={{ height: "20px" }} onClick={() => setPeticionajena(props.peticion.user)}>
-                      {props.peticion.username}
-                      {/* {link.id} */}
-                      {/* {link.username} */}
-                    </div>
-
-                    <div
-                      className="textol"
-                      onClick={() => juntarTraduccion(props.peticion.description)}
-                    >
-                      {mostrar ? (
-                        props.peticion.description === juntar ? (
-                          <div className="titulo1"> {props.peticion.description}</div>
-                        ) : null
-                      ) : null}
-                      <div className="titulo2">{props.peticion.title}</div>
-                    </div>
-
-
-                    <Modal
-                      isOpen={isModalOpen}
-                      onRequestClose={() => setModalOpen(false)}
-                      contentLabel="Usuarios que dieron like"
-                    >
-                      <h2>Usuarios que dieron "like" a la tarea { }:</h2>
-                      <ul>
-                        {listUsers.map(user => (
-                          <li key={user.id}>
-                            ID: {user.id}, Nombre de usuario: {user.username}
-                          </li>
-                        ))}
-                      </ul>
-                      <button onClick={() => setModalOpen(false)}>Cerrar</button>
-                    </Modal>
-
-                    <Modal
-                      isOpen={isModalOpenImage}
-                      onRequestClose={() => setModalOpenImage(false)} // Permite cerrar el modal al hacer clic fuera de él o presionar ESC
-                      contentLabel="Usuarios que dieron like"
-                      style={{ padding: "0px !important " }}
-                    >
-                      <h2> </h2>
-                      <img src={imagen} alt="Imagen" onClick={() => setModalOpenImage(false)} className="imagenPeticionModel" />
-                      <button onClick={() => setModalOpenImage(false)}>Cerrar</button> {/* Botón para cerrar el modal */}
-                    </Modal>
-
-                    <div className="line-down">
-                      <div className="likes">
-                        <div style={{ padding: "5px" }}>
-                          <Link
-                            to="/peticionesTwo"
-                            className="nlink"
-                            style={{ color: "white" }}
-                          // onClick={() => props.setComentario(link.id)}
-                          >
-                            Responder
-                          </Link>
-                        </div>
-                        <div className="megusta">
-
-                          {/* <input
-              type="checkbox"
-              checked={link.completed}
-              onChange={() => handleUpdate({ ...link, completed: !link.completed, like: 1 })}
+          {/* Adjuntar imagen (como subtask[0][image]) */}
+          <div className="imagenInput">
+            <label htmlFor="fileInput">
+              <div className="imagenIcon">
+                <FontAwesomeIcon icon={faImage} />
+              </div>
+            </label>
+            <input
+              type="file"
+              id="fileInput"
+              accept="image/*"
+              onChange={handleImageChange}
+              style={{ display: 'none' }}
             />
-            <br/> */}
-                          <div
-                            className="like"
-                          >
-                            <div onClick={() => handleUpdate(props.peticion.id)}>
-                              <FontAwesomeIcon
-                                style={{ color: props.peticion.userHasLiked ? "54afff" : "white" }}
-                                icon={faHeart}
-                              />
-                            </div>
-
-                            <div className="like_cantidad" onClick={() => handleListUserss(props.peticion)}>{props.peticion.likes_count}</div>
-                            {/* <div className="like_cantidad" onClick={() => handleListUsers(peticionComment)}>{props.peticion.likes_count}</div> */}
-                          </div>
-                          <div
-                            className="unlike"
-                          >
-                            {/* <FontAwesomeIcon icon={faThumbsDown} /> */}
-                          </div>
-                        </div>
-                        {/* <Likeia
-                        correoUsuario={props.correoUsuario}
-                        pageSelect={props.pageSelect}
-                        {...{ setPostId, postId, user, setUser }}
-                      /> */}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="content" style={{ marginLeft: "50px" }}>
-                  <div className="hole" style={{ marginLeft: "30px" }}>
-                    <div className="icon1" style={{ marginLeft: "190px" }}>
-                      <div
-                        className="material-iconis"
-                        // onClick={() => setCurrentId(link.id)}
-                        z-index="1"
-                      >
-                        {/* <FontAwesomeIcon icon={faPenToSquare} /> */}
-                      </div>
-                    </div>
-                    <div className="icon2" >
-                      <div
-                        className="material-iconi"
-                      // onClick={() => onDeleteLink(link.id)}
-                      >
-                        {/* <FontAwesomeIcon icon={faPenToSquare} /> */}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="usuario" style={{ height: "20px" }}>
-                    {props.peticion.username}
-                  </div>
-                  <div
-                    className="textol"
-                  // onClick={() => juntarTraduccion(link.description)}
-                  >
-                    {mostrar ? (
-                      props.peticion.description === juntar ? (
-                        <div className="titulo1"> {props.peticion.description}</div>
-                      ) : null
-                    ) : null}
-                    <div className="titulo2">{props.peticion.title}</div>
-                  </div>
-
-                  <div className="line-down">
-                    <div className="comment"></div>
-                    <div className="likes">
-                      <div style={{ padding: "5px" }}>
-                        {/* <Link to="/respond" className="nlink">
-                            Responder
-                          </Link> */}
-                      </div>
-                      <div className="megusta">
-                        {/* <div>{link.like}</div> */}
-                        <div
-                          className="like"
-                        // onClick={() => incrementt(link)}
-                        >
-                          {/* <FontAwesomeIcon icon={faThumbsUp} /> */}
-                        </div>
-                        <div
-                          className="unlike"
-                        // onClick={() => incrementt(link)}
-                        >
-                          {/* <FontAwesomeIcon icon={faThumbsDown} /> */}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
+            {selectedImagePreview ? (
+              <img
+                src={selectedImagePreview}
+                alt="preview"
+                className="imagenPeticion"
+                style={{ height: 100, width: 100 }}
+              />
+            ) : null}
           </div>
 
-          <div className="contenido-pagin">
-            {tasksWithLikeInfo.map((link) => (
-              <div key={link.id} style={{ borderRadius: "10px" }} className="comment" >
-                {correoUsuario === correoUsuario ? (
-                  <div
-                    className="contentt"
-                    key={link.id}
-                    style={{ marginRight: "0px", width: "100vw" }}
-                  >
-                    <div className="redondear">
-                      <div className="hole">
-                        <div className="icon1">
-                          <div
-                            className="material-iconis"
-                            // onClick={() => hideModal(link.id)}
-                            onClick={() => handleUpdate(link)}
-                            z-index="1"
-                          >
-                            {/* <FontAwesomeIcon icon={faPenToSquare} /> */}
-                          </div>
-                        </div>
-                        <div className="icon2">
-                          <div
-                            className="material-iconi"
-                            onClick={() => handleDelete(link.id)}
-                          >
-                            <FontAwesomeIcon icon={faTrash} />
-                            {props.usuario === link.userId ? (<FontAwesomeIcon icon={faTrash} />) : (null)}
-                          </div>
-                          {/* <div>
-                          {props.usuario}
-                          </div>
-                          <div>
-                          {link.userId} 
-                          </div> */}
-                        </div>
-                      </div>
-                      <div className="usuario" style={{ height: "20px" }} onClick={() => setPeticionajena(link.userId)}>
-                        {link.username}
-                        {/* {()=>setUsernames(link.user)}
-            {usernames.map((usernamee) => (
-              <div>
-                {usernamee.username}
-              </div>
-            ))} */}
-                        {/* {link.id} */}
-                        {/* {link.username} */}
-                      </div>
+          <div>
+            <button className="btnpetition" disabled={isCreating || !text.trim()} onClick={handleAddComment}>
+              {isCreating ? 'Agregando…' : parentId ? 'Responder' : 'Agregar'}
+            </button>
 
-                      <div
-                        className="textol"
-                        onClick={() => juntarTraduccion(link.description)}
-                      >
-                        {mostrar ? (
-                          link.description === juntar ? (
-                            <div className="titulo1"> {link.description}</div>
-                          ) : null
-                        ) : null}
-                        <div className="titulo2">{link.title}</div>
-                      </div>
-
-                      {link.image !== null && link.image !== "" ? (<img src={link.image} alt="Imagen" onClick={() => imageSelect(link.image)} icon={faHeart} className="imagenPeticion" style={{ height: "100px", width: "100px" }} />) : (null)}
-
-                      <div className="line-down">
-                        <div className="likes">
-                          <div style={{ padding: "5px" }}
-                          // onClick={() => setPeticion(link)}
-                          >
-                            <Link
-                              to="/peticionesTwo"
-                              className="nlink"
-                              style={{ color: "white" }}
-                            // onClick={() => props.setComentario(link.id)}
-                            >
-                              ___________
-                            </Link>
-                          </div>
-                          <div className="megusta">
-
-                            {/* <input
-              type="checkbox"
-              checked={link.completed}
-              onChange={() => handleUpdate({ ...link, completed: !link.completed, like: 1 })}
-            />
-            <br/> */}
-                            <div
-                              className="like"
-                            //   onClick={() => incrementt(link)}
-                            >
-                              <div onClick={() => handleUpdateComment(link)}>
-                                <FontAwesomeIcon
-                                  style={{ color: link.userHasLiked ? "54afff" : "white" }}
-                                  icon={faHeart}
-                                />
-                              </div>
-
-                              <div className="like_cantidad" onClick={() => handleListUsers(link)}>{link.likes_count}</div>
-                            </div>
-                            <div
-                              className="unlike"
-                            // onClick={() => incrementt(link)}
-                            >
-                              {/* <FontAwesomeIcon icon={faThumbsDown} /> */}
-                            </div>
-                          </div>
-                          {/* <Likeia
-                        correoUsuario={props.correoUsuario}
-                        pageSelect={props.pageSelect}
-                        {...{ setPostId, postId, user, setUser }}
-                      /> */}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="content" style={{ marginLeft: "50px" }}>
-                    <div className="hole" style={{ marginLeft: "30px" }}>
-                      <div className="icon1" >
-                        <div
-                          className="material-iconis"
-                          // onClick={() => setCurrentId(link.id)}
-                          z-index="1"
-                        >
-                          {/* <FontAwesomeIcon icon={faPenToSquare} /> */}
-                        </div>
-                      </div>
-                      <div className="icon2">
-                        <div
-                          className="material-iconi"
-                        // onClick={() => onDeleteLink(link.id)}
-                        >
-                          {/* <FontAwesomeIcon icon={faPenToSquare} /> */}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="usuario" style={{ height: "20px" }}>
-                      {link.id}
-                    </div>
-                    <div
-                      className="textol"
-                    // onClick={() => juntarTraduccion(link.description)}
-                    >
-                      {/* {mostrar ? (
-                        link.description === juntar ? (
-                          <div className="titulo1"> {link.description}</div>
-                        ) : null
-                      ) : null} */}
-                      <div className="titulo2">{link.content}</div>
-                    </div>
-
-                    <div className="line-down">
-                      <div className="comment"></div>
-                      <div className="likes">
-                        <div style={{ padding: "5px" }}>
-                          {/* <Link to="/respond" className="nlink">
-                            Responder
-                          </Link> */}
-                        </div>
-                        <div className="megusta">
-                          {/* <div>{link.like}</div> */}
-                          <div
-                            className="like"
-                          // onClick={() => incrementt(link)}
-                          >
-                            {/* <FontAwesomeIcon icon={faThumbsUp} /> */}
-                          </div>
-                          <div
-                            className="unlike"
-                          // onClick={() => incrementt(link)}
-                          >
-                            {/* <FontAwesomeIcon icon={faThumbsDown} /> */}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ))}
+            {parentId ? (
+              <button
+                className="btnpetition"
+                style={{ marginLeft: 8, background: '#777' }}
+                onClick={() => setParentId(null)}
+              >
+                Cancelar respuesta
+              </button>
+            ) : null}
           </div>
-
         </div>
 
-      ) : (
-        <div><PeticionesTwo {...{ setPeticionajena, peticionajena, setPeticionajenaa, peticionajenaa }} /></div>
-      )}
+        {props?.setPeticion ? (
+          <div>
+            <button className="btnpetition" onClick={() => props.setPeticion('')}>
+              Volver
+            </button>
+          </div>
+        ) : null}
+      </div>
+
+      {/* Listado */}
+      <div className="contenido-pagin">
+        {/* Cabecera de la tarea (opcional, similar a tu versión previa) */}
+        <div key={`task-${taskId}`} className="comment" style={{ borderRadius: 10 }}>
+          <div className="contentt" style={{ marginRight: 0, width: '100%' }}>
+            <div className="redondear">
+              <div className="usuario" style={{ height: 20 }}>
+                {props?.peticion?.username}
+              </div>
+              <div className="textol">
+                <div className="titulo2">{props?.peticion?.title}</div>
+                {props?.peticion?.description ? (
+                  <div className="titulo1">{props?.peticion?.description}</div>
+                ) : null}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Comentarios */}
+        {isFetching ? (
+          <div style={{ padding: 16 }}>Cargando comentarios…</div>
+        ) : comments.length === 0 ? (
+          <div style={{ padding: 16 }}>Aún no hay comentarios.</div>
+        ) : (
+          comments.map((c) => renderComment(c))
+        )}
+      </div>
+
+      {/* Modal de usuarios que dieron like */}
+      <Modal isOpen={likesModalOpen} onRequestClose={() => setLikesModalOpen(false)} contentLabel="Usuarios que dieron like">
+        <h2>Usuarios que dieron “like”</h2>
+        <ul style={{ paddingLeft: 18 }}>
+          {likesModalUsers.length === 0 ? (
+            <li>Nadie aún</li>
+          ) : (
+            likesModalUsers.map((u) => (
+              <li key={u.id}>
+                {u.username} (id: {u.id})
+              </li>
+            ))
+          )}
+        </ul>
+        <button onClick={() => setLikesModalOpen(false)}>Cerrar</button>
+      </Modal>
     </div>
   );
 };

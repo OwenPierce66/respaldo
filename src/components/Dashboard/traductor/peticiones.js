@@ -168,6 +168,30 @@ const favoritosIds = useMemo(
 const PAGE_SIZE = 3;
 
 const [offset, setOffset] = useState(0);
+
+
+const ordering =
+  filtro === "fecha"
+    ? "-created_at"
+    : "-likes_count";
+
+let period;
+if (filtro === "top_day") period = "day";
+else if (filtro === "top_week") period = "week";
+else if (filtro === "top_month") period = "month";
+
+// ✅ Debe existir así:
+const { data: page, isFetching, refetch } = useGetFeedQuery({
+  limit: PAGE_SIZE,
+  offset,
+  ordering,
+  ...(period ? { period } : {}),
+});
+
+
+
+
+
 const [items, setItems] = useState([]);     // lista acumulada del feed
 const [canLoadMore, setCanLoadMore] = useState(true);
 
@@ -177,19 +201,17 @@ const scrollRootRef = useRef(null);
 
 const lastScrollYRef = useRef(0);
 
-const {
-  data: page,                 // { items, next, prev, count }
-  isFetching: rtkIsFetching,  // <-- usar este
-  refetch,
-} = useGetFeedQuery({ limit: PAGE_SIZE, offset });
-
 const loadMore = useCallback(() => {
   if (loadingRef.current) return;
-  if (rtkIsFetching || !canLoadMore) return;
-  loadingRef.current = true;
-  setOffset(o => o + PAGE_SIZE);
-}, [rtkIsFetching, canLoadMore]);
-
+  if (isFetching || !canLoadMore) return;  // use 'isFetching' returned from RTK Query
+  setOffset(prevOffset => {
+    if (prevOffset === 0 && items.length === 0) {
+      return prevOffset;
+    }
+    loadingRef.current = true;
+    return prevOffset + PAGE_SIZE;
+  });
+}, [isFetching, canLoadMore, items.length]);
 
 
   // Formulario de creación
@@ -265,6 +287,13 @@ const normalizeUsersResponse = (data) => {
   }));
 };
 
+useEffect(() => {
+  // cuando cambie ordering/period, resetea la lista y vuelve a cargar desde 0
+  setOffset(0);
+  setItems([]);
+  setCanLoadMore(true);
+  refetch();
+}, [ordering, period, refetch]);
 
 
 
@@ -290,8 +319,8 @@ const normalizeUsersResponse = (data) => {
 
 // Liberar bandera local cuando RTK termina
 useEffect(() => {
-  if (!rtkIsFetching) loadingRef.current = false;
-}, [rtkIsFetching]);
+   if (!isFetching) loadingRef.current = false;
+ }, [isFetching]);
 
 
 useEffect(() => {
@@ -347,8 +376,22 @@ useEffect(() => {
 }, [usuario?.user?.id]);
 
 useEffect(() => {
-  const pageItems = Array.isArray(page?.items) ? page.items : [];
-  setCanLoadMore(Boolean(page?.next));
+  // const pageItems = Array.isArray(page?.items) ? page.items : [];
+  // setCanLoadMore(Boolean(page?.next));
+
+  const pageItems = Array.isArray(page?.items)
+   ? page.items
+   : Array.isArray(page?.results)
+   ? page.results
+   : Array.isArray(page)
+   ? page
+   : [];
+
+ // usa 'next' si existe (DRF); si no, infiere por longitud
+ const hasNext = typeof page?.next !== 'undefined'
+   ? Boolean(page.next)
+   : pageItems.length >= PAGE_SIZE;
+ setCanLoadMore(hasNext);
 
   if (!pageItems.length) return;
 
@@ -2024,13 +2067,6 @@ return (
                 }
                 return true;
               })
-              .sort((a, b) => {
-                if (filtro === "fecha") {
-                  return new Date(b.created_at) - new Date(a.created_at);
-                } else {
-                  return b.likes_count - a.likes_count;
-                }
-              })
               .map(link => {
                 const isShared = !!link.shared_by;
 
@@ -2414,23 +2450,26 @@ const videoPath = getFirstVideo(link);
 </button> */}
 <button
   type="button"
-  className={`nlink ${selectedReplyId === link.id ? 'nlink-selected' : ''}`}
+  className="nlink"
   onClick={(e) => {
     e.stopPropagation();
-    setSelectedReplyId(prev => (prev === link.id ? null : link.id));
+    // Opción A: usar tu helper que ya existe:
+    navigateToPeticionPost(link.id);
+
+    // Opción B: directo con navigate y pasar el task por state:
+    // navigate(`/dashboard/newpeticionesPost/${link.id}`, { state: { peticion: link } });
   }}
-  aria-pressed={selectedReplyId === link.id}
-  aria-controls={`reply-${link.id}`}
-  aria-expanded={selectedReplyId === link.id}
 >
   Responder
 </button>
 
-{selectedReplyId === link.id && (
+
+{/* {selectedReplyId === link.id && (
   <div id={`reply-${link.id}`}>
-    {/* tu caja de respuesta aquí */}
+   
+
   </div>
-)}
+)} */}
 
                             <div className="like">
                               <div className="like_cantidad" onClick={() => handleListUsers(link.id)}>{link.likes_count}</div>
