@@ -32,6 +32,21 @@ const PeticionCard = ({ peticionId, openAddModal }) => {
   const [usuario, setUsuario] = useState(null);
   const [showLink, setShowLink] = useState({});
 
+  
+const API =
+  (typeof import.meta !== "undefined" && import.meta.env?.VITE_API_URL)
+  || "http://127.0.0.1:8000";
+
+const join = (a, b) => `${String(a).replace(/\/+$/, "")}/${String(b).replace(/^\/+/, "")}`;
+const toMedia = (urlLike) => {
+  if (!urlLike) return "";
+  const s = String(urlLike).trim();
+  if (/^https?:\/\//i.test(s)) return s;   // ya absoluta
+  if (s.startsWith("/")) return join(API, s);
+  if (s.startsWith("media/")) return join(API, s);
+  return join(API, join("/media", s));
+};
+
   const fetchUserDetails = async () => {
     const token = localStorage.getItem('userTokenLG');
     try {
@@ -119,18 +134,19 @@ const PeticionCard = ({ peticionId, openAddModal }) => {
 
   const tareasFavoritosIds = pchFavoritos;
 
-  const handleLike = async () => {
-    try {
-      await axios.post(
-        `http://127.0.0.1:8000/api/tasks/${peticionId}/`,
-        {},
-        { headers: { Authorization: `Token ${localStorage.getItem("userTokenLG")}` } }
-      );
-      fetchPeticion();
-    } catch (error) {
-      console.error("Error liking peticion:", error);
-    }
-  };
+const handleLike = async () => {
+  // optimista
+  setPeticion((p) => p ? { ...p, likes_count: (p.likes_count || 0) + (likedByMe ? -1 : 1) } : p);
+  try {
+    await axios.post(`http://127.0.0.1:8000/api/tasks/${peticionId}/`, {}, {
+      headers: { Authorization: `Token ${localStorage.getItem("userTokenLG")}` },
+    });
+    fetchPeticion(); // confirma con server
+  } catch {
+    fetchPeticion(); // revierte si falló
+  }
+};
+
 
   const handleListUsersWhoLiked = async () => {
     try {
@@ -233,11 +249,17 @@ const PeticionCard = ({ peticionId, openAddModal }) => {
             <div className="usuario" onClick={() => console.log("Usuario seleccionado:", peticion.user)}>
               <div className="user-infoImage">
                 <div className="image-container">
-                  {peticion.user_image && peticion.user_image !== "No image available" ? (
-                    <img src={peticion.user_image} alt="Usuario" className="circle-image" />
-                  ) : (
-                    <FontAwesomeIcon icon={faUser} style={{ color: "grey", cursor: "pointer" }} />
-                  )}
+{peticion.user_image && peticion.user_image !== "No image available" ? (
+  <img
+    src={toMedia(peticion.user_image)}
+    alt="Usuario"
+    className="circle-image"
+    onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/placeholder.png'; }}
+  />
+) : (
+  <FontAwesomeIcon icon={faUser} style={{ color: "grey", cursor: "pointer" }} />
+)}
+
                 </div>
                 <div className="nombreFecha">
                   <div className="username">{peticion.username}</div>
@@ -333,21 +355,21 @@ const PeticionCard = ({ peticionId, openAddModal }) => {
           </div>
 
           <div className="tamanio" style={{ width: "350px" }}>
-            {peticion.video && (
-              <video controls className="testimonial-video">
-                <source src={peticion.video} type="video/mp4" />
-                Your browser does not support the video tag.
-              </video>
-            )}
-            {peticion.image && (
-              <img
-                src={peticion.image}
-                alt="Imagen"
-                onClick={() => imageSelect(peticion.image)}
-                className="imagenPeticion"
-                style={{ height: "100px", width: "100px" }}
-              />
-            )}
+{peticion.video && (
+  <video controls className="testimonial-video">
+    <source src={toMedia(peticion.video)} type="video/mp4" />
+  </video>
+)}
+{peticion.image && (
+  <img
+    src={toMedia(peticion.image)}
+    alt="Imagen"
+    onClick={() => imageSelect(toMedia(peticion.image))}
+    className="imagenPeticion"
+    style={{ height: 100, width: 100 }}
+  />
+)}
+
 
             {visibleSection === 'subtasks' && peticion.subtasks.length > 0 && (
               <div className="subtasks-container">
@@ -367,12 +389,13 @@ const PeticionCard = ({ peticionId, openAddModal }) => {
                         )}
                       </div>
                     )}
-                    {subtask.image && <img src={subtask.image} alt="Subtask" className="imagePch" />}
-                    {subtask.video && (
-                      <video controls className="testimonial-video">
-                        <source src={subtask.video} type="video/mp4" />
-                      </video>
-                    )}
+                   {subtask.image && <img src={toMedia(subtask.image)} alt="Subtask" className="imagePch" />}
+{subtask.video && (
+  <video controls className="testimonial-video">
+    <source src={toMedia(subtask.video)} type="video/mp4" />
+  </video>
+)}
+
                   </div>
                 ))}
               </div>
@@ -396,12 +419,13 @@ const PeticionCard = ({ peticionId, openAddModal }) => {
                         )}
                       </div>
                     )}
-                    {subfactor.image && <img src={subfactor.image} alt="Subfactor" className="imagePch" />}
-                    {subfactor.video && (
-                      <video controls className="testimonial-video">
-                        <source src={subfactor.video} type="video/mp4" />
-                      </video>
-                    )}
+                {subfactor.image && <img src={toMedia(subfactor.image)} alt="Subfactor" className="imagePch" />}
+{subfactor.video && (
+  <video controls className="testimonial-video">
+    <source src={toMedia(subfactor.video)} type="video/mp4" />
+  </video>
+)}
+
                   </div>
                 ))}
               </div>
@@ -425,12 +449,13 @@ const PeticionCard = ({ peticionId, openAddModal }) => {
                         )}
                       </div>
                     )}
-                    {subfuente.image && <img src={subfuente.image} alt="Subfuente" className="imagePch" />}
-                    {subfuente.video && (
-                      <video controls className="testimonial-video">
-                        <source src={subfuente.video} type="video/mp4" />
-                      </video>
-                    )}
+                   {subfuente.image && <img src={toMedia(subfuente.image)} alt="Subfuente" className="imagePch" />}
+{subfuente.video && (
+  <video controls className="testimonial-video">
+    <source src={toMedia(subfuente.video)} type="video/mp4" />
+  </video>
+)}
+
                   </div>
                 ))}
               </div>
@@ -485,9 +510,9 @@ const PeticionCard = ({ peticionId, openAddModal }) => {
                 {listUsers.map(u => (
                   <div className="user-info" key={u.id}>
                     <div className="user-image-container">
-                      {u.user_image && u.user_image !== "No image available" ? (
-                        <img src={u.user_image} alt="Usuario" className="user-circle-image" />
-                      ) : (
+                     {u.user_image && u.user_image !== "No image available" ? (
+  <img src={toMedia(u.user_image)} alt="Usuario" className="user-circle-image" />
+)  : (
                         <div className="user-icon-placeholder">
                           <FontAwesomeIcon icon={faUser} style={{ color: "grey", cursor: "pointer" }} />
                         </div>
@@ -517,8 +542,8 @@ const PeticionCard = ({ peticionId, openAddModal }) => {
                   <div className="user-info" key={u.id}>
                     <div className="user-image-container">
                       {u.user_image && u.user_image !== "No image available" ? (
-                        <img src={u.user_image} alt="Usuario" className="user-circle-image" />
-                      ) : (
+  <img src={toMedia(u.user_image)} alt="Usuario" className="user-circle-image" />
+)  : (
                         <div className="user-icon-placeholder">
                           <FontAwesomeIcon icon={faUser} style={{ color: "grey", cursor: "pointer" }} />
                         </div>
@@ -541,7 +566,7 @@ const PeticionCard = ({ peticionId, openAddModal }) => {
           </Modal>
 
           <Modal isOpen={isModalOpenImage} onRequestClose={() => setModalOpenImage(false)} contentLabel="Imagen">
-            <img src={imagen} alt="Imagen" className="imagenPeticionModel" />
+           <img src={toMedia(imagen)} alt="Imagen" className="imagenPeticionModel" />
             <button onClick={() => setModalOpenImage(false)}>Cerrar</button>
           </Modal>
         </div>
