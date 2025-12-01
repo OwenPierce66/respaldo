@@ -17,204 +17,173 @@ class AddParticipants extends Component {
       count: 0,
       pages: 0,
       members: null,
+      loadingGroup: false,
+      loadingUsers: false,
+      error: null,
     };
     this.getGroup = this.getGroup.bind(this);
     this.handleUsers = this.handleUsers.bind(this);
     this.getUsers = this.getUsers.bind(this);
     this.handleAddParticipants = this.handleAddParticipants.bind(this);
+    this.handleSearch = this.handleSearch.bind(this);
   }
 
-  getGroup() {
-    Axios.get("http://127.0.0.1:8000/api/my_group/", {
-      headers: {
-        Authorization: `Token ${localStorage.getItem("userTokenLG")}`,
-      },
-    }).then((res) => {
-      if (res.data.error) {
-      } else {
-        this.setState({
-          groupDataID: res.data.group.id,
-          group: res.data,
-          // groupLeader:
-        });
-      }
-    });
-  }
-
-  handleSearch(e) {
-    let url = "http://127.0.0.1:8000/api/admin/users/?search=" + e.target.value;
-    this.getUsers(url);
-  }
-
-  getUsers(URL) {
-    Axios.get(URL, {
-      headers: {
-        Authorization: `Token ${localStorage.getItem("userTokenLG")}`,
-      },
-    }).then((response) => {
-      this.setState({
-        previous: response.data.previous,
-        next: response.data.next,
-        users: response.data.results,
-        count: response.data.count,
-        pages: Math.ceil(response.data.count / 10),
-      });
-    });
-  }
-
-  handleUsers() {
-    const users = this.state.users;
-    if (users) {
-      return users.map((user) => {
-        if ((user.profile.subscriptionActive = "Inactive")) {
-          return (
-            <div>
-              <tr key={user.id} className="handleUserWrapper">
-                <td className="handleUser">{user.username}</td>
-                <td className="handleUser">{/* {user.first_name} */} </td>
-                <td className="DoNotDisplay">-</td>
-                <div className="handleUserButton">
-                  {/* <button> */}
-                  <FontAwesomeIcon
-                    className="buttonadduser"
-                    icon={faPlus}
-                    onClick={() => {
-                      this.handleAddParticipants(user);
-                    }}
-                  />
-                  {/* </button> */}
-                </div>
-              </tr>
-            </div>
-          );
-        } else return;
-      });
-    }
-  }
-
-  handleSearch(e) {
-    let url = "http://127.0.0.1:8000/api/admin/users/?search=" + e.target.value;
-    this.getUsers(url);
-  }
-
-  handleAddParticipants(user) {
-    Axios.post(
-      `http://127.0.0.1:8000/api/my_group/`,
-      {
-        post_type: "addUser",
-        user: user.id,
-        group: this.state.groupDataID,
-      },
-      {
+  async getGroup() {
+    this.setState({ loadingGroup: true, error: null });
+    try {
+      const res = await Axios.get("http://127.0.0.1:8000/api/my_group/", {
         headers: {
           Authorization: `Token ${localStorage.getItem("userTokenLG")}`,
         },
+      });
+      if (res.data && res.data.group) {
+        this.setState({
+          groupDataID: res.data.group.id,
+          group: res.data.group,
+          groupLeader: res.data.group.leader ?? null,
+        });
+      } else {
+        // respuesta inesperada
+        this.setState({ error: "No se encontró group en la respuesta del servidor." });
       }
-    ).then((res) => {
-      window.location.reload();
+    } catch (err) {
+      console.error("getGroup error:", err);
+      this.setState({ error: "Error al obtener grupo (ver consola)." });
+      // No redirigir aquí; deja que el usuario vea el modal con mensaje.
+    } finally {
+      this.setState({ loadingGroup: false });
+    }
+  }
+
+  // si no pasas URL, usamos este por defecto
+  async getUsers(URL = "http://127.0.0.1:8000/api/admin/users/") {
+    this.setState({ loadingUsers: true, error: null });
+    try {
+      const response = await Axios.get(URL, {
+        headers: {
+          Authorization: `Token ${localStorage.getItem("userTokenLG")}`,
+        },
+      });
+      const data = response.data;
+      this.setState({
+        previous: data.previous ?? null,
+        next: data.next ?? null,
+        users: data.results ?? data ?? [],
+        count: data.count ?? (Array.isArray(data) ? data.length : 0),
+        pages: data.count ? Math.ceil(data.count / 10) : 1,
+      });
+    } catch (err) {
+      console.error("getUsers error:", err);
+      this.setState({ error: "Error al obtener usuarios. Revisa la consola." });
+    } finally {
+      this.setState({ loadingUsers: false });
+    }
+  }
+
+  handleUsers() {
+    const { users } = this.state;
+    if (!users || users.length === 0) return null;
+
+    return users.map((user) => {
+      // comparacion, no asignacion
+      const isInactive = user?.profile?.subscriptionActive === "Inactive";
+      // si quieres filtrar solo inactive, usa isInactive en condicional
+      if (!isInactive) return null;
+
+      return (
+        <div key={user.id} className="handleUserWrapper">
+          <div className="handleUser">{user.username}</div>
+          <div className="handleUser">{/* first/last if needed */}</div>
+          <div className="DoNotDisplay">-</div>
+          <div className="handleUserButton">
+            <FontAwesomeIcon
+              className="buttonadduser"
+              icon={faPlus}
+              onClick={() => this.handleAddParticipants(user)}
+            />
+          </div>
+        </div>
+      );
     });
   }
 
   handleSearch(e) {
-    let url = "http://127.0.0.1:8000/api/admin/users/?search=" + e.target.value;
+    const q = e.target.value || "";
+    const url = `http://127.0.0.1:8000/api/admin/users/?search=${encodeURIComponent(q)}`;
     this.getUsers(url);
+  }
+
+  async handleAddParticipants(user) {
+    if (!this.state.groupDataID) {
+      alert("No se encontró el ID del grupo. Asegúrate de que el grupo esté cargado.");
+      return;
+    }
+    try {
+      const res = await Axios.post(
+        `http://127.0.0.1:8000/api/my_group/`,
+        {
+          post_type: "addUser",
+          user: user.id,
+          group: this.state.groupDataID,
+        },
+        {
+          headers: {
+            Authorization: `Token ${localStorage.getItem("userTokenLG")}`,
+          },
+        }
+      );
+      // espera éxito del backend
+      if (res.data && (res.data.success || res.data === "success")) {
+        // actualizar UI sin recargar
+        // ideal: backend devuelve members o grupo actualizado -> actualizar state
+        // aquí forzamos recarga ligera
+        await this.getGroup();
+        await this.getUsers(); // refrescar lista si necesario
+      } else {
+        console.warn("handleAddParticipants response:", res.data);
+        alert("No se pudo añadir el usuario. Revisa la consola.");
+      }
+    } catch (err) {
+      console.error("handleAddParticipants error:", err);
+      alert("Error al añadir participante. Revisa la consola para más detalles.");
+    }
   }
 
   componentDidMount() {
     this.getGroup();
-    this.getUsers();
-    this.handleUsers();
+    this.getUsers(); // ahora con URL por defecto
+    // no llamamos a handleUsers() aquí
   }
 
   render() {
+    const { loadingGroup, loadingUsers, error } = this.state;
+
     return (
       <div className="modal-wrapper">
         <div className="adminModal-body">
-          {this.state.createProcessing ? (
-            <div>
-              {this.state.createProcessingFinished ? (
-                <div className="successful">User Successfully Created</div>
-              ) : (
-                <Spinner />
-              )}
-            </div>
-          ) : (
-            <form
-              onSubmit={(e) => this.handleSubmit(e, "create")}
-              className="adminCreateForm"
-            >
-              <div className="input-container">
-                <label htmlFor="">Username:</label>
-                <input
-                  type="text"
-                  name="username"
-                  placeholder="Enter Username"
-                  onChange={(e) => this.handleChange(e)}
-                  required
-                />
-              </div>
-              <div className="input-container">
-                <label htmlFor="">First Name:</label>
-                <input
-                  className="DoNotDisplay"
-                  type="text"
-                  name="first_name"
-                  placeholder="Enter First Name"
-                  onChange={(e) => this.handleChange(e)}
-                  required
-                />
-              </div>
-              <div className="input-container">
-                <label htmlFor="">Middle Name:</label>
-                <input
-                  type="text"
-                  name="middle_name"
-                  className="DoNotDisplay"
-                  placeholder="Enter Middle Name"
-                  onChange={(e) => this.handleChange(e)}
-                  required
-                />
-              </div>
-              <div className="input-container">
-                <label htmlFor="">Last Name:</label>
-                <input
-                  className="DoNotDisplay"
-                  type="text"
-                  name="last_name"
-                  placeholder="Enter Last Name"
-                  onChange={(e) => this.handleChange(e)}
-                  required
-                />
-              </div>
-              <div className="adminModal-button-container">
-                <button type="submit">Create User</button>
-              </div>
-            </form>
-          )}
-          {this.state.createError ? <div>{this.state.createError}</div> : null}
-        </div>
-        <div className="modal-box">
-          <div className="modal-header">Add User To Group Participants</div>
-          <div className="flex-center">
-            <button>
+          {loadingGroup ? <div>Cargando grupo...</div> : null}
+          {error ? <div style={{ color: "red" }}>{error}</div> : null}
+
+          <div className="modal-box">
+            <div className="modal-header">Add User To Group Participants</div>
+
+            <div className="flex-center">
               <div className="SearchUserParticipantsWrapper">
                 <div className="SearchUserParticipantsTitle">Search User</div>
                 <input
                   className="SearchUserParticipants"
                   type="text"
                   placeholder="Search User"
-                  onChange={(e) => this.handleSearch(e)}
+                  onChange={this.handleSearch}
                 />
               </div>
-            </button>
 
-            {/* <div className="handleUserWrapperNames">
-                            <td className="handleUser">username</td>
-                            <td className="handleUser">first_name{" "}last_name</td>
-                            
-                            <td className="handleUserButton">add member</td>
-                        </div> */}
-            {this.handleUsers()}
+              {loadingUsers ? <div>Cargando usuarios...</div> : null}
+
+              <div style={{ width: "100%", marginTop: 12 }}>
+                {this.handleUsers()}
+              </div>
+            </div>
           </div>
         </div>
       </div>

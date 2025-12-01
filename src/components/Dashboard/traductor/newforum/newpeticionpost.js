@@ -33,6 +33,15 @@ const NewPeticionPost = () => {
   const [isSelectTaskModalOpen, setSelectTaskModalOpen] = useState(false);
   const toggleSelectTaskModal = () => setSelectTaskModalOpen((v) => !v);
   const [aportacionSeleccionada, setAportacionSeleccionada] = useState(null);
+const [openRepliesMap, setOpenRepliesMap] = useState({});
+
+// permite: toggleReplies(id)  o  toggleReplies(id, true/false)
+const toggleReplies = (commentId, force) => {
+  setOpenRepliesMap(prev => ({
+    ...prev,
+    [commentId]: typeof force === "boolean" ? force : !prev[commentId],
+  }));
+};
 
   // Form de nuevo comentario
   const [commentInput, setCommentInput] = useState("");
@@ -51,6 +60,7 @@ const NewPeticionPost = () => {
   const [periodFilter, setPeriodFilter] = useState(""); // '', 'day', 'week', 'month'
   const [limit] = useState(10);
   const [offset, setOffset] = useState(0);
+const refetchCommentsRef = useRef(null);
 
   const {
     data: commentsPage,
@@ -76,13 +86,34 @@ const NewPeticionPost = () => {
   const results = commentsPage?.results ?? [];
   const hasNext = Boolean(commentsPage?.next);
 
-  // Reconsultar al cambiar filtros
-  useEffect(() => {
-    setOffset(0);
-    if (peticionId) refetchComments();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ordering, periodFilter, peticionId]);
+  // mantiene copia local para actualizaciones inmediatas (optimista)
+const [localComments, setLocalComments] = useState(results);
 
+// sincroniza cada vez que RTK Query actualiza results
+useEffect(() => {
+  setLocalComments(results);
+}, [results]);
+
+
+useEffect(() => {
+  refetchCommentsRef.current = refetchComments;
+}, [refetchComments]);
+
+// reemplaza el useEffect problemático por esto:
+useEffect(() => {
+  // sólo forzamos offset a 0 si no lo es (evitamos actualizaciones innecesarias)
+  setOffset(prev => (prev === 0 ? prev : 0));
+
+  // llamamos a la versión estable almacenada en ref
+  if (peticionId && typeof refetchCommentsRef.current === "function") {
+    try {
+      refetchCommentsRef.current();
+    } catch (err) {
+      console.error("refetchComments error:", err);
+    }
+  }
+  // dependemos SOLO de ordering/periodFilter/peticionId (no del refetch directo)
+}, [ordering, periodFilter, peticionId]);
   // Helpers
   // ⬇️ SOLO cambié esta función para corregir rutas relativas tipo "media/..." o nombres sueltos
   const getMediaUrl = (path) => {
@@ -204,20 +235,28 @@ const NewPeticionPost = () => {
     });
 
     try {
-      await createComment({ taskId: peticion.id, body: formData }).unwrap();
+ await createComment({ taskId: comment.post, body: formData }).unwrap();
 
-      // limpiar formulario
-      setCommentInput("");
-      setMasTasks([{ title: "", description: "", link: "", image: null, video: null }]);
-      setMasFuentes([{ title: "", description: "", link: "", image: null, video: null }]);
-      setMasFactores([{ title: "", description: "", link: "", image: null, video: null }]);
-      setAportacionSeleccionada(null);
+  // limpiar UI local
+  setReplyText("");
+  setShowReplyBox(false);
+// después de crear el comentario:
+setCommentInput("");
+  setMasTasks([{ title: "", description: "", link: "", image: null, video: null }]);
+  setMasFuentes([{ title: "", description: "", link: "", image: null, video: null }]);
+  setMasFactores([{ title: "", description: "", link: "", image: null, video: null }]);
+  setAportacionSeleccionada(null);
 
-      // volver a página 1 y refetch inmediato
-      setOffset(0);
-      refetchComments();
+  // forzamos volver a la primera página — la query pedirá los datos
+  setOffset(0);
 
-      setAddModalOpen(false);
+  // cerramos modal
+  setAddModalOpen(false);
+
+  // si quieres abrir el hilo de replies, usa tu handleReply (no refetch aquí)
+  if (typeof handleReply === "function") {
+    await handleReply(); // esto debería abrir hilo / actualizar padre, pero no hacer refetch extra
+  }
     } catch (err) {
       console.error("Error submitting comment:", err);
     }
@@ -276,6 +315,40 @@ const NewPeticionPost = () => {
   const handlePostFileChangeFuente = handleFileFor(setMasFuentes);
 
   if (!peticion) return <div>Loading...</div>;
+
+  // arriba del return, define handlers
+const handleOrderingChange = (val) => {
+  setOrdering(val);
+  setOffset(0);        // volver a la primera "página"
+  // petición inmediata para mayor inmediatez
+  // if (peticionId) refetchComments();
+};
+
+// arriba, junto a tus otros useState
+// mantiene el contrato con el backend: si "" -> undefined para que no lo envíe
+const handlePeriodChange = (val) => {
+  const normalized = val === "" ? "" /* o null si prefieres */ : String(val);
+  setPeriodFilter(normalized);
+  setOffset(0);
+  // refetch explícito para forzar refresco inmediato
+  // if (peticionId) refetchComments();
+};
+
+const handleRefreshReplies = async (parentId) => {
+  try {
+    setOffset(0);
+    if (commentsLoading) return;
+    const res = await refetchComments();
+    setLocalComments(res?.data?.results ?? []);
+    if (parentId) toggleReplies(parentId, true);
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+
+
+
 
   return (
     <div className="anivelar">
@@ -512,40 +585,46 @@ const NewPeticionPost = () => {
                 </div>
               </Modal>
 
-              {/* Controles de orden / ventana */}
-              <div style={{ display: "flex", gap: 8, alignItems: "center", margin: "8px 0" }}>
-                <label>
-                  Orden:&nbsp;
-                  <select value={ordering} onChange={(e) => setOrdering(e.target.value)}>
-                    <option value="-created_at">Más recientes</option>
-                    <option value="created_at">Más antiguos</option>
-                    <option value="-likes">Más liked</option>
-                    <option value="likes">Menos liked</option>
-                  </select>
-                </label>
-                <label>
-                  Ventana:&nbsp;
-                  <select value={periodFilter} onChange={(e) => setPeriodFilter(e.target.value)}>
-                    <option value="">Todas</option>
-                    <option value="day">Hoy</option>
-                    <option value="week">Última semana</option>
-                    <option value="month">Último mes</option>
-                  </select>
-                </label>
-              </div>
+        {/* Controles de orden / ventana */}
+<div style={{ display: "flex", gap: 8, alignItems: "center", margin: "8px 0" }}>
+  <label>
+    Orden:&nbsp;
+    <select value={ordering} onChange={(e) => handleOrderingChange(e.target.value)}>
+      <option value="-created_at">Más recientes</option>
+      <option value="created_at">Más antiguos</option>
+      {/* Asegúrate que el backend usa "likes_count" o el campo real */}
+      <option value="-likes_count">Más liked</option>
+      <option value="likes_count">Menos liked</option>
+    </select>
+  </label>
+<label>
+  Ventana:&nbsp;
+  <select value={periodFilter} onChange={(e) => handlePeriodChange(e.target.value)}>
+    <option value="">Todas</option>
+    <option value="day">Hoy</option>
+    <option value="week">Última semana</option>
+    <option value="month">Último mes</option>
+  </select>
+</label>
+
+</div>
+
 
               {/* Lista de comentarios */}
               <div className="peticionCommentsContainer">
                 <div className="commentsHeader">{(commentsPage?.count ?? 0) + " comments"}</div>
 
                 <div className="commentsContainer">
-                  <NewPeticionComments
-                    comments={results}
-                    user={user}
-                    handleReply={() => refetchComments()}
-                    handleLike={handleLikeComment}
-                    peticion={peticion?.pch}
-                  />
+<NewPeticionComments
+  comments={results}
+  user={user}
+  handleReply={handleRefreshReplies}   // <-- aquí
+  handleLike={handleLikeComment}
+  peticion={peticion?.pch}
+  repliesOpenMap={openRepliesMap}
+  onToggleReplies={toggleReplies}
+/>
+
 
                   {commentsLoading && <div style={{ padding: 12 }}>Cargando…</div>}
                   {!commentsLoading && results.length === 0 && (

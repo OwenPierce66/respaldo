@@ -148,6 +148,7 @@ const AuthLinks = () => {
       <Route path="community" element={<Forum />} />
       <Route path="communityPost/:postId" element={<ForumPost />} />
       <Route path="newcommunity" element={<NewForum />} />
+      <Route path="newcommunity/:userId" element={<NewForum />} />
       <Route path="newcommunityPost/:postId" element={<NewForumPost />} />
       <Route path="newpeticionesPost/:peticionId" element={<NewPeticionPost />} />
 

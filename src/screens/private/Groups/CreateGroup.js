@@ -2,6 +2,7 @@ import React, { Component } from "react";
 import { connect } from "react-redux";
 import Axios from "axios";
 import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 class CreateGroup extends Component {
   constructor() {
@@ -37,7 +38,8 @@ class CreateGroup extends Component {
     )
       .then((res) => {
         if (res.data.success) {
-          this.props.history.push("/dashboard/groups");
+          // Ahora usa navigate correctamente
+          this.props.navigate("/dashboard/groups");
         } else {
           this.setState({
             error: res.data.error,
@@ -57,15 +59,14 @@ class CreateGroup extends Component {
           name="description"
           type="text"
           placeholder="What is this group about?"
-          onChange={() => this.handleChange(event)}
+          onChange={(event) => this.handleChange(event)}
           value={this.state.description}
         />
         <div className="buttons-wrapper">
           <button className="Back-cg">
-            {" "}
             <Link className="Back-cg-link" to="../Dashboard/joinGroup">
               Go Back
-            </Link>{" "}
+            </Link>
           </button>
           <button className="Back-cg" onClick={this.handleCreateGroup}>
             Create Group
@@ -82,4 +83,10 @@ const mapStateToProps = (state) => {
   };
 };
 
-export default connect(mapStateToProps)(CreateGroup);
+// Wrapper funcional para inyectar navigate
+const CreateGroupWithNavigate = (props) => {
+  const navigate = useNavigate();
+  return <CreateGroup {...props} navigate={navigate} />;
+};
+
+export default connect(mapStateToProps)(CreateGroupWithNavigate);

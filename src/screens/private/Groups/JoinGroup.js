@@ -8,7 +8,7 @@ import {
   faChevronRight,
 } from "@fortawesome/free-solid-svg-icons";
 import { connect } from "react-redux";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 class JoinGroup extends Component {
   constructor() {
@@ -35,8 +35,7 @@ class JoinGroup extends Component {
         Authorization: `Token ${localStorage.getItem("userTokenLG")}`,
       },
     }).then((res) => {
-      if (res.data.error) {
-      } else {
+      if (!res.data.error) {
         this.setState({
           groups: res.data.results,
           previous: res.data.previous,
@@ -50,41 +49,37 @@ class JoinGroup extends Component {
 
   renderGroups() {
     const { groups } = this.state;
-    if (groups) {
-      return groups.map((group) => {
-        let leader = group.leader;
 
-        if (leader.first_name) {
-          leader = group.leader.first_name + " " + group.leader.last_name;
-        } else {
-          leader = "Not Available";
-        }
+    if (!groups) return <div>No groups were found.</div>;
 
-        return (
-          <div className="group">
-            <FontAwesomeIcon className="userCircleIcon" icon={faUserCircle} />
-            <div className="leaderDescription">
-              <input value={leader} className="leader" readOnly />
-              <input
-                value={group.description}
-                className="description"
-                readOnly
-              />
-            </div>
-            <button onClick={() => this.handleJoinGroup(group.id)}>
-              <FontAwesomeIcon icon={faUserPlus} />
-            </button>
-            <div className="borderBottom"></div>
+    return groups.map((group) => {
+      let leader = group.leader;
+
+      if (leader.first_name) {
+        leader = group.leader.first_name + " " + group.leader.last_name;
+      } else {
+        leader = "Not Available";
+      }
+
+      return (
+        <div className="group">
+          <FontAwesomeIcon className="userCircleIcon" icon={faUserCircle} />
+          <div className="leaderDescription">
+            <input value={leader} className="leader" readOnly />
+            <input value={group.description} className="description" readOnly />
           </div>
-        );
-      });
-    } else {
-      return <div className="noGroups">No groups were found.</div>;
-    }
+          <button onClick={() => this.handleJoinGroup(group.id)}>
+            <FontAwesomeIcon icon={faUserPlus} />
+          </button>
+          <div className="borderBottom"></div>
+        </div>
+      );
+    });
   }
 
-  handleJoinGroup(groupId) {
-    Axios.post(
+async handleJoinGroup(groupId) {
+  try {
+    const res = await Axios.post(
       `http://127.0.0.1:8000/api/groups/`,
       {
         post_type: "join_group",
@@ -95,12 +90,31 @@ class JoinGroup extends Component {
           Authorization: `Token ${localStorage.getItem("userTokenLG")}`,
         },
       }
-    ).then((res) => {
-      if (res.data.success) {
-        this.props.history.push("/dashboard/groups");
-      }
-    });
+    );
+
+    console.log("JoinGroup response:", res.data);
+
+    if (res.data.success) {
+      // si el backend a veces tarda en reflejar la membresía, hacemos un pequeño wait + refetch
+      // navegamos a /dashboard/groups (donde Groups hará la llamada a my_group)
+      // usar navigate inyectado por wrapper (si aplicaste el wrapper)
+      // hacemos un pequeño delay para evitar race conditions
+      setTimeout(() => {
+        if (this.props.navigate) {
+          this.props.navigate("/dashboard/groups");
+        } else {
+          window.location.href = "/dashboard/groups";
+        }
+      }, 300); // 300ms debería ser suficiente en la mayoría de casos
+    } else {
+      console.warn("JoinGroup failed:", res.data);
+      // muestra error al usuario si quieres
+    }
+  } catch (err) {
+    console.error("handleJoinGroup error:", err);
   }
+}
+
 
   handleSearch(e) {
     let url = "http://127.0.0.1:8000/api/groups/?search=" + e.target.value;
@@ -132,8 +146,9 @@ class JoinGroup extends Component {
 
   render() {
     if (!this.state.groups) {
-      return <div className="slkfdj"></div>;
+      return <div></div>;
     }
+
     return (
       <div className="content">
         <div className="createGroupBtn">
@@ -141,6 +156,7 @@ class JoinGroup extends Component {
             <button>Create Group</button>
           </Link>
         </div>
+
         <div className="joinGroup">
           <div className="groupsNameSearchbar">
             <div className="groupsName">Groups</div>
@@ -151,7 +167,9 @@ class JoinGroup extends Component {
               onChange={(e) => this.handleSearch(e)}
             />
           </div>
+
           <div className="joinGroupsWrapper">{this.renderGroups()}</div>
+
           <div className="pagePaginationWrapper">
             <div className="pagePagination">
               {this.state.previous ? (
@@ -166,6 +184,7 @@ class JoinGroup extends Component {
                   icon={faChevronLeft}
                 />
               )}
+
               <div className="itemsShowing">
                 {this.state.currentPage * 10 - 10}-
                 {this.state.currentPage * 10 > this.state.count
@@ -173,6 +192,7 @@ class JoinGroup extends Component {
                   : this.state.currentPage * 10}{" "}
                 of {this.state.count}
               </div>
+
               {this.state.next ? (
                 <FontAwesomeIcon
                   className="changePage-icon"
@@ -199,4 +219,10 @@ const mapStateToProps = (state) => {
   };
 };
 
-export default connect(mapStateToProps)(JoinGroup);
+// Wrapper funcional para inyectar navigate
+const JoinGroupWithNavigate = (props) => {
+  const navigate = useNavigate();
+  return <JoinGroup {...props} navigate={navigate} />;
+};
+
+export default connect(mapStateToProps)(JoinGroupWithNavigate);

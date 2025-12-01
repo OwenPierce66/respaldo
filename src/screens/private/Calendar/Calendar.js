@@ -16,7 +16,9 @@ const Calendar = ({ user }) => {
   const [selectedEvent, setSelectedEvent] = useState();
   const [events, setEvents] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [userCategories, setUserCategories] = useState(user.profile.calendar_event_categories)
+const [userCategories, setUserCategories] = useState(
+  user?.profile?.calendar_event_categories ?? []
+);
   const [view, setView] = useState('month')
   const [date, setDate] = useState(new Date())
 
@@ -154,6 +156,7 @@ function CategoriesModal({ open, setOpen, userCategories, setUserCategories, cat
       setOpen(false)
     });
   }
+  
 
   return (
     <Modal

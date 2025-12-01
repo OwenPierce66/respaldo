@@ -1113,9 +1113,11 @@
 
   .subtasks-container {
     display: flex;
-    overflow-x: auto;
+    // overflow-x: auto;
     /* Añade desplazamiento horizontal si los elementos exceden el ancho del contenedor */
     gap: 10px;
+    width: 100%;
+  flex-wrap: wrap; 
     /* Espacio entre los elementos */
   }
 

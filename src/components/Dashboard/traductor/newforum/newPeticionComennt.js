@@ -12,12 +12,13 @@ import {
   useDeleteCommentMutation,
   useLazyGetCommentLikesQuery,
 }from "../commentApi";
+import { ImgWithFallback } from "./ImgWithFallback";
 
 // RTK Query (comments)
 
 const getMediaUrl = (path) => (path ? `http://127.0.0.1:8000${path}` : '');
 
-const NewPeticionComment = ({ comment, user, handleReply, handleLike, peticion }) => {
+const NewPeticionComment =  ({ comment, user, handleReply, handleLike, peticion, repliesOpenMap = {}, onToggleReplies = () => {} })  => {
   const [showReplyBox, setShowReplyBox] = useState(false);
   const [replyText, setReplyText] = useState("");
   const [peticionajena, setPeticionajena] = useState("");
@@ -38,16 +39,20 @@ const NewPeticionComment = ({ comment, user, handleReply, handleLike, peticion }
   const [deleteComment] = useDeleteCommentMutation();
   const [triggerGetLikes] = useLazyGetCommentLikesQuery();
 
-  const nestedComments = (comment.children || []).map((childComment) => (
-    <NewPeticionComment
-      key={childComment.id}
-      comment={childComment}
-      user={user}
-      handleReply={handleReply}
-      handleLike={handleLike}
-      peticion={peticion}
-    />
-  ));
+  const isOpen = Boolean(repliesOpenMap[comment.id]);
+  
+const nestedComments = (comment.children || []).map((childComment) => (
+  <NewPeticionComment
+key={childComment.id}
+    comment={childComment}
+    user={user}
+    handleReply={handleReply}
+    handleLike={handleLike}
+    peticion={peticion}
+    repliesOpenMap={repliesOpenMap}
+    onToggleReplies={onToggleReplies}
+  />
+));
 
   const onDelete = async () => {
     if (!confirm("Confirm You Want To Delete Comment.")) return;
@@ -93,39 +98,52 @@ const NewPeticionComment = ({ comment, user, handleReply, handleLike, peticion }
       if (t.video) formData.append(`subfuentes[${i}][video]`, t.video, t.video.name);
     });
 
-    try {
-      await createComment({ taskId: comment.post, body: formData }).unwrap();
-      setReplyText("");
-      setShowReplyBox(false);
-      setMasTasks([{ title: '', description: '', link: '', image: null, video: null, imagePreview: null, videoPreview: null }]);
-      setMasFactores([{ title: '', description: '', link: '', image: null, video: null, imagePreview: null, videoPreview: null }]);
-      setMasFuentes([{ title: '', description: '', link: '', image: null, video: null, imagePreview: null, videoPreview: null }]);
-      handleReply(comment.id, replyText);
-    } catch (err) {
-      console.error("Error submitting reply:", err);
-    }
+try {
+  await createComment({ taskId: comment.post, body: formData }).unwrap();
+
+  // limpiar UI local
+  setReplyText("");
+  setShowReplyBox(false);
+  setMasTasks([{ title: '', description: '', link: '', image: null, video: null, imagePreview: null, videoPreview: null }]);
+  setMasFactores([{ title: '', description: '', link: '', image: null, video: null, imagePreview: null, videoPreview: null }]);
+  setMasFuentes([{ title: '', description: '', link: '', image: null, video: null, imagePreview: null, videoPreview: null }]);
+
+  // le pedimos al padre que haga refetch y que abra el hilo del parent
+  if (typeof handleReply === "function") {
+    await handleReply(comment.id);
+  }
+} catch (err) {
+  console.error("Error submitting reply:", err);
+}
+
   };
 
-  const toggleTree = () => {
-    const child = document.getElementById(`replies${comment.id}`);
-    const button = document.getElementById(`commentButton${comment.id}`);
-    if (!child || !button) return;
-    child.style.display = child.style.display === "none" ? "block" : "none";
-    button.textContent = button.textContent === "Hide Replies" ? "Show Replies" : "Hide Replies";
-  };
+// ahora delegamos el control al padre a través de onToggleReplies
+const toggleTree = () => {
+  onToggleReplies(comment.id);
+};
 
-  const handleFileFor = (setter) => (index, e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const isImage = file.type.startsWith('image/');
-    setter(prev => prev.map((t, i) => i === index ? ({
-      ...t,
-      image: isImage ? file : null,
-      video: !isImage ? file : null,
-      imagePreview: isImage ? URL.createObjectURL(file) : null,
-      videoPreview: !isImage ? URL.createObjectURL(file) : null
-    }) : t));
-  };
+const handleFileFor = (setter) => (index, e) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+  const isImage = file.type.startsWith('image/');
+  setter(prev =>
+    prev.map((t, i) => {
+      if (i !== index) return t;
+      // revocar preview anterior
+      try { if (t.imagePreview && t.imagePreview.startsWith('blob:')) URL.revokeObjectURL(t.imagePreview); } catch {}
+      try { if (t.videoPreview && t.videoPreview.startsWith('blob:')) URL.revokeObjectURL(t.videoPreview); } catch {}
+      return {
+        ...t,
+        image: isImage ? file : null,
+        video: !isImage ? file : null,
+        imagePreview: isImage ? URL.createObjectURL(file) : null,
+        videoPreview: !isImage ? URL.createObjectURL(file) : null
+      };
+    })
+  );
+};
+
 
   const handleFileChange = handleFileFor(setMasTasks);
   const handlePostFileChangeFuente = handleFileFor(setMasFuentes);
@@ -166,6 +184,50 @@ const NewPeticionComment = ({ comment, user, handleReply, handleLike, peticion }
     },
   };
 
+  // base robusto para construir URLs de media
+const API_BASE = 'http://127.0.0.1:8000';
+
+const cleanVal = (v) => {
+  if (!v) return null;
+  const s = String(v).trim();
+  if (s === "" || s === "No image available" || s === "undefined" || s === "null") return null;
+  return s;
+};
+
+const toSrc = (path) => {
+  const p = cleanVal(path);
+  if (!p) return "";
+  // ya es absoluta, blob o data
+  if (/^https?:\/\//i.test(p) || p.startsWith("blob:") || p.startsWith("data:")) return p;
+  // si viene con /media o con media/ o con "imagen.jpg" lo normalizamos
+  try {
+    // new URL(baseRelativeOrAbsolute, base) maneja correctamente /x y x
+    return new URL(p.startsWith("/") ? p : `/${p}`, API_BASE).href;
+  } catch {
+    return `${API_BASE}${p.startsWith("/") ? "" : "/"}${p}`;
+  }
+};
+
+useEffect(() => {
+  // cuando masTasks/masFactores/masFuentes cambian, limpia previos antiguos
+  return () => {
+    const revokeIf = (url) => {
+      try {
+        if (url && url.startsWith('blob:')) URL.revokeObjectURL(url);
+      } catch (e) {}
+    };
+
+    (masTasks || []).forEach(t => revokeIf(t.imagePreview));
+    (masFactores || []).forEach(t => revokeIf(t.imagePreview));
+    (masFuentes || []).forEach(t => revokeIf(t.imagePreview));
+  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, []); // solo al desmontar (o puedes observar previews específicos si creas y revocas dinámicamente)
+
+
+// console.log("render comment", comment.id, "image:", toSrc(comment.image));
+// (comment.subtasks || []).forEach(s => console.log(" subtask", s.id, toSrc(s.image)));
+
   return (
     <div className="comment-container" id={comment.id}>
       <div className="comment-container2">
@@ -176,7 +238,12 @@ const NewPeticionComment = ({ comment, user, handleReply, handleLike, peticion }
                 <div className="user-infoImage">
                   <div className="image-container">
                     {comment.created_by.user_image ? (
-                      <img src={getMediaUrl(comment.created_by.user_image)} alt="Imagen de Usuario" className="circle-image" />
+                      <ImgWithFallback
+    src={toSrc(comment.created_by.user_image)}
+    alt="Imagen de Usuario"
+    className="circle-image"
+    style={{ width: 40, height: 40, borderRadius: "50%", objectFit: "cover" }}
+  />
                     ) : (
                       <div className="user-infoImageIcon">
                         <FontAwesomeIcon icon={faUser} style={{ color: "grey", cursor: "pointer" }} />
@@ -189,9 +256,10 @@ const NewPeticionComment = ({ comment, user, handleReply, handleLike, peticion }
                   </div>
                 </div>
               </div>
+
               <div className="comment-icons">
                 <div className="icon2">
-                  {user.id === comment.created_by.id && (
+                  {user?.id === comment.created_by.id && (
                     <div className="material-iconi" onClick={onDelete}>
                       <FontAwesomeIcon icon={faTrash} />
                     </div>
@@ -202,7 +270,9 @@ const NewPeticionComment = ({ comment, user, handleReply, handleLike, peticion }
 
             {comment.aportacion && (
               <div className="section-buttons" style={{ margin: "16px", marginLeft: "-155px" }}>
-                <button className="section-button" onClick={() => setModalOpenAportacion(true)}>Ver Aportación</button>
+                <button className="section-button" onClick={() => setModalOpenAportacion(true)}>
+                  Ver Aportación
+                </button>
               </div>
             )}
 
@@ -226,54 +296,85 @@ const NewPeticionComment = ({ comment, user, handleReply, handleLike, peticion }
             <div>
               {comment.video && (
                 <video controls className="comment-video">
-                  <source src={getMediaUrl(comment.video)} type="video/mp4" />
+                  <source src={toSrc(comment.video)} type="video/mp4" />
                   Your browser does not support the video tag.
                 </video>
               )}
-              {comment.image && (
-                <img src={getMediaUrl(comment.image)} alt="Imagen" className="comment-image" />
-              )}
+ {comment.image && (
+   <ImgWithFallback
+    src={toSrc(comment.image)}
+    alt="Imagen"
+    className="comment-image"
+    style={{ maxWidth: "100%", height: "auto", objectFit: "cover" }}
+    onClick={() => imageSelect(comment.image)} // ahora sí funciona
+  />
+)}
+
             </div>
           </div>
 
           <div>
             {comment.video && (
               <video controls className="testimonial-video">
-                <source src={getMediaUrl(comment.video)} type="video/mp4" />
+                <source src={toSrc(comment.video)} type="video/mp4" />
               </video>
             )}
-            {comment.image && (
-              <img
-                src={getMediaUrl(comment.image)}
-                alt="Imagen"
-                onClick={() => imageSelect(comment.image)}
-                className="imagenPeticion"
-                style={{ height: "100px", width: "100px" }}
-              />
-            )}
+{comment.image && (
+  <ImgWithFallback
+    src={toSrc(comment.image)}
+    alt="Imagen"
+    className="imagenPeticion"
+    style={{ height: "100px", width: "100px", objectFit: "cover", cursor: "pointer" }}
+    onClick={() => imageSelect(comment.image)}
+  />
+)}
           </div>
 
           {/* Tabs subtareas/factores/fuentes */}
           <div className="section-buttons" style={{ justifyContent: "normal", marginLeft: "16px" }}>
-            <button className={`section-button ${visibleSection === 'subtasks' ? 'selected' : ''}`} onClick={() => handleSectionChange('subtasks')}>SubComentario</button>
-            <button className={`section-button ${visibleSection === 'subFactores' ? 'selected' : ''}`} onClick={() => handleSectionChange('subFactores')}>Factores</button>
-            <button className={`section-button ${visibleSection === 'subFuentes' ? 'selected' : ''}`} onClick={() => handleSectionChange('subFuentes')}>Fuentes</button>
+            <button
+              className={`section-button ${visibleSection === "subtasks" ? "selected" : ""}`}
+              onClick={() => handleSectionChange("subtasks")}
+            >
+              SubComentario
+            </button>
+            <button
+              className={`section-button ${visibleSection === "subFactores" ? "selected" : ""}`}
+              onClick={() => handleSectionChange("subFactores")}
+            >
+              Factores
+            </button>
+            <button
+              className={`section-button ${visibleSection === "subFuentes" ? "selected" : ""}`}
+              onClick={() => handleSectionChange("subFuentes")}
+            >
+              Fuentes
+            </button>
           </div>
 
-          {visibleSection === 'subtasks' && (
+          {visibleSection === "subtasks" && (
             <div className="subtasks-container">
-              {comment.subtasks.map(subtask => (
+              {(comment.subtasks || []).map((subtask) => (
                 <div key={subtask.id} className="subtask">
                   <div className="textol">
                     <div className="titulo2">{subtask.title}</div>
                     <div className="titulo1">{subtask.description}</div>
                   </div>
-                  {subtask.image && <img src={getMediaUrl(subtask.image)} className="imagePch" alt="Subtask" />}
+
+                  {subtask.image && (
+  <ImgWithFallback
+    src={toSrc(subtask.image)}
+    alt="Subtask"
+    className="imagePch"
+    style={{ maxWidth: "100%", height: "auto", objectFit: "cover" }}
+  />
+)}
                   {subtask.video && (
                     <video controls className="testimonial-video">
-                      <source src={getMediaUrl(subtask.video)} type="video/mp4" />
+                      <source src={toSrc(subtask.video)} type="video/mp4" />
                     </video>
                   )}
+
                   <div className="moldeando">
                     {subtask.link && subtask.link.trim() !== "" && subtask.link !== "undefined" && (
                       !showLink ? (
@@ -291,22 +392,24 @@ const NewPeticionComment = ({ comment, user, handleReply, handleLike, peticion }
             </div>
           )}
 
-          {visibleSection === 'subFactores' && (
+          {visibleSection === "subFactores" && (
             <div className="subtasks-container">
               <div className="subtasks-container-sub">
                 {Array.isArray(comment.subFactores) && comment.subFactores.length > 0 ? (
-                  comment.subFactores.map(subfactor => (
+                  comment.subFactores.map((subfactor) => (
                     <div key={subfactor.id} className="subtask">
                       <div className="textol">
                         <div className="titulo2">{subfactor.title}</div>
                         <div className="titulo1">{subfactor.description}</div>
                       </div>
-                      {subfactor.image && <img src={getMediaUrl(subfactor.image)} className="imagePch" alt="Subfactor" />}
+
+                      {subfactor.image && <img src={toSrc(subfactor.image)} className="imagePch" alt="Subfactor" />}
                       {subfactor.video && (
                         <video controls className="testimonial-video">
-                          <source src={getMediaUrl(subfactor.video)} type="video/mp4" />
+                          <source src={toSrc(subfactor.video)} type="video/mp4" />
                         </video>
                       )}
+
                       <div className="moldeando">
                         {subfactor.link && subfactor.link.trim() !== "" && subfactor.link !== "undefined" && (
                           !showLink ? (
@@ -328,22 +431,32 @@ const NewPeticionComment = ({ comment, user, handleReply, handleLike, peticion }
             </div>
           )}
 
-          {visibleSection === 'subFuentes' && (
+          {visibleSection === "subFuentes" && (
             <div className="subtasks-container">
               <div className="subtasks-container-sub">
                 {Array.isArray(comment.subFuentes) && comment.subFuentes.length > 0 ? (
-                  comment.subFuentes.map(subfuente => (
+                  comment.subFuentes.map((subfuente) => (
                     <div key={subfuente.id} className="subtask">
                       <div className="textol">
                         <div className="titulo2">{subfuente.title}</div>
                         <div className="titulo1">{subfuente.description}</div>
                       </div>
-                      {subfuente.image && <img src={getMediaUrl(subfuente.image)} className="imagePch" alt="Subfuente" />}
+
+                      {subfuente.image && (
+  <ImgWithFallback
+    src={toSrc(subfuente.image)}
+    alt="Subfuente"
+    className="imagePch"
+    style={{ maxWidth: "100%", height: "auto", objectFit: "cover" }}
+  />
+)}
+
                       {subfuente.video && (
                         <video controls className="testimonial-video">
-                          <source src={getMediaUrl(subfuente.video)} type="video/mp4" />
+                          <source src={toSrc(subfuente.video)} type="video/mp4" />
                         </video>
                       )}
+
                       <div className="moldeando">
                         {subfuente.link && subfuente.link.trim() !== "" && subfuente.link !== "undefined" && (
                           !showLink ? (
@@ -367,13 +480,20 @@ const NewPeticionComment = ({ comment, user, handleReply, handleLike, peticion }
 
           <div className="line-down-comment">
             <div className="comment-actions">
-              <div style={{ padding: "5px" }} onClick={() => setShowReplyBox(v => !v)}>
-                <button className="comment-reply-link" style={{ color: "white" }}>Responder</button>
+              <div style={{ padding: "5px" }} onClick={() => setShowReplyBox((v) => !v)}>
+                <button className="comment-reply-link" style={{ color: "white" }}>
+                  Responder
+                </button>
               </div>
 
               <div className="mostrar">
-                <button onClick={toggleTree} id={`commentButton${comment.id}`} className="comment-toggle-link" style={{ color: "white" }}>
-                  Mostrar
+                <button
+                  onClick={toggleTree}
+                  id={`commentButton${comment.id}`}
+                  className="comment-toggle-link"
+                  style={{ color: "white" }}
+                >
+                  {isOpen ? "Ocultar respuestas" : "Mostrar respuestas"}
                 </button>
               </div>
 
@@ -383,7 +503,9 @@ const NewPeticionComment = ({ comment, user, handleReply, handleLike, peticion }
                 </div>
                 <div onClick={() => handleLike(comment.id)}>
                   <FontAwesomeIcon
-                    style={{ color: comment.like_set.some(like => like.user.id === user.id) ? "#54afff" : "white" }}
+                    style={{
+                      color: (comment.like_set || []).some((like) => like.user?.id === user?.id) ? "#54afff" : "white",
+                    }}
                     icon={faHeart}
                   />
                 </div>
@@ -394,20 +516,22 @@ const NewPeticionComment = ({ comment, user, handleReply, handleLike, peticion }
           <Modal isOpen={isModalOpen} onRequestClose={() => setModalOpen(false)} contentLabel="Usuarios que dieron like">
             <h2>Usuarios que dieron "like" al comentario</h2>
             <ul>
-              {listUsers.map(u => (
+              {listUsers.map((u) => (
                 <div className="user-info" key={u.id} onClick={() => setPeticionajena(u.id)}>
                   <div className="user-image-container">
                     {u.user_image && u.user_image !== "No image available" ? (
-                      <img src={getMediaUrl(u.user_image)} alt="Usuario" className="user-circle-image" />
+                      <img src={toSrc(u.user_image)} alt="Usuario" className="user-circle-image" />
                     ) : (
                       <div className="user-icon-placeholder">
                         <FontAwesomeIcon icon={faUser} style={{ color: "grey", cursor: "pointer" }} />
                       </div>
                     )}
                   </div>
+
                   <div className="user-details">
                     <div className="username-info">{u.username}</div>
                   </div>
+
                   <div className="LikeHeart">
                     <div className="likes-count-info">{u.likes_count}</div>
                     <FontAwesomeIcon icon={faHeart} style={{ color: "grey", cursor: "pointer" }} />
@@ -432,17 +556,47 @@ const NewPeticionComment = ({ comment, user, handleReply, handleLike, peticion }
                 <div className="titulo-task">Sub Comment</div>
                 {masTasks.map((task, index) => (
                   <div key={index} className="task-item">
-                    <input type="text" name="title" value={task.title} onChange={(e) => setMasTasks(prev => prev.map((t, i) => i === index ? { ...t, [e.target.name]: e.target.value } : t))} placeholder="Title" />
-                    <textarea name="description" value={task.description} onChange={(e) => setMasTasks(prev => prev.map((t, i) => i === index ? { ...t, [e.target.name]: e.target.value } : t))} placeholder="Description" />
-                    <input type="file" onChange={(e) => handleFileChange(index, e)} accept="image/*,video/*" style={{ display: 'none' }} id={`task-file-${index}`} />
+                    <input
+                      type="text"
+                      name="title"
+                      value={task.title}
+                      onChange={(e) =>
+                        setMasTasks((prev) => prev.map((t, i) => (i === index ? { ...t, [e.target.name]: e.target.value } : t)))
+                      }
+                      placeholder="Title"
+                    />
+                    <textarea
+                      name="description"
+                      value={task.description}
+                      onChange={(e) =>
+                        setMasTasks((prev) => prev.map((t, i) => (i === index ? { ...t, [e.target.name]: e.target.value } : t)))
+                      }
+                      placeholder="Description"
+                    />
+                    <input
+                      type="file"
+                      onChange={(e) => handleFileChange(index, e)}
+                      accept="image/*,video/*"
+                      style={{ display: "none" }}
+                      id={`task-file-${index}`}
+                    />
                     <label htmlFor={`task-file-${index}`} className="file-label">
                       <FontAwesomeIcon icon={faImage} /> / <FontAwesomeIcon icon={faVideo} />
                     </label>
                     {task.imagePreview && <img src={task.imagePreview} alt="Preview" className="preview-image" />}
                     {task.videoPreview && <video src={task.videoPreview} controls className="preview-video" />}
                     <div className="botonesAddPCH">
-                      <button type="button" onClick={() => setMasTasks(prev => [...prev, { title: '', description: '', link: '', image: null, video: null, imagePreview: null, videoPreview: null }])}><FontAwesomeIcon icon={faPlus} /></button>
-                      <button type="button" onClick={() => setMasTasks(prev => prev.filter((_, i) => i !== index))}><FontAwesomeIcon icon={faMinus} /></button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setMasTasks((prev) => [...prev, { title: "", description: "", link: "", image: null, video: null, imagePreview: null, videoPreview: null }])
+                        }
+                      >
+                        <FontAwesomeIcon icon={faPlus} />
+                      </button>
+                      <button type="button" onClick={() => setMasTasks((prev) => prev.filter((_, i) => i !== index))}>
+                        <FontAwesomeIcon icon={faMinus} />
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -453,17 +607,47 @@ const NewPeticionComment = ({ comment, user, handleReply, handleLike, peticion }
                 <div className="titulo-factor">Factor</div>
                 {masFactores.map((factor, index) => (
                   <div key={index} className="factor-item">
-                    <input type="text" name="title" value={factor.title} onChange={(e) => setMasFactores(prev => prev.map((t, i) => i === index ? { ...t, [e.target.name]: e.target.value } : t))} placeholder="Title" />
-                    <textarea name="description" value={factor.description} onChange={(e) => setMasFactores(prev => prev.map((t, i) => i === index ? { ...t, [e.target.name]: e.target.value } : t))} placeholder="Description" />
-                    <input type="file" onChange={(e) => handlePostFileChangeFactor(index, e)} accept="image/*,video/*" style={{ display: 'none' }} id={`factor-file-${index}`} />
+                    <input
+                      type="text"
+                      name="title"
+                      value={factor.title}
+                      onChange={(e) =>
+                        setMasFactores((prev) => prev.map((t, i) => (i === index ? { ...t, [e.target.name]: e.target.value } : t)))
+                      }
+                      placeholder="Title"
+                    />
+                    <textarea
+                      name="description"
+                      value={factor.description}
+                      onChange={(e) =>
+                        setMasFactores((prev) => prev.map((t, i) => (i === index ? { ...t, [e.target.name]: e.target.value } : t)))
+                      }
+                      placeholder="Description"
+                    />
+                    <input
+                      type="file"
+                      onChange={(e) => handlePostFileChangeFactor(index, e)}
+                      accept="image/*,video/*"
+                      style={{ display: "none" }}
+                      id={`factor-file-${index}`}
+                    />
                     <label htmlFor={`factor-file-${index}`} className="file-label">
                       <FontAwesomeIcon icon={faImage} /> / <FontAwesomeIcon icon={faVideo} />
                     </label>
                     {factor.imagePreview && <img src={factor.imagePreview} alt="Preview" className="preview-image" />}
                     {factor.videoPreview && <video src={factor.videoPreview} controls className="preview-video" />}
                     <div className="botonesAddPCH">
-                      <button type="button" onClick={() => setMasFactores(prev => [...prev, { title: '', description: '', link: '', image: null, video: null, imagePreview: null, videoPreview: null }])}><FontAwesomeIcon icon={faPlus} /></button>
-                      <button type="button" onClick={() => setMasFactores(prev => prev.filter((_, i) => i !== index))}><FontAwesomeIcon icon={faMinus} /></button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setMasFactores((prev) => [...prev, { title: "", description: "", link: "", image: null, video: null, imagePreview: null, videoPreview: null }])
+                        }
+                      >
+                        <FontAwesomeIcon icon={faPlus} />
+                      </button>
+                      <button type="button" onClick={() => setMasFactores((prev) => prev.filter((_, i) => i !== index))}>
+                        <FontAwesomeIcon icon={faMinus} />
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -474,53 +658,108 @@ const NewPeticionComment = ({ comment, user, handleReply, handleLike, peticion }
                 <div className="titulo-fuente">Fuente</div>
                 {masFuentes.map((fuente, index) => (
                   <div key={index} className="fuente-item">
-                    <input type="text" name="title" value={fuente.title} onChange={(e) => setMasFuentes(prev => prev.map((t, i) => i === index ? { ...t, [e.target.name]: e.target.value } : t))} placeholder="Title" />
-                    <textarea name="description" value={fuente.description} onChange={(e) => setMasFuentes(prev => prev.map((t, i) => i === index ? { ...t, [e.target.name]: e.target.value } : t))} placeholder="Description" />
-                    <input type="file" onChange={(e) => handlePostFileChangeFuente(index, e)} accept="image/*,video/*" style={{ display: 'none' }} id={`fuente-file-${index}`} />
+                    <input
+                      type="text"
+                      name="title"
+                      value={fuente.title}
+                      onChange={(e) =>
+                        setMasFuentes((prev) => prev.map((t, i) => (i === index ? { ...t, [e.target.name]: e.target.value } : t)))
+                      }
+                      placeholder="Title"
+                    />
+                    <textarea
+                      name="description"
+                      value={fuente.description}
+                      onChange={(e) =>
+                        setMasFuentes((prev) => prev.map((t, i) => (i === index ? { ...t, [e.target.name]: e.target.value } : t)))
+                      }
+                      placeholder="Description"
+                    />
+                    <input
+                      type="file"
+                      onChange={(e) => handlePostFileChangeFuente(index, e)}
+                      accept="image/*,video/*"
+                      style={{ display: "none" }}
+                      id={`fuente-file-${index}`}
+                    />
                     <label htmlFor={`fuente-file-${index}`} className="file-label">
                       <FontAwesomeIcon icon={faImage} /> / <FontAwesomeIcon icon={faVideo} />
                     </label>
                     {fuente.imagePreview && <img src={fuente.imagePreview} alt="Preview" className="preview-image" />}
                     {fuente.videoPreview && <video src={fuente.videoPreview} controls className="preview-video" />}
                     <div className="botonesAddPCH">
-                      <button type="button" onClick={() => setMasFuentes(prev => [...prev, { title: '', description: '', link: '', image: null, video: null, imagePreview: null, videoPreview: null }])}><FontAwesomeIcon icon={faPlus} /></button>
-                      <button type="button" onClick={() => setMasFuentes(prev => prev.filter((_, i) => i !== index))}><FontAwesomeIcon icon={faMinus} /></button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setMasFuentes((prev) => [...prev, { title: "", description: "", link: "", image: null, video: null, imagePreview: null, videoPreview: null }])
+                        }
+                      >
+                        <FontAwesomeIcon icon={faPlus} />
+                      </button>
+                      <button type="button" onClick={() => setMasFuentes((prev) => prev.filter((_, i) => i !== index))}>
+                        <FontAwesomeIcon icon={faMinus} />
+                      </button>
                     </div>
                   </div>
                 ))}
               </div>
 
-              <button type="submit" disabled={creatingReply}>Submit</button>
+              <button type="submit" disabled={creatingReply}>
+                Submit
+              </button>
             </form>
           )}
 
-          <div className="replies" id={`replies${comment.id}`}>
-            {nestedComments}
-          </div>
+{isOpen && (
+  <div className="replies">
+    {(comment.children || []).map((child) => (
+      <NewPeticionComment
+        key={child.id}
+        comment={child}
+        user={user}
+        handleReply={handleReply}
+        handleLike={handleLike}
+        peticion={peticion}
+        repliesOpenMap={repliesOpenMap}
+        onToggleReplies={onToggleReplies}
+      />
+    ))}
+  </div>
+)}
 
-          <Modal isOpen={isModalOpenImage} onRequestClose={() => setModalOpenImage(false)} contentLabel="Imagen del comentario" style={{ padding: "0px !important " }}>
-            <img src={getMediaUrl(imagen)} alt="Imagen" onClick={() => setModalOpenImage(false)} className="imagenPeticionModel" />
+
+
+          <Modal
+            isOpen={isModalOpenImage}
+            onRequestClose={() => setModalOpenImage(false)}
+            contentLabel="Imagen del comentario"
+            style={{ padding: "0px !important " }}
+          >
+            <img src={toSrc(imagen)} alt="Imagen" onClick={() => setModalOpenImage(false)} className="imagenPeticionModel" />
             <button onClick={() => setModalOpenImage(false)}>Cerrar</button>
           </Modal>
         </div>
       </div>
     </div>
   );
+
 };
 
-const NewPeticionComments = ({ comments, user, handleReply, handleLike, peticion }) => {
+const NewPeticionComments = ({ comments, user, handleReply, handleLike, peticion, repliesOpenMap = {}, onToggleReplies = () => {} }) => {
   return (
     <div>
       {comments.map((comment) =>
         comment.is_parent ? (
-          <NewPeticionComment
-            key={comment.id}
-            comment={comment}
-            user={user}
-            handleReply={handleReply}
-            handleLike={handleLike}
-            peticion={peticion}
-          />
+         <NewPeticionComment
+  key={comment.id}
+  comment={comment}
+  user={user}
+  handleReply={handleReply}
+  handleLike={handleLike}
+  peticion={peticion}
+  repliesOpenMap={repliesOpenMap}
+  onToggleReplies={onToggleReplies}
+/>
         ) : null
       )}
     </div>
