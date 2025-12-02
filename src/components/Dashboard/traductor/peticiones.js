@@ -1003,6 +1003,13 @@ const handleClose = (taskId) => {
 //     console.error("Error fetching tasks:", err);
 //   }
 // };
+// helpers/derivados como HOOKS, no detrás de un return condicional
+// const feedWithLike = useMemo(() => {
+//   const uid = dataa;
+//   const liked = (task, userId) =>
+//     task.like_set && task.like_set.some((l) => l.user.id === userId);
+//   return (feed || []).map((t) => ({ ...t, userHasLiked: liked(t, uid) }));
+// }, [feed, dataa]);
 
 
   // ---------- removeTask (for add form) ----------
@@ -1016,13 +1023,6 @@ function userHasLikedTask(task, userId) {
   return task.like_set && task.like_set.some(like => like.user.id === userId);
 }
 
-// helpers/derivados como HOOKS, no detrás de un return condicional
-// const feedWithLike = useMemo(() => {
-//   const uid = dataa;
-//   const liked = (task, userId) =>
-//     task.like_set && task.like_set.some((l) => l.user.id === userId);
-//   return (feed || []).map((t) => ({ ...t, userHasLiked: liked(t, uid) }));
-// }, [feed, dataa]);
 
 const filteredTasks = useMemo(() => {
    const list = Array.isArray(feedWithLike) ? feedWithLike : [];

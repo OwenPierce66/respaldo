@@ -36,18 +36,13 @@ import Manage from "../../screens/private/Subscription/Manage";
 import Success from "../../screens/private/Subscription/Success";
 
 // Traductor (tus componentes custom)
-import Traductor from "./traductor/traductorr";
 import Peticiones from "./traductor/peticiones";
-import NuevasPeticiones from "./traductor/nuevoTask";
-import Imagenes from "./traductor/imagenes";
-import Sociales from "./traductor/sociales/Sociales";
 import NewForumPost from "./traductor/newforum/NewForumPost";
 import NewForum from "./traductor/newforum/newForum";
 import DirectMessaging from "./traductor/directMessaging";
-import GroupMessaging from "./traductor/GroupMessaging";
-import AddMember from "./traductor/AddMember";
 import NewPeticionPost from "./traductor/newforum/newpeticionpost";
-import Diagram from "./traductor/Diagram";
+
+
 import RequireAdmin from "../HOC/requireAdmin";
 
 const AuthLinks = () => {
@@ -56,7 +51,6 @@ const AuthLinks = () => {
 
   return (
     <Routes>
-      {/* Dashboard */}
       <Route
         path="/"
         element={
@@ -68,21 +62,11 @@ const AuthLinks = () => {
           />
         }
       />
+
       <Route path="home" element={<DashboardHome />} />
       <Route path="calendar" element={<Calendar />} />
 
       {/* Traductor */}
-      <Route
-        path="traductor"
-        element={
-          <Traductor
-            usuario={usuario}
-            usuarioName={usuarioName}
-            setUsuario={setUsuario}
-            setUsuarioName={setUsuarioName}
-          />
-        }
-      />
       <Route
         path="peticiones"
         element={
@@ -94,22 +78,7 @@ const AuthLinks = () => {
           />
         }
       />
-      <Route
-        path="nuevaspeticiones"
-        element={
-          <NuevasPeticiones
-            usuario={usuario}
-            usuarioName={usuarioName}
-            setUsuario={setUsuario}
-            setUsuarioName={setUsuarioName}
-          />
-        }
-      />
-      <Route path="imagen" element={<Imagenes />} />
-      <Route path="sociales" element={<Sociales />} />
-      <Route path="diagram" element={<Diagram />} />
-      <Route path="groupss" element={<GroupMessaging />} />
-      <Route path="addmember" element={<AddMember />} />
+
       <Route path="direcmassaging/:userId" element={<DirectMessaging />} />
 
       {/* Blog */}
@@ -128,10 +97,14 @@ const AuthLinks = () => {
       <Route path="joinGroup" element={<JoinGroup />} />
       <Route path="createGroup" element={<CreateGroup />} />
 
-      {/* Directory / Business / Exchange */}
+      {/* Directory / Business */}
       <Route path="directory" element={<Directory />} />
       <Route path="businessPage/:pageId" element={<BusinessPage />} />
+
+      {/* Exchange */}
       <Route path="exchange" element={<Exchange />} />
+
+      {/* Contact */}
       <Route path="contact" element={<Contact />} />
 
       {/* News */}
@@ -150,13 +123,17 @@ const AuthLinks = () => {
       <Route path="newcommunity" element={<NewForum />} />
       <Route path="newcommunity/:userId" element={<NewForum />} />
       <Route path="newcommunityPost/:postId" element={<NewForumPost />} />
+
+      {/* New Peticiones */}
       <Route path="newpeticionesPost/:peticionId" element={<NewPeticionPost />} />
 
       {/* Classifieds */}
       <Route path="classifieds" element={<DashboardHome />} />
 
-      {/* Profile / Subscription */}
+      {/* Profile */}
       <Route path="profile" element={<Profile />} />
+
+      {/* Subscription */}
       <Route path="subscription" element={<Manage />} />
       <Route path="subscription/success" element={<Success />} />
 
@@ -185,12 +162,6 @@ const AuthLinks = () => {
 
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />
-      
-      {/* Página de error de permisos */}
-      {/* <Route path="403" element={<NoPermission />} /> */}
-
-      {/* Fallback 404 */}
-      {/* <Route path="*" element={<NotFound />} /> */}
     </Routes>
   );
 };
