@@ -1,391 +1,1319 @@
-import React, { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
-import Select from 'react-select';
-import { useParams, useNavigate } from 'react-router-dom';
-import '../owenscss/directmessagingg.scss';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faImage, faHeart } from '@fortawesome/free-solid-svg-icons';
+// src/components/Dashboard/traductor/DirectMessaging.js
+
+import React, { useState, useEffect, useRef } from "react";
+import axios from "axios";
+import moment from "moment";
+import { useSelector } from "react-redux";
+import { useParams, useNavigate } from "react-router-dom";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faPaperPlane,
+  faUserPlus,
+  faUsers,
+  faTimes,
+  faArrowLeft,
+  faPaperclip,
+} from "@fortawesome/free-solid-svg-icons";
+
+import "../owenscss/Mensajes.scss";
+
+const API_BASE_URL = "http://127.0.0.1:8000";
+
+const resolveMediaUrl = (url) => {
+  if (!url) return null;
+  if (url.startsWith("http://") || url.startsWith("https://")) return url;
+  if (url.startsWith("/")) return `${API_BASE_URL}${url}`;
+  return `${API_BASE_URL}/${url}`;
+};
+
+/* ======================= MODAL DE ACCIONES DE USUARIO ======================= */
+
+const UserActionsModal = ({
+  isOpen,
+  onClose,
+  user,
+  onStartDirectMessage,
+  onGoToProfile,
+}) => {
+  if (!isOpen || !user) return null;
+
+  return (
+    <div className="dm-modal-backdrop">
+      <div className="dm-modal">
+        <div className="dm-modal-header">
+          <div>
+            <h3>{user.username}</h3>
+            <p className="dm-modal-subtitle">Opciones con este usuario</p>
+          </div>
+          <button className="dm-modal-close" onClick={onClose}>
+            <FontAwesomeIcon icon={faTimes} />
+          </button>
+        </div>
+
+        <div className="dm-modal-section">
+          <button
+            className="dm-user-action-btn"
+            onClick={() => onStartDirectMessage && onStartDirectMessage(user)}
+          >
+            Enviar mensaje directo
+          </button>
+          <button
+            className="dm-user-action-btn"
+            onClick={() => onGoToProfile && onGoToProfile(user)}
+          >
+            Ver perfil de aportaciones
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ======================= MODAL DE INFO DE GRUPO ======================= */
+
+const GroupInfoModal = ({
+  isOpen,
+  onClose,
+  groupInfo,
+  members,
+  availableUsers,
+  loadingUsers,
+  onAddMember,
+  onRemoveMember,
+  currentUserId,
+  onDeleteGroup,
+  onMakeAdmin,
+  onUserClick,
+}) => {
+  const [search, setSearch] = useState("");
+
+  if (!isOpen || !groupInfo) return null;
+
+  const filteredAvailable = availableUsers.filter((u) =>
+    u.username.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const creatorUser =
+    members.find((m) => m.id === groupInfo.created_by) || null;
+
+  const isCreator = currentUserId === groupInfo.created_by;
+  const isAdmin = groupInfo.current_user_is_admin;
+  const canManage = isCreator || isAdmin;
+
+  return (
+    <div className="dm-modal-backdrop">
+      <div className="dm-modal">
+        <div className="dm-modal-header">
+          <div>
+            <h3>Información del grupo</h3>
+            <p className="dm-modal-subtitle">
+              {groupInfo.name}{" "}
+              {creatorUser && (
+                <span className="dm-modal-creator">
+                  · Creado por{" "}
+                  <span
+                    className="dm-username-link"
+                    onClick={() => onUserClick && onUserClick(creatorUser)}
+                  >
+                    {creatorUser.username}
+                  </span>
+                </span>
+              )}
+            </p>
+          </div>
+          <button className="dm-modal-close" onClick={onClose}>
+            <FontAwesomeIcon icon={faTimes} />
+          </button>
+        </div>
+
+        <div className="dm-modal-section">
+          <h4>Miembros</h4>
+          <div className="dm-modal-members-list">
+            {members.length === 0 && (
+              <p className="dm-modal-empty">No hay miembros en este grupo.</p>
+            )}
+
+            {members.map((m) => (
+              <div key={m.id} className="dm-modal-member-row">
+                <span className="dm-modal-member-name">
+                  <span
+                    className="dm-username-link"
+                    onClick={() => onUserClick && onUserClick(m)}
+                  >
+                    {m.username}
+                    {m.id === currentUserId && " (tú)"}
+                  </span>
+
+                  {m.is_creator && (
+                    <span className="dm-role-badge dm-role-creator">
+                      Creador
+                    </span>
+                  )}
+
+                  {!m.is_creator && m.is_admin && (
+                    <span className="dm-role-badge dm-role-admin">Admin</span>
+                  )}
+                </span>
+
+                <div style={{ display: "flex", gap: "4px" }}>
+                  <button
+                    className="dm-modal-member-remove"
+                    onClick={() => onRemoveMember(m.id)}
+                    disabled={
+                      m.is_creator || m.id === currentUserId || !canManage
+                    }
+                    title={
+                      m.is_creator
+                        ? "No puedes eliminar al creador del grupo."
+                        : !canManage
+                        ? "Solo el creador o un admin del grupo puede eliminar miembros."
+                        : m.id === currentUserId
+                        ? "Para salir del grupo luego hacemos un botón especial."
+                        : "Eliminar de este grupo"
+                    }
+                  >
+                    Eliminar
+                  </button>
+
+                  <button
+                    className={`dm-modal-member-make-admin ${
+                      m.is_admin ? "is-admin" : ""
+                    }`}
+                    onClick={() => onMakeAdmin && onMakeAdmin(m.id)}
+                    disabled={!canManage || m.is_creator || m.id === currentUserId}
+                    title={
+                      !canManage
+                        ? "Solo el creador o un admin del grupo puede gestionar administradores."
+                        : m.is_creator
+                        ? "El creador siempre es admin."
+                        : m.id === currentUserId
+                        ? "No puedes modificar tu propio rol aquí."
+                        : m.is_admin
+                        ? "Quitar permisos de administrador."
+                        : "Convertir en administrador"
+                    }
+                  >
+                    {m.is_creator
+                      ? "Admin"
+                      : m.is_admin
+                      ? "Quitar admin"
+                      : "Hacer admin"}
+                  </button>
+                </div>
+              </div>
+            ))}
+
+            {!canManage && members.length > 0 && (
+              <p className="dm-modal-empty">
+                Solo el creador o un admin del grupo puede eliminar miembros o
+                gestionar administradores.
+              </p>
+            )}
+          </div>
+        </div>
+
+        <div className="dm-modal-section">
+          <h4>Agregar miembros</h4>
+          <input
+            type="text"
+            placeholder="Buscar usuarios por nombre..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="dm-modal-search"
+          />
+          <div className="dm-modal-available-list">
+            {loadingUsers ? (
+              <p className="dm-modal-empty">Cargando usuarios...</p>
+            ) : filteredAvailable.length === 0 ? (
+              <p className="dm-modal-empty">
+                No hay usuarios disponibles para agregar.
+              </p>
+            ) : (
+              filteredAvailable.map((u) => (
+                <div key={u.id} className="dm-modal-member-row">
+                  <span className="dm-modal-member-name">{u.username}</span>
+                  <button
+                    className="dm-modal-member-add"
+                    onClick={() => onAddMember(u.id)}
+                  >
+                    Agregar
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {isCreator && (
+          <div className="dm-modal-footer">
+            <button className="dm-modal-delete-group" onClick={onDeleteGroup}>
+              Eliminar grupo
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+/* ======================= COMPONENTE PRINCIPAL ======================= */
 
 const DirectMessaging = () => {
-    const { userId } = useParams();
-    const navigate = useNavigate();
-    const [users, setUsers] = useState([]);
-    const [messages, setMessages] = useState([]);
-    const [filteredMessages, setFilteredMessages] = useState([]);
-    const [selectedUser, setSelectedUser] = useState(null);
-    const [messageContent, setMessageContent] = useState('');
-    const [translatedText, setTranslatedText] = useState('');
-    const [selectedImage, setSelectedImage] = useState(null);
-    const [selectedVideo, setSelectedVideo] = useState(null);
-    const [selectedImagePreview, setSelectedImagePreview] = useState(null);
-    const [videoPreview, setVideoPreview] = useState(null);
-    const [usuario, setUsuario] = useState(null);
-    const [loadingUsers, setLoadingUsers] = useState(true);
-    const [loadingMessages, setLoadingMessages] = useState(true);
-    const [loadingMoreMessages, setLoadingMoreMessages] = useState(false);
-    const [page, setPage] = useState(1);
-    const [hasMoreMessages, setHasMoreMessages] = useState(true);
-    const [visibleTranslatedMessages, setVisibleTranslatedMessages] = useState({});
+  const { userId } = useParams();
+  const navigate = useNavigate();
+  const authUser = useSelector((state) => state.auth.user);
+  const loggedUserId = authUser?.id ?? null;
 
-    const messagesEndRef = useRef(null);
-    const messagesContainerRef = useRef(null);
+  const [isMobile, setIsMobile] = useState(false);
 
-    useEffect(() => {
-        fetchUserData();
-        fetchUsers();
-    }, []);
+  const [directMessages, setDirectMessages] = useState([]);
+  const [groupMessages, setGroupMessages] = useState([]);
+  const [loadingChat, setLoadingChat] = useState(false);
+  const [chatError, setChatError] = useState(null);
 
-    useEffect(() => {
-        if (users.length > 0 && userId) {
-            const selectedUserOption = users.find(user => user.id.toString() === userId);
-            if (selectedUserOption) {
-                setSelectedUser({ value: userId, label: selectedUserOption.username });
-            }
-        }
-    }, [userId, users]);
+  const [messageText, setMessageText] = useState("");
 
-    useEffect(() => {
-        if (selectedUser) {
-            fetchMessages(selectedUser.value, 1, true);
-        }
-    }, [selectedUser]);
+  const [showCreateGroup, setShowCreateGroup] = useState(false);
+  const [newGroupName, setNewGroupName] = useState("");
 
-    useEffect(() => {
-        if (selectedUser) {
-            filterMessages(selectedUser.value);
-        } else {
-            setFilteredMessages([]);
-        }
-    }, [messages, selectedUser]);
+  const [showGroupModal, setShowGroupModal] = useState(false);
+  const [users, setUsers] = useState([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+  const [groupMembers, setGroupMembers] = useState([]);
+  const [groupInfo, setGroupInfo] = useState(null);
 
-    useEffect(() => {
-        if (!loadingMessages) {
-            scrollToBottom();
-        }
-    }, [filteredMessages, loadingMessages]);
+  const [selectedUserForActions, setSelectedUserForActions] = useState(null);
+  const [showUserModal, setShowUserModal] = useState(false);
 
-    useEffect(() => {
-        const handleScroll = async () => {
-            if (messagesContainerRef.current) {
-                const { scrollTop } = messagesContainerRef.current;
-                if (scrollTop === 0 && !loadingMoreMessages && hasMoreMessages) {
-                    const currentHeight = messagesContainerRef.current.scrollHeight;
-                    setLoadingMoreMessages(true);
-                    await fetchMoreMessages();
-                    setLoadingMoreMessages(false);
-                    messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight - currentHeight;
-                }
-            }
-        };
+  // Adjuntos a enviar ahora
+  const [attachments, setAttachments] = useState([]);
+  const fileInputRef = useRef(null);
 
-        const container = messagesContainerRef.current;
-        if (container) {
-            container.addEventListener('scroll', handleScroll);
-            return () => container.removeEventListener('scroll', handleScroll);
-        }
-    }, [loadingMoreMessages, hasMoreMessages]);
+  const messagesEndRef = useRef(null);
 
-    const fetchUserData = async () => {
-        try {
-            const token = localStorage.getItem("userTokenLG");
-            const response = await axios.get('http://127.0.0.1:8000/api/get-user/', {
-                headers: { Authorization: `Token ${token}` },
-            });
-            setUsuario(response.data.user.id);
-        } catch (error) {
-            console.error('Error fetching user details:', error);
-        }
+  const [conversations, setConversations] = useState([]);
+  const [loadingConversations, setLoadingConversations] = useState(true);
+  const [conversationsError, setConversationsError] = useState(null);
+
+  const [selectedConversation, setSelectedConversation] = useState(null);
+
+  // Modal para ver adjuntos de un mensaje ya enviado
+  const [showAttachmentsModal, setShowAttachmentsModal] = useState(false);
+  const [attachmentsModalItems, setAttachmentsModalItems] = useState([]);
+
+  useEffect(() => {
+    const check = () => {
+      if (typeof window !== "undefined") {
+        setIsMobile(window.innerWidth <= 768);
+      }
     };
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
-    const fetchUsers = async () => {
-        try {
-            const response = await axios.get('http://127.0.0.1:8000/api/users/');
-            setUsers(response.data);
-            setLoadingUsers(false);
-        } catch (error) {
-            console.error('Error fetching users:', error);
-            setLoadingUsers(false);
-        }
-    };
+  // Token para axios
+  useEffect(() => {
+    const token = localStorage.getItem("userTokenLG");
+    if (token) {
+      axios.defaults.headers.common["Authorization"] = `Token ${token}`;
+    }
+  }, []);
 
-    const fetchMessages = async (userId, page, replace = false) => {
-        try {
-            setLoadingMessages(true);
-            const url = `http://127.0.0.1:8000/massaging/messages/?user_id=${userId}&page=${page}`;
-            const response = await axios.get(url, {
-                headers: { Authorization: `Token ${localStorage.getItem("userTokenLG")}` }
-            });
+  const fetchConversations = async () => {
+    setLoadingConversations(true);
+    setConversationsError(null);
+    try {
+      const res = await axios.get(
+        "http://127.0.0.1:8000/massaging/conversations/"
+      );
+      setConversations(res.data || []);
+    } catch (err) {
+      console.error("Error fetchConversations:", err);
+      setConversationsError("Error al cargar las conversaciones.");
+    } finally {
+      setLoadingConversations(false);
+    }
+  };
 
-            const newMessages = response.data.reverse();
-            setMessages(prevMessages => replace ? newMessages : [...newMessages, ...prevMessages]);
+  useEffect(() => {
+    fetchConversations();
+  }, []);
 
-            if (newMessages.length < 10) { // Assume page size is 10
-                setHasMoreMessages(false);
-            }
+  // Autoseleccionar conversación de la URL en desktop
+  useEffect(() => {
+    if (isMobile) return;
+    if (!userId || conversations.length === 0) return;
+    if (selectedConversation) return;
 
-            setLoadingMessages(false);
-            setPage(page);
-        } catch (error) {
-            console.error('Error fetching messages:', error);
-            setLoadingMessages(false);
-        }
-    };
+    const conv = conversations.find(
+      (c) => c.type === "direct" && String(c.id) === String(userId)
+    );
+    if (conv) {
+      handleSelectConversation(conv, false);
+    }
+  }, [userId, conversations, selectedConversation, isMobile]);
 
-    const fetchMoreMessages = async () => {
-        if (selectedUser) {
-            await fetchMessages(selectedUser.value, page + 1);
-        }
-    };
+  const fetchUsers = async () => {
+    setLoadingUsers(true);
+    try {
+      const res = await axios.get("http://127.0.0.1:8000/massaging/users/");
+      setUsers(res.data || []);
+    } catch (err) {
+      console.error("Error fetchUsers:", err);
+    } finally {
+      setLoadingUsers(false);
+    }
+  };
 
-    const filterMessages = (userId) => {
-        const filtered = messages.filter(
-            message => (
-                message.sender.id.toString() === userId.toString() ||
-                message.receiver.id.toString() === userId.toString()
-            )
-        );
-        setFilteredMessages(filtered);
-    };
+  const fetchGroupMembers = async (groupId) => {
+    try {
+      const res = await axios.get("http://127.0.0.1:8000/massaging/groupss/");
+      const groups = res.data || [];
+      const group = groups.find((g) => g.id === groupId);
+      setGroupMembers(group?.members || []);
+      setGroupInfo(group || null);
+    } catch (err) {
+      console.error("Error fetchGroupMembers:", err);
+      setGroupMembers([]);
+      setGroupInfo(null);
+    }
+  };
 
-    const handleSendMessage = async () => {
-        if (selectedUser && (messageContent.trim() || selectedImage || selectedVideo)) {
-            try {
-                const token = localStorage.getItem("userTokenLG");
-                const formData = new FormData();
-                formData.append('receiver', selectedUser.value);
-                formData.append('content', messageContent);
-                formData.append('translated_content', translatedText); // Agregar contenido traducido
+  const fetchDirectMessages = async (otherUserId) => {
+    setLoadingChat(true);
+    setChatError(null);
+    try {
+      const res = await axios.get(
+        `http://127.0.0.1:8000/massaging/messages/?user_id=${otherUserId}`
+      );
+      const msgs = (res.data || [])
+        .slice()
+        .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+      setDirectMessages(msgs);
+    } catch (err) {
+  console.error("Error fetchDirectMessages:", err.response?.data || err);
+  setChatError("Error al cargar mensajes directos.");
+}
+ finally {
+      setLoadingChat(false);
+    }
+  };
 
-                if (selectedImage) {
-                    formData.append('image', selectedImage);
-                }
+  const fetchGroupMessages = async (groupId) => {
+    setLoadingChat(true);
+    setChatError(null);
+    try {
+      const res = await axios.get(
+        `http://127.0.0.1:8000/massaging/groupss/${groupId}/messages/`
+      );
+      const msgs = Array.isArray(res.data) ? res.data : [];
+      const ordered = msgs
+        .slice()
+        .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+      setGroupMessages(ordered);
+    } catch (err) {
+      console.error("Error fetchGroupMessages:", err);
+      setChatError("Error al cargar mensajes del grupo.");
+    } finally {
+      setLoadingChat(false);
+    }
+  };
 
-                if (selectedVideo) {
-                    formData.append('video', selectedVideo);
-                }
+  const handleSelectConversation = async (conv, pushRoute = true) => {
+    setSelectedConversation(conv);
+    setDirectMessages([]);
+    setGroupMessages([]);
+    setMessageText("");
+    setChatError(null);
+    setShowGroupModal(false);
+    clearAttachments();
 
-                const response = await axios.post('http://127.0.0.1:8000/massaging/messages/', formData, {
-                    headers: {
-                        Authorization: `Token ${token}`,
-                        'Content-Type': 'multipart/form-data'
-                    }
-                });
+    if (conv.type === "direct") {
+      if (pushRoute) {
+        navigate(`/dashboard/direcmassaging/${conv.id}`);
+      }
+      await fetchDirectMessages(conv.id);
+    } else if (conv.type === "group") {
+      await fetchGroupMessages(conv.id);
+      await fetchGroupMembers(conv.id);
+    }
+  };
 
-                const newMessage = response.data;
-                setMessages(prevMessages => {
-                    if (!prevMessages.some(message => message.id === newMessage.id)) {
-                        return [...prevMessages, newMessage];
-                    }
-                    return prevMessages;
-                });
-                setMessageContent('');
-                setTranslatedText(''); // Limpiar el texto traducido
-                setSelectedImage(null);
-                setSelectedVideo(null);
-                setSelectedImagePreview(null);
-                setVideoPreview(null);
+  // === Adjuntar archivos ===
+  const handleFileChange = (e) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
 
-                // Actualiza los mensajes filtrados inmediatamente
-                setFilteredMessages(prevMessages => {
-                    if (!prevMessages.some(message => message.id === newMessage.id)) {
-                        return [...prevMessages, newMessage];
-                    }
-                    return prevMessages;
-                });
+    const mapped = files.map((file) => ({
+      id:
+        file.name +
+        "-" +
+        file.lastModified +
+        "-" +
+        Math.random().toString(36).slice(2),
+      file,
+      previewUrl: URL.createObjectURL(file),
+      isImage: file.type.startsWith("image/"),
+    }));
 
-                // Scroll to the new message
-                scrollToBottom();
+    setAttachments((prev) => [...prev, ...mapped]);
+    e.target.value = null;
+  };
 
-            } catch (error) {
-                console.error('Error sending message:', error);
-            }
-        }
-    };
+  const handleRemoveAttachment = (id) => {
+    setAttachments((prev) => {
+      const found = prev.find((a) => a.id === id);
+      if (found && found.previewUrl) {
+        URL.revokeObjectURL(found.previewUrl);
+      }
+      return prev.filter((a) => a.id !== id);
+    });
+  };
 
-const handleUserChange = (user) => {
-    setSelectedUser(user);
-    navigate(`/dashboard/direcmassaging/${user.value}`);
+  const clearAttachments = () => {
+    setAttachments((prev) => {
+      prev.forEach((a) => {
+        if (a.previewUrl) URL.revokeObjectURL(a.previewUrl);
+      });
+      return [];
+    });
+  };
+
+  // === Enviar mensaje ===
+  const handleSendMessage = async () => {
+    if (!selectedConversation) return;
+    if (!messageText.trim() && attachments.length === 0) return;
+
+    if (selectedConversation.type === "direct") {
+      await sendDirectMessage();
+    } else if (selectedConversation.type === "group") {
+      await sendGroupMessage();
+    }
+  };
+
+const sendDirectMessage = async () => {
+  try {
+    setLoadingChat(true);
+
+    const formData = new FormData();
+    formData.append("receiver", selectedConversation.id);
+    formData.append("content", messageText);
+
+    // 🔹 TODOS los archivos como "attachments" (para MessageAttachment)
+    attachments.forEach((att) => {
+      formData.append("attachments", att.file);
+    });
+
+    // 🔹 Compatibilidad con image / video del modelo Message
+    const firstImage = attachments.find((a) => a.isImage);
+    const firstVideo = attachments.find(
+      (a) => !a.isImage && a.file.type.startsWith("video/")
+    );
+
+    if (firstImage) {
+      formData.append("image", firstImage.file);
+    }
+    if (firstVideo) {
+      formData.append("video", firstVideo.file);
+    }
+
+    const res = await axios.post(
+      "http://127.0.0.1:8000/massaging/messages/",
+      formData,
+      {
+        headers: { "Content-Type": "multipart/form-data" },
+      }
+    );
+
+    if (Array.isArray(res.data)) {
+      const ordered = res.data
+        .slice()
+        .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+      setDirectMessages(ordered);
+    } else {
+      setDirectMessages((prev) =>
+        [...prev, res.data].sort(
+          (a, b) => new Date(a.timestamp) - new Date(b.timestamp)
+        )
+      );
+    }
+
+    setMessageText("");
+    clearAttachments();
+    fetchConversations();
+  } catch (err) {
+    console.error("Error sendDirectMessage:", err.response || err);
+    setChatError("Error al enviar el mensaje directo.");
+  } finally {
+    setLoadingChat(false);
+  }
 };
 
 
-    const handleFileChange = (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
 
-        const fileType = file.type.split('/')[0];
 
-        if (fileType === 'image') {
-            setSelectedImage(file);
-            setSelectedVideo(null);
-            const imageURL = URL.createObjectURL(file);
-            setSelectedImagePreview(imageURL);
-            setVideoPreview(null);
-        } else if (fileType === 'video') {
-            setSelectedVideo(file);
-            setSelectedImage(null);
-            const videoURL = URL.createObjectURL(file);
-            setVideoPreview(videoURL);
-            setSelectedImagePreview(null);
-        }
+
+const sendGroupMessage = async () => {
+  if (!loggedUserId) {
+    setChatError("No se pudo identificar al usuario autenticado.");
+    return;
+  }
+  if (!messageText.trim() && attachments.length === 0) return;
+
+  try {
+    setLoadingChat(true);
+
+    const formData = new FormData();
+    formData.append("content", messageText);
+
+    // 🔴 TODOS LOS ARCHIVOS COMO "attachments"
+    attachments.forEach((att) => {
+      formData.append("attachments", att.file);
+    });
+
+const firstImage = attachments.find((a) => a.isImage);
+// antes: const firstFile = attachments.find((a) => !a.isImage);
+const firstVideo = attachments.find(
+  (a) => !a.isImage && a.file.type.startsWith("video/")
+);
+
+if (firstImage) {
+  formData.append("image", firstImage.file);
+}
+if (firstVideo) {
+  formData.append("video", firstVideo.file);
+}
+
+
+    const res = await axios.post(
+      `http://127.0.0.1:8000/massaging/groupss/${selectedConversation.id}/send_message/`,
+      formData,
+      {
+        headers: { "Content-Type": "multipart/form-data" },
+      }
+    );
+
+    const newMsg = res.data;
+    setGroupMessages((prev) =>
+      [...prev, newMsg].sort(
+        (a, b) => new Date(a.timestamp) - new Date(b.timestamp)
+      )
+    );
+    setMessageText("");
+    clearAttachments();
+    fetchConversations();
+  } catch (err) {
+    console.error("Error sendGroupMessage:", err.response || err);
+    setChatError("Error al enviar mensaje al grupo.");
+  } finally {
+    setLoadingChat(false);
+  }
+};
+
+
+
+  // Auto scroll
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [directMessages, groupMessages]);
+
+  // Crear grupo
+  const createGroup = async () => {
+    if (!newGroupName.trim()) return;
+    try {
+      const res = await axios.post(
+        "http://127.0.0.1:8000/massaging/groupss/create/",
+        { name: newGroupName }
+      );
+      const group = res.data;
+      setNewGroupName("");
+      setShowCreateGroup(false);
+      await fetchConversations();
+
+      const newConv = {
+        id: group.id,
+        type: "group",
+        title: group.name,
+        last_message: "",
+        last_timestamp: null,
+      };
+
+      const found = conversations.find(
+        (c) => c.type === "group" && c.id === group.id
+      );
+      await handleSelectConversation(found || newConv, false);
+    } catch (err) {
+      console.error("Error createGroup:", err);
+    }
+  };
+
+  const openGroupModal = async () => {
+    if (!selectedConversation || selectedConversation.type !== "group") return;
+    setShowGroupModal(true);
+    if (!users.length) {
+      await fetchUsers();
+    }
+    await fetchGroupMembers(selectedConversation.id);
+  };
+
+  const handleAddMember = async (userIdToAdd) => {
+    if (!selectedConversation || selectedConversation.type !== "group") return;
+
+    try {
+      await axios.post(
+        `http://127.0.0.1:8000/massaging/groupss/${selectedConversation.id}/add_member/`,
+        { user_id: userIdToAdd }
+      );
+
+      const addedUser = users.find((u) => u.id === userIdToAdd);
+      if (addedUser) {
+        setGroupMembers((prev) => [...prev, addedUser]);
+      }
+    } catch (err) {
+      console.error("Error handleAddMember:", err);
+    }
+  };
+
+  const handleRemoveMember = async (userIdToRemove) => {
+    if (!selectedConversation || selectedConversation.type !== "group") return;
+
+    try {
+      await axios.post(
+        `http://127.0.0.1:8000/massaging/groupss/${selectedConversation.id}/remove_member/`,
+        { user_id: userIdToRemove }
+      );
+      setGroupMembers((prev) => prev.filter((m) => m.id !== userIdToRemove));
+    } catch (err) {
+      console.error("Error handleRemoveMember:", err);
+    }
+  };
+
+  const handleMakeAdmin = async (userIdToPromote) => {
+    if (!selectedConversation || selectedConversation.type !== "group") return;
+
+    try {
+      await axios.post(
+        `http://127.0.0.1:8000/massaging/groupss/${selectedConversation.id}/make_admin/`,
+        { user_id: userIdToPromote }
+      );
+
+      await fetchGroupMembers(selectedConversation.id);
+      alert("Rol de administrador actualizado.");
+    } catch (err) {
+      console.error("Error handleMakeAdmin:", err.response?.data || err.message);
+      alert(
+        err.response?.data?.error ||
+          "No se pudo actualizar el rol de admin. Verifica que seas administrador del grupo."
+      );
+    }
+  };
+
+  // Modal usuario
+  const openUserModal = (user) => {
+    if (!user) return;
+    setSelectedUserForActions(user);
+    setShowUserModal(true);
+  };
+
+  const closeUserModal = () => {
+    setShowUserModal(false);
+    setSelectedUserForActions(null);
+  };
+
+  const handleStartDirectFromModal = (user) => {
+    if (!user) return;
+
+    const baseConv = {
+      id: user.id,
+      type: "direct",
+      title: user.username,
+      last_message: "",
+      last_timestamp: null,
     };
 
-    const scrollToBottom = () => {
-        if (messagesEndRef.current) {
-            messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-        }
-    };
+    const existing = conversations.find(
+      (c) => c.type === "direct" && Number(c.id) === Number(user.id)
+    );
 
-    const translateText = async (text) => {
-        setMessageContent(text); // Actualiza el contenido original
-        const apiKey = "AIzaSyA1pr1L0zW8cv6TNwadyjFHqUhh11POuAQ";
-        const targetLanguage = "es";
-        const url = `https://translation.googleapis.com/language/translate/v2?key=${apiKey}`;
+    const convToUse = existing || baseConv;
 
-        try {
-            const response = await fetch(url, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    q: text,
-                    target: targetLanguage,
-                }),
-            });
-            const data = await response.json();
-            const translatedText = data.data.translations[0].translatedText;
-            setTranslatedText(translatedText);
-        } catch (error) {
-            console.error("Error al traducir el texto:", error);
-        }
-    };
+    if (!existing) {
+      setConversations((prev) => [...prev, convToUse]);
+    }
 
-    const handleContentClick = (messageId) => {
-        setVisibleTranslatedMessages(prevState => ({
-            ...prevState,
-            [messageId]: !prevState[messageId]
-        }));
-    };
+    handleSelectConversation(convToUse, true);
+    closeUserModal();
+  };
 
-    const userOptions = users.map(user => ({
-        value: user.id,
-        label: user.username,
-    }));
+  const handleGoToProfile = (user) => {
+    if (!user) return;
+    navigate(`/dashboard/aportaciones/${user.id}`);
+    closeUserModal();
+  };
 
-    const handleLikeClick = async (messageId) => {
-        try {
-            const response = await axios.post(`http://127.0.0.1:8000/massaging/messages/${messageId}/like/`, {}, {
-                headers: { Authorization: `Token ${localStorage.getItem("userTokenLG")}` }
-            });
+  const availableUsers = users.filter(
+    (u) => !groupMembers.some((m) => m.id === u.id)
+  );
 
-            setMessages(prevMessages =>
-                prevMessages.map(message =>
-                    message.id === messageId ? { ...message, user_has_liked: !message.user_has_liked, likes_count: message.user_has_liked ? message.likes_count - 1 : message.likes_count + 1 } : message
-                )
-            );
-        } catch (error) {
-            console.error('Error liking/unliking message:', error);
-        }
-    };
+  const showSidebar = !isMobile || (isMobile && !selectedConversation);
+  const showChatPanel = !isMobile || (isMobile && selectedConversation);
+
+  const handleBackToConversations = () => {
+    if (!isMobile) return;
+    setSelectedConversation(null);
+    setDirectMessages([]);
+    setGroupMessages([]);
+    setMessageText("");
+    setChatError(null);
+    setShowGroupModal(false);
+    clearAttachments();
+  };
+
+  // ==== Construir adjuntos de un mensaje (backend -> front) ====
+const buildMessageAttachments = (msg) => {
+  const result = [];
+  if (!msg) return result;
+
+  const hasArrayAttachments =
+    Array.isArray(msg.attachments) && msg.attachments.length > 0;
+
+  // 1) Array de attachments (nuevo sistema)
+  if (hasArrayAttachments) {
+    msg.attachments.forEach((att) => {
+      const rawUrl = att.url || att.file || att.path || att.attachment;
+      const url = resolveMediaUrl(rawUrl);
+      if (!url) return;
+
+      let type =
+        att.type ||
+        att.file_type ||
+        (att.is_image ? "image" : att.is_video ? "video" : null);
+
+      if (!type && typeof rawUrl === "string") {
+        if (/\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(rawUrl)) type = "image";
+        else if (/\.(mp4|webm|ogg|mov)$/i.test(rawUrl)) type = "video";
+        else type = "file";
+      }
+
+      result.push({
+        type: type || "file",
+        url,
+        name: att.name || att.filename || att.original_name || "archivo",
+      });
+    });
+  }
+
+  // 2) Campos sueltos SOLO si NO hay array de attachments
+  const singleCandidates = hasArrayAttachments
+    ? [
+        { key: "attachment", forcedType: null },
+        { key: "attachments", forcedType: null },
+      ]
+    : [
+        { key: "attachment", forcedType: null },
+        { key: "attachments", forcedType: null },
+        { key: "image", forcedType: "image" },
+        { key: "video", forcedType: "video" },
+        { key: "file", forcedType: "file" },
+      ];
+
+  singleCandidates.forEach(({ key, forcedType }) => {
+    const value = msg[key];
+    if (!value || typeof value !== "string") return;
+
+    const url = resolveMediaUrl(value);
+    if (!url) return;
+
+    let type = forcedType;
+    if (!type) {
+      if (/\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(value)) type = "image";
+      else if (/\.(mp4|webm|ogg|mov)$/i.test(value)) type = "video";
+      else type = "file";
+    }
+
+    result.push({
+      type,
+      url,
+      name: value.split("/").pop() || "archivo",
+    });
+  });
+
+  return result;
+};
+
+
+  // ==== Modal de adjuntos ====
+  const openAttachmentsModal = (atts) => {
+    if (!atts || !atts.length) return;
+    setAttachmentsModalItems(atts);
+    setShowAttachmentsModal(true);
+  };
+
+  const closeAttachmentsModal = () => {
+    setShowAttachmentsModal(false);
+    setAttachmentsModalItems([]);
+  };
+
+  // ==== Preview dentro de la burbuja ====
+  const renderMessageAttachmentsPreview = (atts) => {
+    if (!atts || !atts.length) return null;
+
+    const media = atts.filter(
+      (a) => a.type === "image" || a.type === "video"
+    );
+    const files = atts.filter((a) => a.type === "file");
+
+    if (!media.length && !files.length) return null;
+
+    const handleOpen = () => openAttachmentsModal(atts);
+
+    // Caso +5: 4 miniaturas en grid y badge +N
+    if (media.length > 5) {
+      const first4 = media.slice(0, 4);
+      const extra = media.length - 4;
+
+      return (
+        <div className="dm-attachments-preview-multi" onClick={handleOpen}>
+          <div className="dm-attachments-grid-4">
+            {first4.map((att, idx) => (
+              <div key={idx} className="dm-attachment-cell">
+                {att.type === "image" ? (
+                  <img src={att.url} alt={att.name} />
+                ) : (
+                  <video src={att.url} />
+                )}
+              </div>
+            ))}
+          </div>
+          {extra > 0 && (
+            <div className="dm-attachments-extra-badge">+{extra}</div>
+          )}
+        </div>
+      );
+    }
+
+    // Caso ≤5: se muestran "normales" (tamaño que definas en CSS) y abren modal
+    return (
+      <div className="dm-attachments-preview-normal">
+        {media.map((att, idx) => (
+          <div
+            key={idx}
+            className="dm-attachment-normal-item"
+            onClick={handleOpen}
+          >
+            {att.type === "image" ? (
+              <img src={att.url} alt={att.name} />
+            ) : (
+              <video src={att.url} controls />
+            )}
+          </div>
+        ))}
+        {files.map((att, idx) => (
+          <a
+            key={`file-${idx}`}
+            href={att.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="dm-message-attachment-file"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {att.name}
+          </a>
+        ))}
+      </div>
+    );
+  };
+
+  const renderSidebar = () => {
+    if (loadingConversations) {
+      return <p>Cargando conversaciones...</p>;
+    }
+    if (conversationsError) {
+      return <p style={{ color: "red" }}>{conversationsError}</p>;
+    }
+    if (!conversations.length) {
+      return <p>No tienes conversaciones todavía.</p>;
+    }
+
+    return conversations.map((conv) => {
+      const isActive =
+        selectedConversation &&
+        selectedConversation.type === conv.type &&
+        selectedConversation.id === conv.id;
+      return (
+        <div
+          key={`${conv.type}-${conv.id}`}
+          className={`dm-conversation-item ${isActive ? "active" : ""}`}
+          onClick={() => handleSelectConversation(conv)}
+        >
+          <div className="dm-conversation-title">
+            {conv.type === "direct" ? (
+              <span
+                className="dm-username-link"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openUserModal({ id: conv.id, username: conv.title });
+                }}
+              >
+                {conv.title}
+              </span>
+            ) : (
+              conv.title
+            )}
+            {conv.type === "group" && (
+              <span className="dm-badge dm-badge-group">
+                <FontAwesomeIcon icon={faUsers} /> Grupo
+              </span>
+            )}
+          </div>
+          {conv.last_message && (
+            <div className="dm-conversation-last">
+              {conv.last_message.length > 40
+                ? conv.last_message.slice(0, 40) + "..."
+                : conv.last_message}
+            </div>
+          )}
+        </div>
+      );
+    });
+  };
+
+  const renderMessages = () => {
+    if (!selectedConversation) {
+      return (
+        <div className="dm-empty-chat">
+          <p>Selecciona un usuario o grupo para comenzar a chatear.</p>
+        </div>
+      );
+    }
+
+    if (loadingChat) {
+      return <p>Cargando mensajes...</p>;
+    }
+
+    if (chatError) {
+      return <p style={{ color: "red" }}>{chatError}</p>;
+    }
+
+    const isDirect = selectedConversation.type === "direct";
+    const msgs = isDirect ? directMessages : groupMessages;
+
+    if (!msgs || msgs.length === 0) {
+      return <p>No hay mensajes todavía.</p>;
+    }
 
     return (
-        <div className="direct-messaging-container">
-            <div className="header">
-                <h1>Direct Messaging</h1>
-                {loadingUsers ? (
-                    <p>Cargando usuarios...</p>
-                ) : (
-                    <Select
-                        options={userOptions}
-                        onChange={handleUserChange}
-                        placeholder="Select a user to message"
-                        isClearable
-                        value={selectedUser}
-                    />
+      <div className="dm-messages-list">
+        {msgs.map((msg) => {
+          const senderId = msg.sender?.id;
+          const senderName = msg.sender?.username;
+          const isMine =
+            loggedUserId &&
+            senderId &&
+            Number(senderId) === Number(loggedUserId);
+
+          const atts = buildMessageAttachments(msg);
+
+          return (
+            <div
+              key={msg.id}
+              className={`dm-message-bubble ${isMine ? "mine" : "theirs"}`}
+            >
+              <div className="dm-message-header">
+                {!isDirect && senderId && (
+                  <span
+                    className="dm-message-sender dm-username-link"
+                    onClick={() =>
+                      openUserModal({
+                        id: senderId,
+                        username: senderName,
+                      })
+                    }
+                  >
+                    {senderName}
+                  </span>
                 )}
-                {selectedUser && (
-                    <p>Chateando con: {selectedUser.label}</p>
-                )}
-            </div>
+                <span className="dm-message-time">
+                  {msg.timestamp ? moment(msg.timestamp).format("LT") : ""}
+                </span>
+              </div>
+              <div className="dm-message-body">{msg.content}</div>
 
-
-            <div className="messages" ref={messagesContainerRef}>
-                {loadingMessages ? (
-                    <p>Cargando mensajes...</p>
-                ) : (
-                    filteredMessages.length > 0 ? (
-                        filteredMessages.map((message) => (
-                            <div key={message.id} className={`message ${message.sender.id === usuario ? 'sent' : 'received'}`}>
-                                <p>
-                                    <div style={{ display: "flex", flexDirection: "column" }}>
-
-                                        <strong>{message.sender.username} ({message.sender.id}) to {message.receiver.username} ({message.receiver.id}):</strong>
-                                        {visibleTranslatedMessages[message.id] && (
-                                            <span>{message.translated_content}</span>
-                                        )}
-                                        <span onClick={() => handleContentClick(message.id)} style={{ cursor: 'pointer' }}>
-                                            {message.content}
-                                        </span>
-                                    </div>
-                                </p>
-                                {message.image && (
-                                    <img src={message.image} alt="Imagen" style={{ height: "100px", width: "100px" }} />
-                                )}
-                                {message.video && (
-                                    <video controls style={{ height: "100px", width: "100px" }}>
-                                        <source src={message.video} type="video/mp4" />
-                                        Your browser does not support the video tag.
-                                    </video>
-                                )}
-                                <div className="like-container" onClick={() => handleLikeClick(message.id)}>
-                                    <FontAwesomeIcon icon={faHeart} style={{ color: message.user_has_liked ? 'red' : 'grey' }} />
-                                    <span>{message.likes_count}</span>
-                                </div>
-                            </div>
-                        ))
-                    ) : (
-                        <p>No hay mensajes para mostrar</p>
-                    )
-                )}
-                <div ref={messagesEndRef} />
-            </div>
-
-            <div className="input-container">
-                {selectedImagePreview && (
-                    <img src={selectedImagePreview} alt="Imagen seleccionada" style={{ height: "100px", width: "100px" }} />
-                )}
-                {videoPreview && (
-                    <video src={videoPreview} controls style={{ height: "100px", width: "100px" }} />
-                )}
-                <div style={{ display: "flex", flexDirection: "column" }}>
-                    <div>
-                        <p style={{ paddingLeft: "15px", paddingRight: "15px" }}>{translatedText}</p>
-
-                    </div>
-
-                    <textarea
-                        value={messageContent}
-                        onChange={(e) => translateText(e.target.value)}
-                        placeholder="Type your message"
-                    />
+              {atts.length > 0 && (
+                <div className="dm-message-attachments">
+                  {renderMessageAttachmentsPreview(atts)}
                 </div>
-
-                <input
-                    type="file"
-                    id="fileInput"
-                    accept="image/*,video/*"
-                    onChange={handleFileChange}
-                    style={{ display: 'none' }}
-                />
-                <label htmlFor="fileInput">
-                    <div className="imagenIcon">
-                        <FontAwesomeIcon icon={faImage} />
-                    </div>
-                </label>
-                <button onClick={handleSendMessage} disabled={!messageContent.trim() && !selectedImage && !selectedVideo}>Send</button>
+              )}
             </div>
-        </div>
+          );
+        })}
+        <div ref={messagesEndRef} />
+      </div>
     );
+  };
+
+  const renderChatHeader = () => {
+    if (!selectedConversation) return null;
+    const isGroup = selectedConversation.type === "group";
+
+    return (
+      <div className="dm-chat-header">
+        <div className="dm-chat-header-left">
+          {isMobile && (
+            <button
+              className="dm-back-button"
+              onClick={handleBackToConversations}
+            >
+              <FontAwesomeIcon icon={faArrowLeft} />
+            </button>
+          )}
+
+          {isGroup ? (
+            <h2>{selectedConversation.title}</h2>
+          ) : (
+            <h2>
+              <span
+                className="dm-username-link"
+                onClick={() =>
+                  openUserModal({
+                    id: selectedConversation.id,
+                    username: selectedConversation.title,
+                  })
+                }
+              >
+                {selectedConversation.title}
+              </span>
+            </h2>
+          )}
+
+          {isGroup && (
+            <span className="dm-badge dm-badge-group">
+              <FontAwesomeIcon icon={faUsers} /> Grupo
+            </span>
+          )}
+        </div>
+        {isGroup && (
+          <button
+            className="dm-add-members-btn"
+            onClick={openGroupModal}
+            title="Ver información del grupo y gestionar miembros"
+          >
+            <FontAwesomeIcon icon={faUserPlus} /> Miembros
+          </button>
+        )}
+      </div>
+    );
+  };
+
+  const renderInput = () => {
+    if (!selectedConversation) return null;
+
+    return (
+      <div className="dm-input-container">
+        {attachments.length > 0 && (
+          <div className="dm-attachments-preview">
+            {attachments.map((att) => (
+              <div key={att.id} className="dm-attachment-thumb">
+                {att.isImage ? (
+                  <img src={att.previewUrl} alt={att.file.name} />
+                ) : (
+                  <div className="dm-attachment-file-icon">
+                    <span>{att.file.name}</span>
+                  </div>
+                )}
+                <button
+                  className="dm-attachment-remove"
+                  onClick={() => handleRemoveAttachment(att.id)}
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="dm-input-row">
+          <input
+            type="file"
+            multiple
+            ref={fileInputRef}
+            className="dm-file-input-hidden"
+            onChange={handleFileChange}
+          />
+
+          <button
+            type="button"
+            className="dm-attach-button"
+            onClick={() =>
+              fileInputRef.current && fileInputRef.current.click()
+            }
+            title="Adjuntar archivos"
+          >
+            <FontAwesomeIcon icon={faPaperclip} />
+          </button>
+
+          <textarea
+            className="dm-input"
+            value={messageText}
+            onChange={(e) => setMessageText(e.target.value)}
+            placeholder="Escribe un mensaje..."
+            rows={2}
+          />
+          <button
+            className="dm-send-button"
+            onClick={handleSendMessage}
+            disabled={!messageText.trim() && attachments.length === 0}
+          >
+            <FontAwesomeIcon icon={faPaperPlane} />
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  const handleDeleteGroup = async () => {
+    if (!selectedConversation || selectedConversation.type !== "group") return;
+
+    const groupId = selectedConversation.id;
+
+    const confirmDelete = window.confirm(
+      "¿Seguro que quieres eliminar este grupo? Esta acción no se puede deshacer."
+    );
+    if (!confirmDelete) return;
+
+    try {
+      await axios.post(
+        `http://127.0.0.1:8000/massaging/groupss/${groupId}/delete/`
+      );
+
+      setShowGroupModal(false);
+      setSelectedConversation(null);
+      setGroupMembers([]);
+      setGroupInfo(null);
+      setGroupMessages([]);
+      setMessageText("");
+      setChatError(null);
+      clearAttachments();
+
+      await fetchConversations();
+    } catch (err) {
+      console.error("Error handleDeleteGroup:", err);
+      alert(
+        "No se pudo eliminar el grupo. Verifica que seas el creador del grupo."
+      );
+    }
+  };
+
+  return (
+    <div className={`dm-wrapper ${isMobile ? "dm-wrapper-mobile" : ""}`}>
+      {showSidebar && (
+        <div className="dm-sidebar">
+          <div className="dm-sidebar-header">
+            <h1>Mensajes</h1>
+            <button
+              className="dm-new-group-btn"
+              onClick={() => setShowCreateGroup((prev) => !prev)}
+            >
+              + Grupo
+            </button>
+          </div>
+          {showCreateGroup && (
+            <div className="dm-create-group">
+              <input
+                type="text"
+                placeholder="Nombre del grupo"
+                value={newGroupName}
+                onChange={(e) => setNewGroupName(e.target.value)}
+              />
+              <div className="dm-create-group-actions">
+                <button onClick={createGroup} disabled={!newGroupName.trim()}>
+                  Crear
+                </button>
+                <button onClick={() => setShowCreateGroup(false)}>
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          )}
+          <div className="dm-sidebar-list">{renderSidebar()}</div>
+        </div>
+      )}
+
+      {showChatPanel && (
+        <div className="dm-chat-panel">
+          {renderChatHeader()}
+          <div className="dm-chat-body">{renderMessages()}</div>
+          {renderInput()}
+        </div>
+      )}
+
+      {selectedConversation && selectedConversation.type === "group" && (
+        <GroupInfoModal
+          isOpen={showGroupModal}
+          onClose={() => setShowGroupModal(false)}
+          groupInfo={groupInfo}
+          members={groupMembers}
+          availableUsers={availableUsers}
+          loadingUsers={loadingUsers}
+          onAddMember={handleAddMember}
+          onRemoveMember={handleRemoveMember}
+          currentUserId={loggedUserId}
+          onDeleteGroup={handleDeleteGroup}
+          onMakeAdmin={handleMakeAdmin}
+          onUserClick={openUserModal}
+        />
+      )}
+
+      <UserActionsModal
+        isOpen={showUserModal}
+        onClose={closeUserModal}
+        user={selectedUserForActions}
+        onStartDirectMessage={handleStartDirectFromModal}
+        onGoToProfile={handleGoToProfile}
+      />
+
+      {showAttachmentsModal && (
+        <div
+          className="dm-attachments-modal-backdrop"
+          onClick={closeAttachmentsModal}
+        >
+          <div
+            className="dm-attachments-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              className="dm-attachments-modal-close"
+              onClick={closeAttachmentsModal}
+            >
+              ×
+            </button>
+            <div className="dm-attachments-modal-list">
+              {attachmentsModalItems.map((att, idx) => (
+                <div key={idx} className="dm-attachments-modal-item">
+                  {att.type === "image" ? (
+                    <img src={att.url} alt={att.name} />
+                  ) : att.type === "video" ? (
+                    <video src={att.url} controls />
+                  ) : (
+                    <a
+                      href={att.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {att.name}
+                    </a>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 };
 
 export default DirectMessaging;
