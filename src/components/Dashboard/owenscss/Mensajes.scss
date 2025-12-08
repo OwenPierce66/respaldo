@@ -23,18 +23,56 @@
   overflow-y: auto;
 }
 
+.dm-msg-menu-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999; // encima del chat
+}
 
-/* Header con el nombre del usuario/grupo */
+.dm-msg-menu {
+  background: #fff;
+  border-radius: 10px;
+  padding: 8px 0;
+  min-width: 180px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+}
 
-// .dm-chat-body {
-//   flex: 1;
-//   position: relative;
-//   display: flex;
-//   flex-direction: column;
-//   padding: 10px;
-//   min-height: 0;
-//   overflow: hidden; 
-// }
+.dm-msg-menu-item {
+  width: 100%;
+  padding: 8px 16px;
+  text-align: left;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.dm-msg-menu-item:hover {
+  background: #f3f3f3;
+}
+
+.dm-msg-menu-delete {
+  color: #c0392b;
+  font-weight: 600;
+}
+
+
+
+.dm-message-footer {
+  margin-top: 4px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.dm-message-time {
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
 
 .dm-messages-list {
   flex: 1;

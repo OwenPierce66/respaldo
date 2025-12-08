@@ -259,7 +259,7 @@ const GroupInfoModal = ({
 /* ======================= COMPONENTE PRINCIPAL ======================= */
 
 const DirectMessaging = () => {
-  const { userId } = useParams();
+  const { userId: routeParam } = useParams();
   const navigate = useNavigate();
   const authUser = useSelector((state) => state.auth.user);
   const loggedUserId = authUser?.id ?? null;
@@ -287,9 +287,10 @@ const DirectMessaging = () => {
 
   // Adjuntos a enviar ahora
   const [attachments, setAttachments] = useState([]);
-  const fileInputRef = useRef(null);
+  const autoSelectedRef = useRef(false);
 
   const messagesEndRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   const [conversations, setConversations] = useState([]);
   const [loadingConversations, setLoadingConversations] = useState(true);
@@ -300,6 +301,15 @@ const DirectMessaging = () => {
   // Modal para ver adjuntos de un mensaje ya enviado
   const [showAttachmentsModal, setShowAttachmentsModal] = useState(false);
   const [attachmentsModalItems, setAttachmentsModalItems] = useState([]);
+
+  // Menú de opciones de mensaje (long-press)
+  const [messageMenu, setMessageMenu] = useState({
+    open: false,
+    message: null,
+    isGroup: false,
+  });
+  const longPressTimerRef = useRef(null);
+  const LONG_PRESS_MS = 600;
 
   useEffect(() => {
     const check = () => {
@@ -340,19 +350,35 @@ const DirectMessaging = () => {
     fetchConversations();
   }, []);
 
-  // Autoseleccionar conversación de la URL en desktop
+  // Autoseleccionar conversación al cargar, basándonos SOLO en la URL
   useEffect(() => {
-    if (isMobile) return;
-    if (!userId || conversations.length === 0) return;
-    if (selectedConversation) return;
+    if (autoSelectedRef.current) return;
+    if (!routeParam || !conversations.length) return;
 
-    const conv = conversations.find(
-      (c) => c.type === "direct" && String(c.id) === String(userId)
-    );
-    if (conv) {
-      handleSelectConversation(conv, false);
+    let targetConv = null;
+
+    if (routeParam.startsWith("group-")) {
+      const groupId = routeParam.replace("group-", "");
+      targetConv = conversations.find(
+        (c) => c.type === "group" && String(c.id) === String(groupId)
+      );
+    } else if (routeParam.startsWith("user-")) {
+      const userIdStr = routeParam.replace("user-", "");
+      targetConv = conversations.find(
+        (c) => c.type === "direct" && String(c.id) === String(userIdStr)
+      );
+    } else {
+      // compat: /direcmassaging/5 → asumimos directo
+      targetConv = conversations.find(
+        (c) => c.type === "direct" && String(c.id) === String(routeParam)
+      );
     }
-  }, [userId, conversations, selectedConversation, isMobile]);
+
+    if (targetConv) {
+      autoSelectedRef.current = true;
+      handleSelectConversation(targetConv, false);
+    }
+  }, [routeParam, conversations]);
 
   const fetchUsers = async () => {
     setLoadingUsers(true);
@@ -392,10 +418,9 @@ const DirectMessaging = () => {
         .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
       setDirectMessages(msgs);
     } catch (err) {
-  console.error("Error fetchDirectMessages:", err.response?.data || err);
-  setChatError("Error al cargar mensajes directos.");
-}
- finally {
+      console.error("Error fetchDirectMessages:", err.response?.data || err);
+      setChatError("Error al cargar mensajes directos.");
+    } finally {
       setLoadingChat(false);
     }
   };
@@ -421,6 +446,8 @@ const DirectMessaging = () => {
   };
 
   const handleSelectConversation = async (conv, pushRoute = true) => {
+    autoSelectedRef.current = true;
+
     setSelectedConversation(conv);
     setDirectMessages([]);
     setGroupMessages([]);
@@ -431,10 +458,13 @@ const DirectMessaging = () => {
 
     if (conv.type === "direct") {
       if (pushRoute) {
-        navigate(`/dashboard/direcmassaging/${conv.id}`);
+        navigate(`/dashboard/direcmassaging/user-${conv.id}`);
       }
       await fetchDirectMessages(conv.id);
     } else if (conv.type === "group") {
+      if (pushRoute) {
+        navigate(`/dashboard/direcmassaging/group-${conv.id}`);
+      }
       await fetchGroupMessages(conv.id);
       await fetchGroupMembers(conv.id);
     }
@@ -492,126 +522,115 @@ const DirectMessaging = () => {
     }
   };
 
-const sendDirectMessage = async () => {
-  try {
-    setLoadingChat(true);
+  const sendDirectMessage = async () => {
+    try {
+      setLoadingChat(true);
 
-    const formData = new FormData();
-    formData.append("receiver", selectedConversation.id);
-    formData.append("content", messageText);
+      const formData = new FormData();
+      formData.append("receiver", selectedConversation.id);
+      formData.append("content", messageText);
 
-    // 🔹 TODOS los archivos como "attachments" (para MessageAttachment)
-    attachments.forEach((att) => {
-      formData.append("attachments", att.file);
-    });
+      attachments.forEach((att) => {
+        formData.append("attachments", att.file);
+      });
 
-    // 🔹 Compatibilidad con image / video del modelo Message
-    const firstImage = attachments.find((a) => a.isImage);
-    const firstVideo = attachments.find(
-      (a) => !a.isImage && a.file.type.startsWith("video/")
-    );
+      const firstImage = attachments.find((a) => a.isImage);
+      const firstVideo = attachments.find(
+        (a) => !a.isImage && a.file.type.startsWith("video/")
+      );
 
-    if (firstImage) {
-      formData.append("image", firstImage.file);
-    }
-    if (firstVideo) {
-      formData.append("video", firstVideo.file);
-    }
-
-    const res = await axios.post(
-      "http://127.0.0.1:8000/massaging/messages/",
-      formData,
-      {
-        headers: { "Content-Type": "multipart/form-data" },
+      if (firstImage) {
+        formData.append("image", firstImage.file);
       }
-    );
+      if (firstVideo) {
+        formData.append("video", firstVideo.file);
+      }
 
-    if (Array.isArray(res.data)) {
-      const ordered = res.data
-        .slice()
-        .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-      setDirectMessages(ordered);
-    } else {
-      setDirectMessages((prev) =>
-        [...prev, res.data].sort(
+      const res = await axios.post(
+        "http://127.0.0.1:8000/massaging/messages/",
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+        }
+      );
+
+      if (Array.isArray(res.data)) {
+        const ordered = res.data
+          .slice()
+          .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+        setDirectMessages(ordered);
+      } else {
+        setDirectMessages((prev) =>
+          [...prev, res.data].sort(
+            (a, b) => new Date(a.timestamp) - new Date(b.timestamp)
+          )
+        );
+      }
+
+      setMessageText("");
+      clearAttachments();
+      fetchConversations();
+    } catch (err) {
+      console.error("Error sendDirectMessage:", err.response || err);
+      setChatError("Error al enviar el mensaje directo.");
+    } finally {
+      setLoadingChat(false);
+    }
+  };
+
+  const sendGroupMessage = async () => {
+    if (!loggedUserId) {
+      setChatError("No se pudo identificar al usuario autenticado.");
+      return;
+    }
+    if (!messageText.trim() && attachments.length === 0) return;
+
+    try {
+      setLoadingChat(true);
+
+      const formData = new FormData();
+      formData.append("content", messageText);
+
+      attachments.forEach((att) => {
+        formData.append("attachments", att.file);
+      });
+
+      const firstImage = attachments.find((a) => a.isImage);
+      const firstVideo = attachments.find(
+        (a) => !a.isImage && a.file.type.startsWith("video/")
+      );
+
+      if (firstImage) {
+        formData.append("image", firstImage.file);
+      }
+      if (firstVideo) {
+        formData.append("video", firstVideo.file);
+      }
+
+      const res = await axios.post(
+        `http://127.0.0.1:8000/massaging/groupss/${selectedConversation.id}/send_message/`,
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+        }
+      );
+
+      const newMsg = res.data;
+      setGroupMessages((prev) =>
+        [...prev, newMsg].sort(
           (a, b) => new Date(a.timestamp) - new Date(b.timestamp)
         )
       );
+      setMessageText("");
+      clearAttachments();
+      fetchConversations();
+    } catch (err) {
+      console.error("Error sendGroupMessage:", err.response || err);
+      setChatError("Error al enviar mensaje al grupo.");
+    } finally {
+      setLoadingChat(false);
     }
-
-    setMessageText("");
-    clearAttachments();
-    fetchConversations();
-  } catch (err) {
-    console.error("Error sendDirectMessage:", err.response || err);
-    setChatError("Error al enviar el mensaje directo.");
-  } finally {
-    setLoadingChat(false);
-  }
-};
-
-
-
-
-
-const sendGroupMessage = async () => {
-  if (!loggedUserId) {
-    setChatError("No se pudo identificar al usuario autenticado.");
-    return;
-  }
-  if (!messageText.trim() && attachments.length === 0) return;
-
-  try {
-    setLoadingChat(true);
-
-    const formData = new FormData();
-    formData.append("content", messageText);
-
-    // 🔴 TODOS LOS ARCHIVOS COMO "attachments"
-    attachments.forEach((att) => {
-      formData.append("attachments", att.file);
-    });
-
-const firstImage = attachments.find((a) => a.isImage);
-// antes: const firstFile = attachments.find((a) => !a.isImage);
-const firstVideo = attachments.find(
-  (a) => !a.isImage && a.file.type.startsWith("video/")
-);
-
-if (firstImage) {
-  formData.append("image", firstImage.file);
-}
-if (firstVideo) {
-  formData.append("video", firstVideo.file);
-}
-
-
-    const res = await axios.post(
-      `http://127.0.0.1:8000/massaging/groupss/${selectedConversation.id}/send_message/`,
-      formData,
-      {
-        headers: { "Content-Type": "multipart/form-data" },
-      }
-    );
-
-    const newMsg = res.data;
-    setGroupMessages((prev) =>
-      [...prev, newMsg].sort(
-        (a, b) => new Date(a.timestamp) - new Date(b.timestamp)
-      )
-    );
-    setMessageText("");
-    clearAttachments();
-    fetchConversations();
-  } catch (err) {
-    console.error("Error sendGroupMessage:", err.response || err);
-    setChatError("Error al enviar mensaje al grupo.");
-  } finally {
-    setLoadingChat(false);
-  }
-};
-
-
+  };
 
   // Auto scroll
   useEffect(() => {
@@ -644,7 +663,7 @@ if (firstVideo) {
       const found = conversations.find(
         (c) => c.type === "group" && c.id === group.id
       );
-      await handleSelectConversation(found || newConv, false);
+      await handleSelectConversation(found || newConv, true);
     } catch (err) {
       console.error("Error createGroup:", err);
     }
@@ -772,78 +791,107 @@ if (firstVideo) {
     clearAttachments();
   };
 
+  // ==== long press helpers ====
+  const startLongPress = (event, msg, isGroup) => {
+    event.preventDefault();
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+    }
+    longPressTimerRef.current = setTimeout(() => {
+      setMessageMenu({
+        open: true,
+        message: msg,
+        isGroup,
+      });
+    }, LONG_PRESS_MS);
+  };
+
+  const cancelLongPress = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  };
+
+  const closeMessageMenu = () => {
+    setMessageMenu({
+      open: false,
+      message: null,
+      isGroup: false,
+    });
+  };
+
+  const handleDeleteSelectedMessage = async () => {
+    const { message, isGroup } = messageMenu;
+    if (!message) return;
+
+    const ok = window.confirm("¿Seguro que quieres eliminar este mensaje?");
+    if (!ok) return;
+
+    try {
+      if (isGroup) {
+        // Asegúrate de tener este endpoint en backend
+        await axios.delete(
+          `http://127.0.0.1:8000/massaging/group_messages/${message.id}/delete/`
+        );
+        setGroupMessages((prev) => prev.filter((m) => m.id !== message.id));
+      } else {
+        await axios.delete(
+          `http://127.0.0.1:8000/massaging/messages/${message.id}/delete/`
+        );
+        setDirectMessages((prev) => prev.filter((m) => m.id !== message.id));
+      }
+    } catch (err) {
+      console.error("Error al eliminar mensaje:", err.response || err);
+      setChatError("No se pudo eliminar el mensaje.");
+    } finally {
+      closeMessageMenu();
+    }
+  };
+
   // ==== Construir adjuntos de un mensaje (backend -> front) ====
-const buildMessageAttachments = (msg) => {
-  const result = [];
-  if (!msg) return result;
+  const buildMessageAttachments = (msg) => {
+    const result = [];
+    if (!msg || !Array.isArray(msg.attachments)) return result;
 
-  const hasArrayAttachments =
-    Array.isArray(msg.attachments) && msg.attachments.length > 0;
-
-  // 1) Array de attachments (nuevo sistema)
-  if (hasArrayAttachments) {
     msg.attachments.forEach((att) => {
-      const rawUrl = att.url || att.file || att.path || att.attachment;
+      const rawUrl = att.file;
+      if (!rawUrl) return;
+
       const url = resolveMediaUrl(rawUrl);
       if (!url) return;
 
-      let type =
-        att.type ||
-        att.file_type ||
-        (att.is_image ? "image" : att.is_video ? "video" : null);
+      let type = "file";
+      const ft = (att.file_type || "").toLowerCase();
 
-      if (!type && typeof rawUrl === "string") {
-        if (/\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(rawUrl)) type = "image";
-        else if (/\.(mp4|webm|ogg|mov)$/i.test(rawUrl)) type = "video";
-        else type = "file";
+      if (
+        att.is_image ||
+        ft.startsWith("image/") ||
+        /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(rawUrl)
+      ) {
+        type = "image";
+      } else if (
+        att.is_video ||
+        ft.startsWith("video/") ||
+        /\.(mp4|webm|ogg|mov)$/i.test(rawUrl)
+      ) {
+        type = "video";
       }
 
       result.push({
-        type: type || "file",
+        type,
         url,
-        name: att.name || att.filename || att.original_name || "archivo",
+        name:
+          att.name ||
+          att.filename ||
+          att.original_name ||
+          rawUrl.split("/").pop() ||
+          "archivo",
       });
     });
-  }
 
-  // 2) Campos sueltos SOLO si NO hay array de attachments
-  const singleCandidates = hasArrayAttachments
-    ? [
-        { key: "attachment", forcedType: null },
-        { key: "attachments", forcedType: null },
-      ]
-    : [
-        { key: "attachment", forcedType: null },
-        { key: "attachments", forcedType: null },
-        { key: "image", forcedType: "image" },
-        { key: "video", forcedType: "video" },
-        { key: "file", forcedType: "file" },
-      ];
-
-  singleCandidates.forEach(({ key, forcedType }) => {
-    const value = msg[key];
-    if (!value || typeof value !== "string") return;
-
-    const url = resolveMediaUrl(value);
-    if (!url) return;
-
-    let type = forcedType;
-    if (!type) {
-      if (/\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(value)) type = "image";
-      else if (/\.(mp4|webm|ogg|mov)$/i.test(value)) type = "video";
-      else type = "file";
-    }
-
-    result.push({
-      type,
-      url,
-      name: value.split("/").pop() || "archivo",
-    });
-  });
-
-  return result;
-};
-
+    return result;
+  };
 
   // ==== Modal de adjuntos ====
   const openAttachmentsModal = (atts) => {
@@ -870,7 +918,6 @@ const buildMessageAttachments = (msg) => {
 
     const handleOpen = () => openAttachmentsModal(atts);
 
-    // Caso +5: 4 miniaturas en grid y badge +N
     if (media.length > 5) {
       const first4 = media.slice(0, 4);
       const extra = media.length - 4;
@@ -895,7 +942,6 @@ const buildMessageAttachments = (msg) => {
       );
     }
 
-    // Caso ≤5: se muestran "normales" (tamaño que definas en CSS) y abren modal
     return (
       <div className="dm-attachments-preview-normal">
         {media.map((att, idx) => (
@@ -947,7 +993,7 @@ const buildMessageAttachments = (msg) => {
         <div
           key={`${conv.type}-${conv.id}`}
           className={`dm-conversation-item ${isActive ? "active" : ""}`}
-          onClick={() => handleSelectConversation(conv)}
+          onClick={() => handleSelectConversation(conv, true)}
         >
           <div className="dm-conversation-title">
             {conv.type === "direct" ? (
@@ -1021,9 +1067,25 @@ const buildMessageAttachments = (msg) => {
             <div
               key={msg.id}
               className={`dm-message-bubble ${isMine ? "mine" : "theirs"}`}
+              // long press solo en mis mensajes
+              onMouseDown={
+                isMine
+                  ? (e) => startLongPress(e, msg, !isDirect)
+                  : undefined
+              }
+              onMouseUp={isMine ? cancelLongPress : undefined}
+              onMouseLeave={isMine ? cancelLongPress : undefined}
+              onTouchStart={
+                isMine
+                  ? (e) => startLongPress(e, msg, !isDirect)
+                  : undefined
+              }
+              onTouchEnd={isMine ? cancelLongPress : undefined}
+              onTouchMove={isMine ? cancelLongPress : undefined}
             >
-              <div className="dm-message-header">
-                {!isDirect && senderId && (
+              {/* Nombre SOLO en grupos */}
+              {!isDirect && senderId && (
+                <div className="dm-message-header">
                   <span
                     className="dm-message-sender dm-username-link"
                     onClick={() =>
@@ -1035,11 +1097,9 @@ const buildMessageAttachments = (msg) => {
                   >
                     {senderName}
                   </span>
-                )}
-                <span className="dm-message-time">
-                  {msg.timestamp ? moment(msg.timestamp).format("LT") : ""}
-                </span>
-              </div>
+                </div>
+              )}
+
               <div className="dm-message-body">{msg.content}</div>
 
               {atts.length > 0 && (
@@ -1047,6 +1107,13 @@ const buildMessageAttachments = (msg) => {
                   {renderMessageAttachmentsPreview(atts)}
                 </div>
               )}
+
+              {/* Hora abajo a la derecha */}
+              <div className="dm-message-footer">
+                <span className="dm-message-time">
+                  {msg.timestamp ? moment(msg.timestamp).format("LT") : ""}
+                </span>
+              </div>
             </div>
           );
         })}
@@ -1199,6 +1266,7 @@ const buildMessageAttachments = (msg) => {
       clearAttachments();
 
       await fetchConversations();
+      navigate("/dashboard/direcmassaging");
     } catch (err) {
       console.error("Error handleDeleteGroup:", err);
       alert(
@@ -1309,6 +1377,31 @@ const buildMessageAttachments = (msg) => {
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+      )}
+
+      {messageMenu.open && (
+        <div
+          className="dm-msg-menu-backdrop"
+          onClick={closeMessageMenu}
+        >
+          <div
+            className="dm-msg-menu"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              className="dm-msg-menu-item dm-msg-menu-delete"
+              onClick={handleDeleteSelectedMessage}
+            >
+              Eliminar mensaje
+            </button>
+            <button
+              className="dm-msg-menu-item"
+              onClick={closeMessageMenu}
+            >
+              Cancelar
+            </button>
           </div>
         </div>
       )}
