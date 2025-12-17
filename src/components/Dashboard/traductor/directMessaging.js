@@ -13,11 +13,24 @@ import {
   faTimes,
   faArrowLeft,
   faPaperclip,
+  faReply,
 } from "@fortawesome/free-solid-svg-icons";
 
 import "../owenscss/Mensajes.scss";
 
 const API_BASE_URL = "http://127.0.0.1:8000";
+
+// Lee el token desde localStorage y construye los headers de auth
+const getAuthHeaders = () => {
+  const token =
+    localStorage.getItem("userTokenLG") ||
+    localStorage.getItem("token") ||
+    localStorage.getItem("authToken");
+
+  if (!token) return {};
+  // Si usas JWT, cambia "Token" por "Bearer"
+  return { Authorization: `Token ${token}` };
+};
 
 const resolveMediaUrl = (url) => {
   if (!url) return null;
@@ -287,6 +300,10 @@ const DirectMessaging = () => {
 
   // Adjuntos a enviar ahora
   const [attachments, setAttachments] = useState([]);
+
+  // Responder a mensaje
+  const [replyTo, setReplyTo] = useState(null);
+
   const autoSelectedRef = useRef(false);
 
   const messagesEndRef = useRef(null);
@@ -297,6 +314,9 @@ const DirectMessaging = () => {
   const [conversationsError, setConversationsError] = useState(null);
 
   const [selectedConversation, setSelectedConversation] = useState(null);
+
+  // Buscador de conversaciones (usuarios / grupos)
+  const [conversationSearch, setConversationSearch] = useState("");
 
   // Modal para ver adjuntos de un mensaje ya enviado
   const [showAttachmentsModal, setShowAttachmentsModal] = useState(false);
@@ -311,6 +331,19 @@ const DirectMessaging = () => {
   const longPressTimerRef = useRef(null);
   const LONG_PRESS_MS = 600;
 
+  // Swipe para responder
+  const SWIPE_THRESHOLD = 60; // px hacia la derecha
+  const touchDataRef = useRef({
+    x: null,
+    y: null,
+    message: null,
+    isGroup: false,
+    canLongPress: false,
+  });
+
+  // refs por id de mensaje para poder hacer scroll al citado
+  const messageRefs = useRef({});
+
   useEffect(() => {
     const check = () => {
       if (typeof window !== "undefined") {
@@ -322,24 +355,18 @@ const DirectMessaging = () => {
     return () => window.removeEventListener("resize", check);
   }, []);
 
-  // Token para axios
-  useEffect(() => {
-    const token = localStorage.getItem("userTokenLG");
-    if (token) {
-      axios.defaults.headers.common["Authorization"] = `Token ${token}`;
-    }
-  }, []);
-
+  // Cargar conversaciones
   const fetchConversations = async () => {
     setLoadingConversations(true);
     setConversationsError(null);
     try {
       const res = await axios.get(
-        "http://127.0.0.1:8000/massaging/conversations/"
+        `${API_BASE_URL}/massaging/conversations/`,
+        { headers: getAuthHeaders() }
       );
       setConversations(res.data || []);
     } catch (err) {
-      console.error("Error fetchConversations:", err);
+      console.error("Error fetchConversations:", err.response || err);
       setConversationsError("Error al cargar las conversaciones.");
     } finally {
       setLoadingConversations(false);
@@ -383,10 +410,12 @@ const DirectMessaging = () => {
   const fetchUsers = async () => {
     setLoadingUsers(true);
     try {
-      const res = await axios.get("http://127.0.0.1:8000/massaging/users/");
+      const res = await axios.get(`${API_BASE_URL}/massaging/users/`, {
+        headers: getAuthHeaders(),
+      });
       setUsers(res.data || []);
     } catch (err) {
-      console.error("Error fetchUsers:", err);
+      console.error("Error fetchUsers:", err.response || err);
     } finally {
       setLoadingUsers(false);
     }
@@ -394,13 +423,15 @@ const DirectMessaging = () => {
 
   const fetchGroupMembers = async (groupId) => {
     try {
-      const res = await axios.get("http://127.0.0.1:8000/massaging/groupss/");
+      const res = await axios.get(`${API_BASE_URL}/massaging/groupss/`, {
+        headers: getAuthHeaders(),
+      });
       const groups = res.data || [];
       const group = groups.find((g) => g.id === groupId);
       setGroupMembers(group?.members || []);
       setGroupInfo(group || null);
     } catch (err) {
-      console.error("Error fetchGroupMembers:", err);
+      console.error("Error fetchGroupMembers:", err.response || err);
       setGroupMembers([]);
       setGroupInfo(null);
     }
@@ -411,7 +442,8 @@ const DirectMessaging = () => {
     setChatError(null);
     try {
       const res = await axios.get(
-        `http://127.0.0.1:8000/massaging/messages/?user_id=${otherUserId}`
+        `${API_BASE_URL}/massaging/messages/?user_id=${otherUserId}`,
+        { headers: getAuthHeaders() }
       );
       const msgs = (res.data || [])
         .slice()
@@ -430,7 +462,8 @@ const DirectMessaging = () => {
     setChatError(null);
     try {
       const res = await axios.get(
-        `http://127.0.0.1:8000/massaging/groupss/${groupId}/messages/`
+        `${API_BASE_URL}/massaging/groupss/${groupId}/messages/`,
+        { headers: getAuthHeaders() }
       );
       const msgs = Array.isArray(res.data) ? res.data : [];
       const ordered = msgs
@@ -438,7 +471,7 @@ const DirectMessaging = () => {
         .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
       setGroupMessages(ordered);
     } catch (err) {
-      console.error("Error fetchGroupMessages:", err);
+      console.error("Error fetchGroupMessages:", err.response || err);
       setChatError("Error al cargar mensajes del grupo.");
     } finally {
       setLoadingChat(false);
@@ -455,15 +488,19 @@ const DirectMessaging = () => {
     setChatError(null);
     setShowGroupModal(false);
     clearAttachments();
+    setReplyTo(null);
 
     if (conv.type === "direct") {
       if (pushRoute) {
-        navigate(`/dashboard/direcmassaging/user-${conv.id}`);
+        // usamos replace para no romper el "back" al origen
+        navigate(`/dashboard/direcmassaging/user-${conv.id}`, { replace: true });
       }
       await fetchDirectMessages(conv.id);
     } else if (conv.type === "group") {
       if (pushRoute) {
-        navigate(`/dashboard/direcmassaging/group-${conv.id}`);
+        navigate(`/dashboard/direcmassaging/group-${conv.id}`, {
+          replace: true,
+        });
       }
       await fetchGroupMessages(conv.id);
       await fetchGroupMembers(conv.id);
@@ -530,6 +567,11 @@ const DirectMessaging = () => {
       formData.append("receiver", selectedConversation.id);
       formData.append("content", messageText);
 
+      // si estamos respondiendo
+      if (replyTo && replyTo.id) {
+        formData.append("reply_to", replyTo.id);
+      }
+
       attachments.forEach((att) => {
         formData.append("attachments", att.file);
       });
@@ -547,10 +589,13 @@ const DirectMessaging = () => {
       }
 
       const res = await axios.post(
-        "http://127.0.0.1:8000/massaging/messages/",
+        `${API_BASE_URL}/massaging/messages/`,
         formData,
         {
-          headers: { "Content-Type": "multipart/form-data" },
+          headers: {
+            ...getAuthHeaders(),
+            "Content-Type": "multipart/form-data",
+          },
         }
       );
 
@@ -569,6 +614,7 @@ const DirectMessaging = () => {
 
       setMessageText("");
       clearAttachments();
+      setReplyTo(null);
       fetchConversations();
     } catch (err) {
       console.error("Error sendDirectMessage:", err.response || err);
@@ -591,6 +637,10 @@ const DirectMessaging = () => {
       const formData = new FormData();
       formData.append("content", messageText);
 
+      if (replyTo && replyTo.id) {
+        formData.append("reply_to", replyTo.id);
+      }
+
       attachments.forEach((att) => {
         formData.append("attachments", att.file);
       });
@@ -608,10 +658,13 @@ const DirectMessaging = () => {
       }
 
       const res = await axios.post(
-        `http://127.0.0.1:8000/massaging/groupss/${selectedConversation.id}/send_message/`,
+        `${API_BASE_URL}/massaging/groupss/${selectedConversation.id}/send_message/`,
         formData,
         {
-          headers: { "Content-Type": "multipart/form-data" },
+          headers: {
+            ...getAuthHeaders(),
+            "Content-Type": "multipart/form-data",
+          },
         }
       );
 
@@ -623,6 +676,7 @@ const DirectMessaging = () => {
       );
       setMessageText("");
       clearAttachments();
+      setReplyTo(null);
       fetchConversations();
     } catch (err) {
       console.error("Error sendGroupMessage:", err.response || err);
@@ -632,7 +686,7 @@ const DirectMessaging = () => {
     }
   };
 
-  // Auto scroll
+  // Auto scroll al final
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
@@ -644,8 +698,9 @@ const DirectMessaging = () => {
     if (!newGroupName.trim()) return;
     try {
       const res = await axios.post(
-        "http://127.0.0.1:8000/massaging/groupss/create/",
-        { name: newGroupName }
+        `${API_BASE_URL}/massaging/groupss/create/`,
+        { name: newGroupName },
+        { headers: getAuthHeaders() }
       );
       const group = res.data;
       setNewGroupName("");
@@ -665,7 +720,7 @@ const DirectMessaging = () => {
       );
       await handleSelectConversation(found || newConv, true);
     } catch (err) {
-      console.error("Error createGroup:", err);
+      console.error("Error createGroup:", err.response || err);
     }
   };
 
@@ -683,8 +738,9 @@ const DirectMessaging = () => {
 
     try {
       await axios.post(
-        `http://127.0.0.1:8000/massaging/groupss/${selectedConversation.id}/add_member/`,
-        { user_id: userIdToAdd }
+        `${API_BASE_URL}/massaging/groupss/${selectedConversation.id}/add_member/`,
+        { user_id: userIdToAdd },
+        { headers: getAuthHeaders() }
       );
 
       const addedUser = users.find((u) => u.id === userIdToAdd);
@@ -692,7 +748,7 @@ const DirectMessaging = () => {
         setGroupMembers((prev) => [...prev, addedUser]);
       }
     } catch (err) {
-      console.error("Error handleAddMember:", err);
+      console.error("Error handleAddMember:", err.response || err);
     }
   };
 
@@ -701,12 +757,13 @@ const DirectMessaging = () => {
 
     try {
       await axios.post(
-        `http://127.0.0.1:8000/massaging/groupss/${selectedConversation.id}/remove_member/`,
-        { user_id: userIdToRemove }
+        `${API_BASE_URL}/massaging/groupss/${selectedConversation.id}/remove_member/`,
+        { user_id: userIdToRemove },
+        { headers: getAuthHeaders() }
       );
       setGroupMembers((prev) => prev.filter((m) => m.id !== userIdToRemove));
     } catch (err) {
-      console.error("Error handleRemoveMember:", err);
+      console.error("Error handleRemoveMember:", err.response || err);
     }
   };
 
@@ -715,8 +772,9 @@ const DirectMessaging = () => {
 
     try {
       await axios.post(
-        `http://127.0.0.1:8000/massaging/groupss/${selectedConversation.id}/make_admin/`,
-        { user_id: userIdToPromote }
+        `${API_BASE_URL}/massaging/groupss/${selectedConversation.id}/make_admin/`,
+        { user_id: userIdToPromote },
+        { headers: getAuthHeaders() }
       );
 
       await fetchGroupMembers(selectedConversation.id);
@@ -789,6 +847,7 @@ const DirectMessaging = () => {
     setChatError(null);
     setShowGroupModal(false);
     clearAttachments();
+    setReplyTo(null);
   };
 
   // ==== long press helpers ====
@@ -830,14 +889,15 @@ const DirectMessaging = () => {
 
     try {
       if (isGroup) {
-        // Asegúrate de tener este endpoint en backend
         await axios.delete(
-          `http://127.0.0.1:8000/massaging/group_messages/${message.id}/delete/`
+          `${API_BASE_URL}/massaging/group_messages/${message.id}/delete/`,
+          { headers: getAuthHeaders() }
         );
         setGroupMessages((prev) => prev.filter((m) => m.id !== message.id));
       } else {
         await axios.delete(
-          `http://127.0.0.1:8000/massaging/messages/${message.id}/delete/`
+          `${API_BASE_URL}/massaging/messages/${message.id}/delete/`,
+          { headers: getAuthHeaders() }
         );
         setDirectMessages((prev) => prev.filter((m) => m.id !== message.id));
       }
@@ -847,6 +907,76 @@ const DirectMessaging = () => {
     } finally {
       closeMessageMenu();
     }
+  };
+
+  // ==== responder (swipe derecho) ====
+  const handleReplyToMessage = (msg) => {
+    if (!msg) return;
+    setReplyTo(msg);
+  };
+
+  const handleMessageTouchStart = (e, msg, isGroup, isMine) => {
+    const touch = e.touches[0];
+    touchDataRef.current = {
+      x: touch.clientX,
+      y: touch.clientY,
+      message: msg,
+      isGroup,
+      canLongPress: !!isMine,
+    };
+
+    // solo long-press (para eliminar) en mis mensajes
+    if (isMine) {
+      startLongPress(e, msg, isGroup);
+    }
+  };
+
+  const handleMessageTouchMove = (e) => {
+    const touch = e.touches[0];
+    const data = touchDataRef.current;
+    if (!data || data.x == null || data.y == null) return;
+
+    const dx = touch.clientX - data.x;
+    const dy = touch.clientY - data.y;
+
+    // más desplazamiento horizontal que vertical y hacia la derecha
+    if (Math.abs(dx) > Math.abs(dy) && dx > SWIPE_THRESHOLD) {
+      cancelLongPress();
+      if (data.message) {
+        handleReplyToMessage(data.message);
+      }
+      touchDataRef.current = {
+        x: null,
+        y: null,
+        message: null,
+        isGroup: false,
+        canLongPress: false,
+      };
+    }
+  };
+
+  const handleMessageTouchEnd = () => {
+    cancelLongPress();
+    touchDataRef.current = {
+      x: null,
+      y: null,
+      message: null,
+      isGroup: false,
+      canLongPress: false,
+    };
+  };
+
+  // ==== scroll a mensaje citado ====
+  const scrollToMessage = (messageId) => {
+    if (!messageId) return;
+    const el = messageRefs.current[messageId];
+    if (!el) return;
+
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    el.classList.add("dm-message-highlight");
+    setTimeout(() => {
+      el.classList.remove("dm-message-highlight");
+    }, 1200);
   };
 
   // ==== Construir adjuntos de un mensaje (backend -> front) ====
@@ -973,6 +1103,19 @@ const DirectMessaging = () => {
     );
   };
 
+  // ==== BACK GLOBAL SINCRONIZADO CON ORIGEN ====
+  const handleGlobalBack = () => {
+    try {
+      if (window.history.length > 1) {
+        navigate(-1);
+      } else {
+        navigate("/dashboard");
+      }
+    } catch {
+      navigate("/dashboard");
+    }
+  };
+
   const renderSidebar = () => {
     if (loadingConversations) {
       return <p>Cargando conversaciones...</p>;
@@ -984,7 +1127,23 @@ const DirectMessaging = () => {
       return <p>No tienes conversaciones todavía.</p>;
     }
 
-    return conversations.map((conv) => {
+    const search = conversationSearch.trim().toLowerCase();
+    const filteredConversations = conversations.filter((conv) => {
+      if (!search) return true;
+      const title = (conv.title || "").toLowerCase();
+      return title.includes(search);
+    });
+
+    if (!filteredConversations.length && search) {
+      return (
+        <p>
+          No se encontraron conversaciones para &quot;{conversationSearch}
+          &quot;.
+        </p>
+      );
+    }
+
+    return filteredConversations.map((conv) => {
       const isActive =
         selectedConversation &&
         selectedConversation.type === conv.type &&
@@ -1027,6 +1186,55 @@ const DirectMessaging = () => {
     });
   };
 
+  // Util para mostrar el bloque "respuesta a"
+  const renderQuotedMessage = (msg) => {
+    if (!msg) return null;
+
+    const replied =
+      msg.replied_to ||
+      msg.reply_to ||
+      msg.replied_message ||
+      msg.parent_message ||
+      msg.parent ||
+      null;
+
+    if (!replied) return null;
+
+    const repliedContent =
+      typeof replied === "object"
+        ? replied.content || replied.text || ""
+        : "";
+    const repliedSender =
+      typeof replied === "object"
+        ? replied.sender?.username || replied.sender_username || ""
+        : "";
+    const repliedId = typeof replied === "object" ? replied.id : null;
+
+    const previewText = repliedContent
+      ? repliedContent.length > 80
+        ? repliedContent.slice(0, 80) + "…"
+        : repliedContent
+      : "[Mensaje]";
+
+    const handleClick = () => {
+      if (repliedId != null) {
+        scrollToMessage(repliedId);
+      }
+    };
+
+    return (
+      <div className="dm-replied-block" onClick={handleClick}>
+        <div className="dm-replied-header">
+          <FontAwesomeIcon icon={faReply} className="dm-replied-icon" />
+          <span className="dm-replied-sender">
+            {repliedSender || "Mensaje anterior"}
+          </span>
+        </div>
+        <div className="dm-replied-text">{previewText}</div>
+      </div>
+    );
+  };
+
   const renderMessages = () => {
     if (!selectedConversation) {
       return (
@@ -1066,23 +1274,26 @@ const DirectMessaging = () => {
           return (
             <div
               key={msg.id}
+              ref={(el) => {
+                if (el) {
+                  messageRefs.current[msg.id] = el;
+                }
+              }}
               className={`dm-message-bubble ${isMine ? "mine" : "theirs"}`}
-              // long press solo en mis mensajes
               onMouseDown={
-                isMine
-                  ? (e) => startLongPress(e, msg, !isDirect)
-                  : undefined
+                isMine ? (e) => startLongPress(e, msg, !isDirect) : undefined
               }
               onMouseUp={isMine ? cancelLongPress : undefined}
               onMouseLeave={isMine ? cancelLongPress : undefined}
-              onTouchStart={
-                isMine
-                  ? (e) => startLongPress(e, msg, !isDirect)
-                  : undefined
+              onTouchStart={(e) =>
+                handleMessageTouchStart(e, msg, !isDirect, isMine)
               }
-              onTouchEnd={isMine ? cancelLongPress : undefined}
-              onTouchMove={isMine ? cancelLongPress : undefined}
+              onTouchMove={handleMessageTouchMove}
+              onTouchEnd={handleMessageTouchEnd}
             >
+              {/* Bloque de "respuesta a" si el mensaje actual responde a otro */}
+              {renderQuotedMessage(msg)}
+
               {/* Nombre SOLO en grupos */}
               {!isDirect && senderId && (
                 <div className="dm-message-header">
@@ -1178,8 +1389,44 @@ const DirectMessaging = () => {
   const renderInput = () => {
     if (!selectedConversation) return null;
 
+    // texto corto para el preview de respuesta
+    const replyPreviewText =
+      replyTo && replyTo.content
+        ? replyTo.content.length > 80
+          ? replyTo.content.slice(0, 80) + "…"
+          : replyTo.content
+        : "";
+
+    const replyPreviewSender =
+      replyTo && replyTo.sender
+        ? replyTo.sender.id === loggedUserId
+          ? "Tú"
+          : replyTo.sender.username || "Usuario"
+        : "Mensaje";
+
     return (
       <div className="dm-input-container">
+        {/* Preview de "respondiendo a ..." */}
+        {replyTo && (
+          <div className="dm-reply-preview">
+            <div className="dm-reply-preview-header">
+              <div className="dm-reply-preview-title">
+                <FontAwesomeIcon icon={faReply} className="dm-reply-icon" />
+                <span>Respondiendo a {replyPreviewSender}</span>
+              </div>
+              <button
+                className="dm-reply-preview-close"
+                onClick={() => setReplyTo(null)}
+              >
+                ×
+              </button>
+            </div>
+            <div className="dm-reply-preview-body">
+              {replyPreviewText || "[Mensaje]"}
+            </div>
+          </div>
+        )}
+
         {attachments.length > 0 && (
           <div className="dm-attachments-preview">
             {attachments.map((att) => (
@@ -1253,7 +1500,9 @@ const DirectMessaging = () => {
 
     try {
       await axios.post(
-        `http://127.0.0.1:8000/massaging/groupss/${groupId}/delete/`
+        `${API_BASE_URL}/massaging/groupss/${groupId}/delete/`,
+        {},
+        { headers: getAuthHeaders() }
       );
 
       setShowGroupModal(false);
@@ -1264,11 +1513,12 @@ const DirectMessaging = () => {
       setMessageText("");
       setChatError(null);
       clearAttachments();
+      setReplyTo(null);
 
       await fetchConversations();
       navigate("/dashboard/direcmassaging");
     } catch (err) {
-      console.error("Error handleDeleteGroup:", err);
+      console.error("Error handleDeleteGroup:", err.response || err);
       alert(
         "No se pudo eliminar el grupo. Verifica que seas el creador del grupo."
       );
@@ -1280,6 +1530,13 @@ const DirectMessaging = () => {
       {showSidebar && (
         <div className="dm-sidebar">
           <div className="dm-sidebar-header">
+            <button
+              className="dm-global-back-btn"
+              onClick={handleGlobalBack}
+              title="Regresar"
+            >
+              <FontAwesomeIcon icon={faArrowLeft} />
+            </button>
             <h1>Mensajes</h1>
             <button
               className="dm-new-group-btn"
@@ -1288,6 +1545,7 @@ const DirectMessaging = () => {
               + Grupo
             </button>
           </div>
+
           {showCreateGroup && (
             <div className="dm-create-group">
               <input
@@ -1306,6 +1564,17 @@ const DirectMessaging = () => {
               </div>
             </div>
           )}
+
+          {/* Buscador de conversaciones */}
+          <div className="dm-sidebar-search">
+            <input
+              type="text"
+              placeholder="Buscar conversación..."
+              value={conversationSearch}
+              onChange={(e) => setConversationSearch(e.target.value)}
+            />
+          </div>
+
           <div className="dm-sidebar-list">{renderSidebar()}</div>
         </div>
       )}
@@ -1382,24 +1651,15 @@ const DirectMessaging = () => {
       )}
 
       {messageMenu.open && (
-        <div
-          className="dm-msg-menu-backdrop"
-          onClick={closeMessageMenu}
-        >
-          <div
-            className="dm-msg-menu"
-            onClick={(e) => e.stopPropagation()}
-          >
+        <div className="dm-msg-menu-backdrop" onClick={closeMessageMenu}>
+          <div className="dm-msg-menu" onClick={(e) => e.stopPropagation()}>
             <button
               className="dm-msg-menu-item dm-msg-menu-delete"
               onClick={handleDeleteSelectedMessage}
             >
               Eliminar mensaje
             </button>
-            <button
-              className="dm-msg-menu-item"
-              onClick={closeMessageMenu}
-            >
+            <button className="dm-msg-menu-item" onClick={closeMessageMenu}>
               Cancelar
             </button>
           </div>
