@@ -170,6 +170,9 @@
   cursor: pointer;
   transition: background 0.15s;
   border-left: 3px solid transparent;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 
   &:hover {
     background: rgba(0, 0, 0, 0.1);
@@ -178,6 +181,33 @@
   &.active {
     background: rgba(0, 0, 0, 0.2);
     border-left-color: #dcf8c6;
+  }
+
+  .dm-conversation-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    overflow: hidden;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.18);
+    font-weight: 600;
+    font-size: 14px;
+    color: #ffffff;
+  }
+
+  .dm-conversation-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .dm-conversation-main {
+    flex: 1;
+    min-width: 0;
   }
 
   .dm-conversation-title {
@@ -224,6 +254,28 @@
     display: flex;
     align-items: center;
     gap: 8px;
+
+    .dm-chat-header-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      overflow: hidden;
+      flex-shrink: 0;
+      background: #e0e0e0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 16px;
+      color: #333;
+    }
+
+    .dm-chat-header-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
 
     h2 {
       margin: 0;
@@ -296,7 +348,6 @@
   text-align: center;
 }
 
-/* ================== BURBUJAS DE MENSAJE ================== */
 
 /* ================== BURBUJAS DE MENSAJE ================== */
 
@@ -309,24 +360,55 @@
   position: relative;
   display: inline-block;
 
+  /* HEADER (avatar + nombre) para mensajes de grupo */
   .dm-message-header {
     display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    margin-bottom: 3px;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
 
-    .dm-message-sender {
-      font-size: 12px;
-      color: #555;
-      font-weight: 600;
-    }
+  /* Avatar circular del usuario en el mensaje (aquí usamos solo inicial) */
+  .dm-message-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    overflow: hidden;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 600;
+    background: rgba(0, 0, 0, 0.08);
+    color: #555;
+  }
 
-    .dm-message-time {
-      font-size: 11px;
-      color: #999;
-      margin-left: 8px;
-      white-space: nowrap;
-    }
+  .dm-message-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .dm-message-sender {
+    font-size: 12px;
+    color: #555;
+    font-weight: 600;
+  }
+
+  /* Variante del avatar cuando el mensaje es mío */
+  &.mine .dm-message-avatar {
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+  }
+
+  /* Variante del avatar cuando el mensaje es de otros */
+  &.theirs .dm-message-avatar {
+    background: rgba(0, 0, 0, 0.06);
+    color: #444;
   }
 
   .dm-message-body {
@@ -348,10 +430,6 @@
     .dm-message-sender {
       color: rgba(255, 255, 255, 0.8);
     }
-
-    .dm-message-time {
-      color: rgba(255, 255, 255, 0.7);
-    }
   }
 
   &.theirs {
@@ -361,11 +439,6 @@
     border: 1px solid #ccc;
   }
 }
-
-
-/* Bloq
-
-ue de mensaje citado dentro de la burbuja */
 
 /* ===== EFECTO DE RESALTADO (CAMBIO DE COLOR) AL HACER SCROLL AL MENSAJE CITADO ===== */
 
@@ -409,6 +482,7 @@ ue de mensaje citado dentro de la burbuja */
   }
 }
 
+/* Bloque de mensaje citado dentro de la burbuja */
 .dm-replied-block {
   margin-bottom: 4px;
   padding: 4px 6px;
@@ -450,6 +524,7 @@ ue de mensaje citado dentro de la burbuja */
   opacity: 0.9;
   word-break: break-word;
 }
+
 
 /* Imágenes sueltas dentro del texto (por si algún mensaje trae HTML) */
 .dm-message-body img {

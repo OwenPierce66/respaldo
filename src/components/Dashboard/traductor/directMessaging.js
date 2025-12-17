@@ -373,8 +373,24 @@ const DirectMessaging = () => {
     }
   };
 
+  const fetchUsers = async () => {
+    setLoadingUsers(true);
+    try {
+      const res = await axios.get(`${API_BASE_URL}/massaging/users/`, {
+        headers: getAuthHeaders(),
+      });
+      setUsers(res.data || []);
+    } catch (err) {
+      console.error("Error fetchUsers:", err.response || err);
+    } finally {
+      setLoadingUsers(false);
+    }
+  };
+
+  // Cargar conversaciones + usuarios al montar
   useEffect(() => {
     fetchConversations();
+    fetchUsers();
   }, []);
 
   // Autoseleccionar conversación al cargar, basándonos SOLO en la URL
@@ -406,20 +422,6 @@ const DirectMessaging = () => {
       handleSelectConversation(targetConv, false);
     }
   }, [routeParam, conversations]);
-
-  const fetchUsers = async () => {
-    setLoadingUsers(true);
-    try {
-      const res = await axios.get(`${API_BASE_URL}/massaging/users/`, {
-        headers: getAuthHeaders(),
-      });
-      setUsers(res.data || []);
-    } catch (err) {
-      console.error("Error fetchUsers:", err.response || err);
-    } finally {
-      setLoadingUsers(false);
-    }
-  };
 
   const fetchGroupMembers = async (groupId) => {
     try {
@@ -1116,6 +1118,33 @@ const DirectMessaging = () => {
     }
   };
 
+  // ========= HELPERS PARA AVATARES (LISTA + HEADER) =========
+
+  const getUserById = (id) => {
+    return users.find((u) => Number(u.id) === Number(id));
+  };
+
+  const getUserAvatarData = (id, fallbackName) => {
+    const user = getUserById(id);
+    const username = user?.username || fallbackName || "";
+
+    const rawImage =
+      user?.image || user?.profile_image || user?.avatar || null;
+
+    const imageUrl = rawImage ? resolveMediaUrl(rawImage) : null;
+
+    const initial =
+      username && username.trim().length
+        ? username.trim().charAt(0).toUpperCase()
+        : "?";
+
+    return {
+      imageUrl,
+      initial,
+      username,
+    };
+  };
+
   const renderSidebar = () => {
     if (loadingConversations) {
       return <p>Cargando conversaciones...</p>;
@@ -1148,39 +1177,58 @@ const DirectMessaging = () => {
         selectedConversation &&
         selectedConversation.type === conv.type &&
         selectedConversation.id === conv.id;
+
+      // Avatar solo para conversaciones directas
+      let avatarData = null;
+      if (conv.type === "direct") {
+        avatarData = getUserAvatarData(conv.id, conv.title);
+      }
+
       return (
         <div
           key={`${conv.type}-${conv.id}`}
           className={`dm-conversation-item ${isActive ? "active" : ""}`}
           onClick={() => handleSelectConversation(conv, true)}
         >
-          <div className="dm-conversation-title">
-            {conv.type === "direct" ? (
-              <span
-                className="dm-username-link"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  openUserModal({ id: conv.id, username: conv.title });
-                }}
-              >
-                {conv.title}
-              </span>
-            ) : (
-              conv.title
-            )}
-            {conv.type === "group" && (
-              <span className="dm-badge dm-badge-group">
-                <FontAwesomeIcon icon={faUsers} /> Grupo
-              </span>
-            )}
-          </div>
-          {conv.last_message && (
-            <div className="dm-conversation-last">
-              {conv.last_message.length > 40
-                ? conv.last_message.slice(0, 40) + "..."
-                : conv.last_message}
+          {conv.type === "direct" && (
+            <div className="dm-conversation-avatar">
+              {avatarData?.imageUrl ? (
+                <img src={avatarData.imageUrl} alt={avatarData.username} />
+              ) : (
+                <span>{avatarData?.initial}</span>
+              )}
             </div>
           )}
+
+          <div className="dm-conversation-main">
+            <div className="dm-conversation-title">
+              {conv.type === "direct" ? (
+                <span
+                  className="dm-username-link"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openUserModal({ id: conv.id, username: conv.title });
+                  }}
+                >
+                  {conv.title}
+                </span>
+              ) : (
+                conv.title
+              )}
+              {conv.type === "group" && (
+                <span className="dm-badge dm-badge-group">
+                  <FontAwesomeIcon icon={faUsers} /> Grupo
+                </span>
+              )}
+            </div>
+            {conv.last_message && (
+              <div className="dm-conversation-last">
+                {conv.last_message.length > 40
+                  ? conv.last_message.slice(0, 40) + "..."
+                  : conv.last_message}
+              </div>
+            )}
+          </div>
         </div>
       );
     });
@@ -1269,6 +1317,11 @@ const DirectMessaging = () => {
             senderId &&
             Number(senderId) === Number(loggedUserId);
 
+          const senderInitial =
+            senderName && senderName.trim().length
+              ? senderName.trim().charAt(0).toUpperCase()
+              : "?";
+
           const atts = buildMessageAttachments(msg);
 
           return (
@@ -1294,9 +1347,12 @@ const DirectMessaging = () => {
               {/* Bloque de "respuesta a" si el mensaje actual responde a otro */}
               {renderQuotedMessage(msg)}
 
-              {/* Nombre SOLO en grupos */}
+              {/* Solo nombre/avatar (inicial) en grupos; sin foto real */}
               {!isDirect && senderId && (
                 <div className="dm-message-header">
+                  <div className="dm-message-avatar">
+                    <span>{senderInitial}</span>
+                  </div>
                   <span
                     className="dm-message-sender dm-username-link"
                     onClick={() =>
@@ -1337,6 +1393,14 @@ const DirectMessaging = () => {
     if (!selectedConversation) return null;
     const isGroup = selectedConversation.type === "group";
 
+    let directAvatarData = null;
+    if (!isGroup) {
+      directAvatarData = getUserAvatarData(
+        selectedConversation.id,
+        selectedConversation.title
+      );
+    }
+
     return (
       <div className="dm-chat-header">
         <div className="dm-chat-header-left">
@@ -1347,6 +1411,20 @@ const DirectMessaging = () => {
             >
               <FontAwesomeIcon icon={faArrowLeft} />
             </button>
+          )}
+
+          {/* Avatar arriba del nombre SOLO en direct */}
+          {!isGroup && (
+            <div className="dm-chat-header-avatar">
+              {directAvatarData?.imageUrl ? (
+                <img
+                  src={directAvatarData.imageUrl}
+                  alt={directAvatarData.username}
+                />
+              ) : (
+                <span>{directAvatarData?.initial}</span>
+              )}
+            </div>
           )}
 
           {isGroup ? (
