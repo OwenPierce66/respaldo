@@ -360,10 +360,10 @@ const DirectMessaging = () => {
     setLoadingConversations(true);
     setConversationsError(null);
     try {
-      const res = await axios.get(
-        `${API_BASE_URL}/massaging/conversations/`,
-        { headers: getAuthHeaders() }
-      );
+      const res = await axios.get(`${API_BASE_URL}/massaging/conversations/`, {
+        headers: getAuthHeaders(),
+      });
+      console.log("[DM DEBUG] /massaging/conversations/ response:", res.data);
       setConversations(res.data || []);
     } catch (err) {
       console.error("Error fetchConversations:", err.response || err);
@@ -379,6 +379,7 @@ const DirectMessaging = () => {
       const res = await axios.get(`${API_BASE_URL}/massaging/users/`, {
         headers: getAuthHeaders(),
       });
+      console.log("[DM DEBUG] /massaging/users/ response:", res.data);
       setUsers(res.data || []);
     } catch (err) {
       console.error("Error fetchUsers:", err.response || err);
@@ -428,6 +429,7 @@ const DirectMessaging = () => {
       const res = await axios.get(`${API_BASE_URL}/massaging/groupss/`, {
         headers: getAuthHeaders(),
       });
+      console.log("[DM DEBUG] /massaging/groupss/ response:", res.data);
       const groups = res.data || [];
       const group = groups.find((g) => g.id === groupId);
       setGroupMembers(group?.members || []);
@@ -446,6 +448,10 @@ const DirectMessaging = () => {
       const res = await axios.get(
         `${API_BASE_URL}/massaging/messages/?user_id=${otherUserId}`,
         { headers: getAuthHeaders() }
+      );
+      console.log(
+        "[DM DEBUG] /massaging/messages/ direct response:",
+        res.data
       );
       const msgs = (res.data || [])
         .slice()
@@ -466,6 +472,10 @@ const DirectMessaging = () => {
       const res = await axios.get(
         `${API_BASE_URL}/massaging/groupss/${groupId}/messages/`,
         { headers: getAuthHeaders() }
+      );
+      console.log(
+        "[DM DEBUG] /massaging/groupss/:id/messages response:",
+        res.data
       );
       const msgs = Array.isArray(res.data) ? res.data : [];
       const ordered = msgs
@@ -601,6 +611,8 @@ const DirectMessaging = () => {
         }
       );
 
+      console.log("[DM DEBUG] sendDirectMessage response:", res.data);
+
       if (Array.isArray(res.data)) {
         const ordered = res.data
           .slice()
@@ -670,6 +682,8 @@ const DirectMessaging = () => {
         }
       );
 
+      console.log("[DM DEBUG] sendGroupMessage response:", res.data);
+
       const newMsg = res.data;
       setGroupMessages((prev) =>
         [...prev, newMsg].sort(
@@ -705,6 +719,7 @@ const DirectMessaging = () => {
         { headers: getAuthHeaders() }
       );
       const group = res.data;
+      console.log("[DM DEBUG] create_group response:", group);
       setNewGroupName("");
       setShowCreateGroup(false);
       await fetchConversations();
@@ -1118,18 +1133,30 @@ const DirectMessaging = () => {
     }
   };
 
-  // ========= HELPERS PARA AVATARES (LISTA + HEADER) =========
+  // ========= HELPERS PARA AVATARES (LISTA + HEADER + MENSAJES) =========
 
   const getUserById = (id) => {
     return users.find((u) => Number(u.id) === Number(id));
   };
 
-  const getUserAvatarData = (id, fallbackName) => {
+  // Ahora acepta una imagen cruda de respaldo (sender_image, user_image, etc.)
+  const getUserAvatarData = (id, fallbackName, fallbackRawImage = null) => {
     const user = getUserById(id);
-    const username = user?.username || fallbackName || "";
+
+    const username =
+      (user && user.username) || fallbackName || "";
 
     const rawImage =
-      user?.image || user?.profile_image || user?.avatar || null;
+      (user && (user.image || user.profile_image || user.avatar)) ||
+      fallbackRawImage ||
+      null;
+
+    console.log("[DM DEBUG] getUserAvatarData", {
+      id,
+      username,
+      rawImage,
+      user,
+    });
 
     const imageUrl = rawImage ? resolveMediaUrl(rawImage) : null;
 
@@ -1182,6 +1209,10 @@ const DirectMessaging = () => {
       let avatarData = null;
       if (conv.type === "direct") {
         avatarData = getUserAvatarData(conv.id, conv.title);
+        console.log("[DM DEBUG] sidebar direct avatar", {
+          convId: conv.id,
+          avatarData,
+        });
       }
 
       return (
@@ -1317,10 +1348,31 @@ const DirectMessaging = () => {
             senderId &&
             Number(senderId) === Number(loggedUserId);
 
-          const senderInitial =
-            senderName && senderName.trim().length
-              ? senderName.trim().charAt(0).toUpperCase()
-              : "?";
+          // Imagen que viene directo del mensaje (para fallback)
+          const rawAvatarFromMsg =
+            msg.sender_image ||
+            msg.user_image ||
+            msg.sender?.image ||
+            msg.sender?.profile_image ||
+            msg.sender?.avatar ||
+            null;
+
+          let avatarData = null;
+          if (!isDirect && senderId) {
+            avatarData = getUserAvatarData(
+              senderId,
+              senderName,
+              rawAvatarFromMsg
+            );
+            console.log("[DM DEBUG] group message sender avatar", {
+              msgId: msg.id,
+              senderId,
+              avatarData,
+              sender: msg.sender,
+              sender_image: msg.sender_image,
+              user_image: msg.user_image,
+            });
+          }
 
           const atts = buildMessageAttachments(msg);
 
@@ -1347,11 +1399,18 @@ const DirectMessaging = () => {
               {/* Bloque de "respuesta a" si el mensaje actual responde a otro */}
               {renderQuotedMessage(msg)}
 
-              {/* Solo nombre/avatar (inicial) en grupos; sin foto real */}
+              {/* Header con avatar + nombre SOLO en grupos */}
               {!isDirect && senderId && (
                 <div className="dm-message-header">
                   <div className="dm-message-avatar">
-                    <span>{senderInitial}</span>
+                    {avatarData?.imageUrl ? (
+                      <img
+                        src={avatarData.imageUrl}
+                        alt={avatarData.username}
+                      />
+                    ) : (
+                      <span>{avatarData?.initial}</span>
+                    )}
                   </div>
                   <span
                     className="dm-message-sender dm-username-link"
@@ -1399,6 +1458,10 @@ const DirectMessaging = () => {
         selectedConversation.id,
         selectedConversation.title
       );
+      console.log("[DM DEBUG] chat header direct avatar", {
+        convId: selectedConversation.id,
+        directAvatarData,
+      });
     }
 
     return (
