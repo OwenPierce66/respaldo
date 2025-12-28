@@ -1,6 +1,29 @@
 // Mensajes.scss
 
 /* ================== LAYOUT GENERAL ================== */
+.dm-sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dm-sidebar-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dm-user-search-btn {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 999px;
+}
+
+.dm-user-search-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
 
 /* CONTENEDOR PRINCIPAL DEL MÓDULO DE MENSAJES */
 .dm-wrapper {

@@ -14,6 +14,7 @@ import {
   faArrowLeft,
   faPaperclip,
   faReply,
+  faSearch, // 👈 NUEVO
 } from "@fortawesome/free-solid-svg-icons";
 
 import "../owenscss/Mensajes.scss";
@@ -76,6 +77,73 @@ const UserActionsModal = ({
           >
             Ver perfil de aportaciones
           </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ======================= MODAL DE BÚSQUEDA DE USUARIOS ======================= */
+
+const UserSearchModal = ({
+  isOpen,
+  onClose,
+  users,
+  currentUserId,
+  onStartDirectMessage,
+}) => {
+  const [query, setQuery] = useState("");
+
+  if (!isOpen) return null;
+
+  const filtered = (users || [])
+    .filter((u) => u.id !== currentUserId)
+    .filter((u) =>
+      u.username.toLowerCase().includes(query.toLowerCase())
+    );
+
+  return (
+    <div className="dm-modal-backdrop">
+      <div className="dm-modal">
+        <div className="dm-modal-header">
+          <div>
+            <h3>Buscar usuarios</h3>
+            <p className="dm-modal-subtitle">
+              Elige un usuario para iniciar un chat directo
+            </p>
+          </div>
+          <button className="dm-modal-close" onClick={onClose}>
+            <FontAwesomeIcon icon={faTimes} />
+          </button>
+        </div>
+
+        <div className="dm-modal-section">
+          <input
+            type="text"
+            className="dm-modal-search"
+            placeholder="Buscar por nombre de usuario..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+
+          <div className="dm-modal-available-list">
+            {filtered.length === 0 ? (
+              <p className="dm-modal-empty">No se encontraron usuarios.</p>
+            ) : (
+              filtered.map((u) => (
+                <div
+                  key={u.id}
+                  className="dm-modal-member-row"
+                  onClick={() => {
+                    onStartDirectMessage && onStartDirectMessage(u);
+                    onClose();
+                  }}
+                >
+                  <span className="dm-modal-member-name">{u.username}</span>
+                </div>
+              ))
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -298,6 +366,9 @@ const DirectMessaging = () => {
   const [selectedUserForActions, setSelectedUserForActions] = useState(null);
   const [showUserModal, setShowUserModal] = useState(false);
 
+  // NUEVO: Modal de búsqueda de usuarios
+  const [showUserSearchModal, setShowUserSearchModal] = useState(false);
+
   // Adjuntos a enviar ahora
   const [attachments, setAttachments] = useState([]);
 
@@ -343,6 +414,23 @@ const DirectMessaging = () => {
 
   // refs por id de mensaje para poder hacer scroll al citado
   const messageRefs = useRef({});
+
+
+
+
+
+
+
+  // Extrae el ID de usuario desde el parámetro de ruta
+// Soporta: "user-5" y "5"
+const parseRouteUserId = (param) => {
+  if (!param) return null;
+  if (param.startsWith("group-")) return null; // No confundir grupos con usuarios
+  if (param.startsWith("user-")) return param.replace("user-", "");
+  // Compatibilidad: /direcmassaging/5
+  return param;
+};
+
 
   useEffect(() => {
     const check = () => {
@@ -394,35 +482,74 @@ const DirectMessaging = () => {
     fetchUsers();
   }, []);
 
-  // Autoseleccionar conversación al cargar, basándonos SOLO en la URL
-  useEffect(() => {
-    if (autoSelectedRef.current) return;
-    if (!routeParam || !conversations.length) return;
+// Autoseleccionar conversación al cargar (URL → conversación o usuario)
+useEffect(() => {
+  if (autoSelectedRef.current) return;
+  if (!routeParam) return;
 
-    let targetConv = null;
+  // 1) Si es un grupo, solo buscamos en las conversaciones
+  if (routeParam.startsWith("group-")) {
+    if (!conversations.length) return;
 
-    if (routeParam.startsWith("group-")) {
-      const groupId = routeParam.replace("group-", "");
-      targetConv = conversations.find(
-        (c) => c.type === "group" && String(c.id) === String(groupId)
-      );
-    } else if (routeParam.startsWith("user-")) {
-      const userIdStr = routeParam.replace("user-", "");
-      targetConv = conversations.find(
-        (c) => c.type === "direct" && String(c.id) === String(userIdStr)
-      );
-    } else {
-      // compat: /direcmassaging/5 → asumimos directo
-      targetConv = conversations.find(
-        (c) => c.type === "direct" && String(c.id) === String(routeParam)
-      );
-    }
+    const groupId = routeParam.replace("group-", "");
+    const groupConv = conversations.find(
+      (c) => c.type === "group" && String(c.id) === String(groupId)
+    );
 
-    if (targetConv) {
+    if (groupConv) {
       autoSelectedRef.current = true;
-      handleSelectConversation(targetConv, false);
+      handleSelectConversation(groupConv, false);
     }
-  }, [routeParam, conversations]);
+    return;
+  }
+
+  // 2) Si es un usuario, intentamos primero encontrar una conversación existente
+  const userIdFromRoute = parseRouteUserId(routeParam);
+  if (!userIdFromRoute) return;
+
+  if (conversations.length) {
+    const directConv = conversations.find(
+      (c) => c.type === "direct" && String(c.id) === String(userIdFromRoute)
+    );
+    if (directConv) {
+      autoSelectedRef.current = true;
+      handleSelectConversation(directConv, false);
+      return;
+    }
+  }
+
+  // 3) Si aún no hay conversación, creamos una "fake" con la lista de usuarios
+  if (!users.length) return;
+
+  const targetUser = users.find(
+    (u) => String(u.id) === String(userIdFromRoute)
+  );
+
+  if (!targetUser) return;
+
+  autoSelectedRef.current = true;
+
+  const baseConv = {
+    id: targetUser.id,
+    type: "direct",
+    title: targetUser.username,
+    last_message: "",
+    last_timestamp: null,
+  };
+
+  // Añadimos la conversación a la lista si no estaba
+  setConversations((prev) => {
+    const exists = prev.some(
+      (c) => c.type === "direct" && String(c.id) === String(targetUser.id)
+    );
+    return exists ? prev : [...prev, baseConv];
+  });
+
+  // Y la seleccionamos (false = no volvemos a cambiar la URL aquí)
+  handleSelectConversation(baseConv, false);
+}, [routeParam, conversations, users]);
+
+
 
   const fetchGroupMembers = async (groupId) => {
     try {
@@ -1143,8 +1270,7 @@ const DirectMessaging = () => {
   const getUserAvatarData = (id, fallbackName, fallbackRawImage = null) => {
     const user = getUserById(id);
 
-    const username =
-      (user && user.username) || fallbackName || "";
+    const username = (user && user.username) || fallbackName || "";
 
     const rawImage =
       (user && (user.image || user.profile_image || user.avatar)) ||
@@ -1180,7 +1306,12 @@ const DirectMessaging = () => {
       return <p style={{ color: "red" }}>{conversationsError}</p>;
     }
     if (!conversations.length) {
-      return <p>No tienes conversaciones todavía.</p>;
+      return (
+        <p>
+          No tienes conversaciones todavía. Usa el botón con el icono de lupa
+          arriba para buscar usuarios y empezar a chatear.
+        </p>
+      );
     }
 
     const search = conversationSearch.trim().toLowerCase();
@@ -1678,13 +1809,26 @@ const DirectMessaging = () => {
             >
               <FontAwesomeIcon icon={faArrowLeft} />
             </button>
+
             <h1>Mensajes</h1>
-            <button
-              className="dm-new-group-btn"
-              onClick={() => setShowCreateGroup((prev) => !prev)}
-            >
-              + Grupo
-            </button>
+
+            <div className="dm-sidebar-header-actions">
+              <button
+                className="dm-user-search-btn"
+                onClick={() => setShowUserSearchModal(true)}
+                title="Buscar usuario para chatear"
+              >
+                <FontAwesomeIcon icon={faSearch} />
+              </button>
+
+              <button
+                className="dm-new-group-btn"
+                onClick={() => setShowCreateGroup((prev) => !prev)}
+                title="Crear grupo"
+              >
+                + Grupo
+              </button>
+            </div>
           </div>
 
           {showCreateGroup && (
@@ -1744,6 +1888,14 @@ const DirectMessaging = () => {
           onUserClick={openUserModal}
         />
       )}
+
+      <UserSearchModal
+        isOpen={showUserSearchModal}
+        onClose={() => setShowUserSearchModal(false)}
+        users={users}
+        currentUserId={loggedUserId}
+        onStartDirectMessage={handleStartDirectFromModal}
+      />
 
       <UserActionsModal
         isOpen={showUserModal}

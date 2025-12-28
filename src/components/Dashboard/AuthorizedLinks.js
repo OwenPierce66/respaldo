@@ -44,6 +44,7 @@ import NewPeticionPost from "./traductor/newforum/newpeticionpost";
 
 
 import RequireAdmin from "../HOC/requireAdmin";
+import ReelsPCH from "./traductor/ReelsPCH";
 
 const AuthLinks = () => {
   const [usuarioName, setUsuarioName] = useState("");
@@ -80,6 +81,8 @@ const AuthLinks = () => {
       />
 
       <Route path="direcmassaging/:userId" element={<DirectMessaging />} />
+
+<Route path="reels" element={<ReelsPCH />} />
 
       {/* Blog */}
       <Route path="blog" element={<Blog />} />

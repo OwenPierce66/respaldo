@@ -9,7 +9,7 @@ import { connect } from "react-redux"; // Importa `connect` para conectar con Re
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPen, faUsers, faUser, faEnvelope, faHeart, faTrash, faImage, faGlobe, faArrowRight, faBars, faMinus, faPlus, faSearch,
+import { faPlay, faPen, faUsers, faUser, faEnvelope, faHeart, faTrash, faImage, faGlobe, faArrowRight, faBars, faMinus, faPlus, faSearch,
 } from "@fortawesome/free-solid-svg-icons";
 import Select from 'react-select';
 import Modal from 'react-modal';
@@ -474,9 +474,11 @@ useEffect(() => {
     }));
   };
 
-  const navigateToUserMesseges = (userId) => {
-    navigate(`/dashboard/direcmassaging/${userId}`);
-  };
+const navigateToUserMesseges = (userId) => {
+  if (!userId) return;
+  // Usamos el prefijo "user-" para que DirectMessaging sepa que es ID de usuario
+  navigate(`/dashboard/direcmassaging/user-${userId}`);
+};
 
   const navigateToUserForum = (userId) => {
     navigate(`/dashboard/newcommunity/${userId}`);
@@ -1573,9 +1575,17 @@ return (
     <div className={"importante-separedor"} style={{ paddingTop: "0px" }}>
       <div className={"whatpetition"}>
         <div className="iconspch" style={{ paddingTop: "84px" }}>
-          <div className="iconpchMensaje" onClick={() => navigateToUserMesseges(usuario.user.id)}>
-            <FontAwesomeIcon icon={faEnvelope} />
-          </div>
+      <div
+  className="iconpchMensaje"
+  onClick={() =>
+    navigateToUserMesseges(
+      usuarioSeleccionado || (usuario?.user && usuario.user.id)
+    )
+  }
+>
+  <FontAwesomeIcon icon={faEnvelope} />
+</div>
+
 
           <div className="iconpchUsers" onClick={() => navigateToUserForum(usuario.user.id)}>
             <FontAwesomeIcon icon={faUsers} />
@@ -2008,8 +2018,29 @@ return (
             Agregar
           </div>
           <div className="iconGlobal" onClick={toggleMostrarUsuarios}>
-            <FontAwesomeIcon icon={mostrarUsuarios ? faUsers : faGlobe} />
-          </div>
+  <FontAwesomeIcon icon={mostrarUsuarios ? faUsers : faGlobe} />
+</div>
+
+<div
+  className="iconReels"
+  onClick={(e) => {
+    e.stopPropagation();
+
+    const temaActual = (tema || "historias").toLowerCase();
+    const sp = new URLSearchParams();
+    sp.set("tema", temaActual);
+
+    navigate(`/dashboard/reels?${sp.toString()}`);
+  }}
+  title="Reels"
+>
+  <FontAwesomeIcon icon={faPlay} />
+</div>
+
+
+
+
+
           <div>
             <TaskFilterMenu tema={tema} setSoloFavoritosTareas={setSoloFavoritosTareas} mostrarSoloFavoritos={mostrarSoloFavoritos} cargarFavoritosPerfilesUsuarioSeleccionado={cargarFavoritosPerfilesUsuarioSeleccionado} cargarFavoritosUsuarioSeleccionado={cargarFavoritosUsuarioSeleccionado} usuarioSeleccionado={usuarioSeleccionado} mostrarSoloFavoritosUsuarioSeleccionado={mostrarSoloFavoritosUsuarioSeleccionado} setMostrarSoloFavoritosUsuarioSeleccionado={setMostrarSoloFavoritosUsuarioSeleccionado} soloFavoritosTareas={soloFavoritosTareas} mostrarUsuarios={mostrarUsuarios} setFiltro={setFiltro} handleMostrarCompartidos={handleMostrarCompartidos} showMyTasksOnly={showMyTasksOnly} toggleMostrarFavoritos={toggleMostrarFavoritos} />
           </div>
@@ -2128,7 +2159,9 @@ const videoPath = getFirstVideo(link);
                                   open={Boolean(anchorEl[link.id])}
                                   onClose={() => handleClose(link.id)}
                                 >
-                                  <MenuItem onClick={() => navigateToUserMesseges(link.user)}><FontAwesomeIcon icon={faEnvelope} /></MenuItem>
+                                  <MenuItem onClick={() => navigateToUserMesseges(link.user)}>
+  <FontAwesomeIcon icon={faEnvelope} />
+</MenuItem>
                                   <MenuItem onClick={() => navigateToUserForum(link.user)}><FontAwesomeIcon icon={faUsers} /></MenuItem>
                                   <MenuItem
                                     onClick={(e) => {

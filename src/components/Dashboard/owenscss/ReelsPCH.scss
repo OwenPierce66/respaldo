@@ -1,0 +1,598 @@
+.reels-root {
+  height: 100vh;
+  width: 100%;
+  background: #000;
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+}
+
+.reels-topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background: linear-gradient(to bottom, rgba(0,0,0,.65), rgba(0,0,0,0));
+}
+
+.reels-back,
+.reels-mute {
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.reels-topbar-center {
+  display: flex;
+  gap: 10px;
+}
+
+.reels-tab {
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.reels-tab.active {
+  background: rgba(255,255,255,0.25);
+}
+
+.reels-container {
+  height: 100vh;
+  overflow-y: auto;
+  scroll-snap-type: y mandatory;
+  scroll-behavior: smooth;
+}
+
+.reels-container::-webkit-scrollbar {
+  width: 0px;
+  height: 0px;
+}
+
+.reel {
+  height: 100vh;
+  width: 100%;
+  position: relative;
+  scroll-snap-align: start;
+  background: #000;
+}
+
+.reel-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.reel-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: space-between;
+  padding: 70px 0px 6px 6px; // deja espacio a la topbar
+  background: linear-gradient(to top, rgba(0,0,0,.65), rgba(0,0,0,0) 45%);
+}
+
+.reel-left {
+  max-width: 72%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.reel-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.reel-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.25);
+}
+
+.reel-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.reel-avatar-fallback {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+}
+
+.reel-username {
+  font-weight: 700;
+}
+
+.reel-title {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.reel-description {
+  font-size: 14px;
+  opacity: 0.95;
+  line-height: 1.25;
+  max-height: 3.8em;
+  overflow: hidden;
+}
+
+.reel-cats {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.reel-chip {
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.12);
+}
+
+.reel-right {
+  width: 90px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 16px;
+  align-items: center;
+}
+
+.reel-action {
+  background: transparent;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  display: grid;
+  gap: 6px;
+  justify-items: center;
+}
+
+.reel-action-icon {
+  font-size: 22px;
+}
+
+.reel-action-icon.liked {
+  color: #54afff;
+}
+
+.reel-action-count {
+  font-size: 13px;
+  opacity: 0.95;
+}
+
+.reel-action-label {
+  font-size: 12px;
+  opacity: 0.95;
+}
+
+.reel-nav {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 18%;
+  background: transparent;
+  border: none;
+}
+
+.reel-nav-up { top: 0; }
+.reel-nav-down { bottom: 0; }
+
+.reels-loading,
+.reels-end {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 14px;
+  text-align: center;
+  z-index: 60;
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+.reels-empty {
+  height: 100vh;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  padding: 24px;
+}
+
+.reels-empty-title {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.reels-empty-sub {
+  margin-top: 8px;
+  opacity: 0.9;
+}
+
+/* PÉGALO al final de tu ../owenscss/ReelsPCH.scss */
+
+.reel-section-list {
+  margin-top: 10px;
+  max-height: 34vh;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
+.reel-section-item {
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 10px;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+.reel-section-item-title {
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.reel-section-item-desc {
+  opacity: 0.95;
+  line-height: 1.25;
+}
+
+.reel-section-item-link {
+  display: inline-block;
+  margin-top: 8px;
+  text-decoration: underline;
+}
+
+.reel-mode-indicator {
+  font-size: 12px;
+  opacity: 0.92;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255,255,255,0.12);
+  width: fit-content;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.reel-action-nav {
+  gap: 8px;
+}
+
+.reel-nav-arrows {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.reel-nav-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: #fff;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  padding: 0;
+}
+
+.reel-nav-btn:active {
+  transform: scale(0.97);
+}
+.reel {
+  touch-action: pan-y; // permite scroll vertical y deja detectar swipe horizontal
+}
+
+/* PÉGALO AL FINAL de tu ../owenscss/ReelsPCH.scss */
+
+/* Mantén el mismo “diseño” de tu reel-mode-indicator y solo especializa el caso compartido */
+.reel-mode-indicator.shared-byName {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* --- NUEVO: username sin avatar (lado izquierdo) --- */
+.reel-userline {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* --- NUEVO: avatar como “botón” en la columna derecha --- */
+.reel-profile-btn {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+.reel-avatar {
+  width: 52px;
+  height: 52px;
+  position: relative;
+  overflow: visible; // CLAVE: el aro puede salir hacia afuera
+}
+
+.reel-avatar-inner {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  overflow: hidden; // CLAVE: solo esta capa recorta la imagen
+  background: rgba(0, 0, 0, 0.35); // evita “huecos” si tarda en cargar
+}
+
+.reel-avatar-inner img {
+  width: 100%;
+  height: 100%;
+  display: block;     // evita espacios raros tipo inline-image
+  object-fit: cover;  // la foto llena el círculo sin deformarse
+  object-position: center;
+}
+
+.reel-avatar-fallback {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+}
+
+.reel-avatar-clickable::after {
+  content: "";
+  position: absolute;
+  inset: -4px;          // el aro queda POR FUERA del círculo recortado
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  pointer-events: none; // no bloquea el click
+  box-sizing: border-box;
+}
+
+.reel-avatar--right {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.25);
+  overflow: visible; /* ✅ antes estaba hidden */
+}
+
+/* asegura el orden de capas */
+.reel-avatar-inner {
+  position: relative;
+  z-index: 1;
+}
+
+.reel-avatar-clickable::after {
+  z-index: 2; /* aro */
+}
+
+.reel-avatar-heart {
+  position: absolute;
+  left: 50%;
+  bottom: -8px;
+  transform: translateX(-50%);
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-size: 24px;
+  line-height: 1;
+
+  color: #fff;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+.reel-avatar-heart.active {
+  background: rgba(84,175,255,0.9);
+  color: #000;
+  border: 1px solid rgba(0,0,0,0.25);
+}
+
+
+.reel-avatar--right img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.reel-action-icon-wrap {
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+
+.reel-action-badge {
+  position: absolute;
+  top: -8px;
+  right: -10px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+
+  display: grid;
+  place-items: center;
+
+  font-size: 11px;
+  font-weight: 800;
+
+  background: rgba(255, 255, 255, 0.9);
+  color: #000;
+  border: 1px solid rgba(0, 0, 0, 0.35);
+
+  pointer-events: none; // ✅ para no estorbar clicks
+}
+
+/* PÉGALO al final de tu ../owenscss/ReelsPCH.scss */
+
+/* avatar clickeable (favorito perfil) */
+.reel-avatar-clickable {
+  position: relative;
+  padding: 0;
+  cursor: pointer;
+  background: transparent;
+}
+
+/* corazón pequeño “abrazando” el avatar */
+// .reel-avatar-heart {
+//   position: absolute;
+//   left: 50%;
+//   bottom: -8px;
+//   transform: translateX(-50%);
+//   width: 22px;
+//   height: 22px;
+//   border-radius: 999px;
+//   display: grid;
+//   place-items: center;
+//   font-size: 12px;
+//   line-height: 1;
+
+//   color: #fff; 
+//   background: rgba(0, 0, 0, 0.35);
+//   border: 1px solid rgba(255, 255, 255, 0.15);
+// }
+
+// .reel-avatar-heart.flash {
+//   color: #000;
+//   background: rgba(255, 255, 255, 0.92);
+//   border: 1px solid rgba(0, 0, 0, 0.25);
+//   animation: reelAvatarHeartFade 0.75s ease-out forwards;
+// }
+
+@keyframes reelAvatarHeartFade {
+  0% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-50%) scale(1.35);
+  }
+}
+
+/* badge para el icono de cambiar vista (si no lo tenías ya) */
+.reel-action-icon-wrap {
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+
+.reel-action-badge {
+  position: absolute;
+  top: -6px;
+  right: -8px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  font-size: 11px;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.92);
+  color: #000;
+  border: 1px solid rgba(0, 0, 0, 0.25);
+}
+
+.reel.is-selected .reel-overlay {
+  background: linear-gradient(to top, rgba(0,0,0,.78), rgba(0,0,0,0) 45%);
+}
+
+/* reproductor inferior */
+.reel-player {
+  // position: absolute;
+  // left: 12px;
+  // right: 12px;
+  // bottom: 12px;
+  // z-index: 80;
+
+  // display: flex;
+  // align-items: center;
+  // gap: 10px;
+
+  // padding: 10px 10px;
+  // border-radius: 14px;
+
+  // background: rgba(0,0,0,0.55);
+  // border: 1px solid rgba(255,255,255,0.14);
+  // backdrop-filter: blur(6px);
+    position: absolute;
+    left: 33px;
+    right: -33px;
+    bottom: 12px;
+    z-index: 80;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 10px;
+    border-radius: 14px;
+    background: transparent;
+}
+
+.reel-player-btn,
+.reel-player-close {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: #fff;
+  cursor: pointer;
+  // display: grid;
+  display: none;
+  place-items: center;
+  padding: 0;
+}
+
+.reel-player-range {
+  flex: 1;
+  cursor: pointer;
+}
+
+.reel-player-time {
+  font-size: 12px;
+  opacity: 0.95;
+  min-width: 92px;
+  text-align: left;
+}
+
+/* icono guardar */
+.reel-action-icon.saved {
+  color: #54afff;
+}
+
+/* ✅ Modo “solo video”: oculta todo lo que no sea el video */
+.reels-root.ui-hidden {
+  background: #000;
+}
+
+/* por si hay elementos fixed */
+.reels-root.ui-hidden .reels-loading,
+.reels-root.ui-hidden .reels-end {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* si por algún motivo el overlay queda montado, lo apagas */
+.reels-root.ui-hidden .reel-overlay {
+  display: none !important;
+}
