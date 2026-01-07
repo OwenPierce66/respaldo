@@ -5,54 +5,123 @@
   color: #fff;
   position: relative;
   overflow: hidden;
+
+  /* ✅ alturas controladas por CSS variables (las seteamos en JS) */
+  --topbar-h: 56px;
+  --underbar-h: 0px;
 }
 
+/* ✅ TOPBAR: por encima de todo */
 .reels-topbar {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
-  z-index: 50;
+
+  height: var(--topbar-h);
+  z-index: 5000;
+
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 12px;
+
+  // padding: 10px 12px;
   background: linear-gradient(to bottom, rgba(0,0,0,.65), rgba(0,0,0,0));
 }
 
 .reels-back,
 .reels-mute {
-  background: transparent;
-  border: none;
-  color: #fff;
-  font-size: 18px;
-  cursor: pointer;
+background: transparent;
+    border: none;
+    color: #fff;
+    font-size: 18px;
+    cursor: pointer;
+    margin-top: 3px;
+    margin-right: -3px;
 }
-
-.reels-topbar-center {
+.reels-topbar-right {
+  width: 44px;              /* mismo tamaño que tu botón circular */
+  height: 44px;
   display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 44px;           /* evita que el flex cambie */
+}
+
+.reels-topbar-left {
+  display: flex;
+  align-items: center;
   gap: 10px;
+
+  /* reserva espacio para 2 botones circulares (ajusta si tu size es otro) */
+  // width: calc(44px + 44px + 10px);
+  // flex: 0 0 calc(44px + 44px + 10px);
 }
 
-.reels-tab {
-  background: rgba(255,255,255,0.12);
-  border: 1px solid rgba(255,255,255,0.15);
-  color: #fff;
-  padding: 6px 10px;
+.reels-back,
+.reels-mute {
+  width: 44px;
+  height: 44px;
   border-radius: 999px;
-  cursor: pointer;
-  font-size: 14px;
+  display: grid;
+  place-items: center;
 }
 
-.reels-tab.active {
-  background: rgba(255,255,255,0.25);
+.reels-back.is-hidden,
+.reels-mute.is-hidden {
+  visibility: hidden;   /* sigue ocupando espacio */
+  pointer-events: none; /* no clic */
 }
 
+
+.reels-filter-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  font-size: 1.2em;
+  background: transparent;
+margin-left: -9px;
+}
+
+/* cuando no hay selectedReelId */
+.reels-filter-icon.is-hidden {
+  visibility: hidden;       /* ocupa espacio pero no se ve */
+  pointer-events: none;     /* no clic */
+}
+
+
+/* ✅ UNDERBAR: debajo del topbar, sin cubrirlo */
+.reels-underbar {
+  position: fixed;
+  top: var(--topbar-h);
+  left: 0;
+  right: 0;
+
+  z-index: 4900;
+  pointer-events: auto;
+
+  /* si quieres transparencia suave */
+  background: rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(6px);
+}
+
+.reels-filterbar {
+  padding: 8px 10px;
+}
+
+.reels-catsbar {
+  padding: 6px 10px;
+}
+
+/* ✅ contenedor scrolleable: baja contenido para no quedar detrás del topbar/underbar */
 .reels-container {
   height: 100vh;
   overflow-y: auto;
   scroll-snap-type: y mandatory;
   scroll-behavior: smooth;
+
+  padding-top: calc(var(--topbar-h) + var(--underbar-h));
+  box-sizing: border-box;
 }
 
 .reels-container::-webkit-scrollbar {
@@ -81,12 +150,15 @@
   inset: 0;
   display: flex;
   justify-content: space-between;
-  padding: 70px 0px 6px 6px; // deja espacio a la topbar
+
+  /* ✅ antes tenías 70px fijo; ahora respeta topbar + underbar */
+  padding: calc(var(--topbar-h) + var(--underbar-h) + 14px) 0px 6px 6px;
+
   background: linear-gradient(to top, rgba(0,0,0,.65), rgba(0,0,0,0) 45%);
 }
 
 .reel-left {
-  max-width: 72%;
+  max-width: 81%;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -134,6 +206,8 @@
   font-size: 14px;
   opacity: 0.95;
   line-height: 1.25;
+
+  /* ✅ si ya usas TextoConVerMas, puedes quitar este clamp si estorba */
   max-height: 3.8em;
   overflow: hidden;
 }
@@ -142,6 +216,7 @@
   display: flex;
   gap: 6px;
   flex-wrap: wrap;
+  margin-bottom: 5px;
 }
 
 .reel-chip {
@@ -153,10 +228,10 @@
 }
 
 .reel-right {
-  width: 90px;
+  width: 69px;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: end;
   gap: 16px;
   align-items: center;
 }
@@ -199,7 +274,11 @@
 }
 
 .reel-nav-up { top: 0; }
-.reel-nav-down { bottom: 0; }
+.reel-nav-down { 
+  bottom: 0;
+  // position: relative;
+pointer-events: none;
+}
 
 .reels-loading,
 .reels-end {
@@ -231,7 +310,7 @@
   opacity: 0.9;
 }
 
-/* PÉGALO al final de tu ../owenscss/ReelsPCH.scss */
+/* ====== lo que ya tenías abajo lo dejo igual ====== */
 
 .reel-section-list {
   margin-top: 10px;
@@ -266,8 +345,8 @@
 .reel-mode-indicator {
   font-size: 12px;
   opacity: 0.92;
-  background: rgba(0, 0, 0, 0.35);
-  border: 1px solid rgba(255,255,255,0.12);
+  // background: rgba(0, 0, 0, 0.35);
+  // border: 1px solid rgba(255,255,255,0.12);
   width: fit-content;
   padding: 4px 10px;
   border-radius: 999px;
@@ -299,54 +378,51 @@
 .reel-nav-btn:active {
   transform: scale(0.97);
 }
+
 .reel {
-  touch-action: pan-y; // permite scroll vertical y deja detectar swipe horizontal
+  touch-action: pan-y;
 }
 
-/* PÉGALO AL FINAL de tu ../owenscss/ReelsPCH.scss */
-
-/* Mantén el mismo “diseño” de tu reel-mode-indicator y solo especializa el caso compartido */
 .reel-mode-indicator.shared-byName {
   display: inline-flex;
   align-items: center;
   gap: 6px;
 }
 
-/* --- NUEVO: username sin avatar (lado izquierdo) --- */
 .reel-userline {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-/* --- NUEVO: avatar como “botón” en la columna derecha --- */
 .reel-profile-btn {
   background: transparent;
   border: 0;
   padding: 0;
   cursor: pointer;
+  margin-bottom: 16px;
 }
 
 .reel-avatar {
   width: 52px;
   height: 52px;
-  position: relative;
-  overflow: visible; // CLAVE: el aro puede salir hacia afuera
+  // position: relative;
+  // overflow: visible;
 }
 
 .reel-avatar-inner {
   width: 100%;
   height: 100%;
   border-radius: 50%;
-  overflow: hidden; // CLAVE: solo esta capa recorta la imagen
-  background: rgba(0, 0, 0, 0.35); // evita “huecos” si tarda en cargar
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.35);
 }
 
 .reel-avatar-inner img {
   width: 100%;
   height: 100%;
-  display: block;     // evita espacios raros tipo inline-image
-  object-fit: cover;  // la foto llena el círculo sin deformarse
+  display: block;
+  object-fit: cover;
   object-position: center;
 }
 
@@ -360,10 +436,10 @@
 .reel-avatar-clickable::after {
   content: "";
   position: absolute;
-  inset: -4px;          // el aro queda POR FUERA del círculo recortado
+  inset: -4px;
   border-radius: 50%;
   border: 2px solid rgba(255, 255, 255, 0.85);
-  pointer-events: none; // no bloquea el click
+  pointer-events: none;
   box-sizing: border-box;
 }
 
@@ -372,17 +448,16 @@
   height: 52px;
   border-radius: 50%;
   border: 1px solid rgba(255,255,255,0.25);
-  overflow: visible; /* ✅ antes estaba hidden */
+  overflow: visible;
 }
 
-/* asegura el orden de capas */
 .reel-avatar-inner {
   position: relative;
   z-index: 1;
 }
 
 .reel-avatar-clickable::after {
-  z-index: 2; /* aro */
+  z-index: 2;
 }
 
 .reel-avatar-heart {
@@ -402,17 +477,11 @@
   background: rgba(0, 0, 0, 0.35);
   border: 1px solid rgba(255, 255, 255, 0.15);
 }
+
 .reel-avatar-heart.active {
-  background: rgba(84,175,255,0.9);
+  // background: rgba(84,175,255,0.9);
   color: #000;
   border: 1px solid rgba(0,0,0,0.25);
-}
-
-
-.reel-avatar--right img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
 }
 
 .reel-action-icon-wrap {
@@ -440,44 +509,8 @@
   color: #000;
   border: 1px solid rgba(0, 0, 0, 0.35);
 
-  pointer-events: none; // ✅ para no estorbar clicks
+  pointer-events: none;
 }
-
-/* PÉGALO al final de tu ../owenscss/ReelsPCH.scss */
-
-/* avatar clickeable (favorito perfil) */
-.reel-avatar-clickable {
-  position: relative;
-  padding: 0;
-  cursor: pointer;
-  background: transparent;
-}
-
-/* corazón pequeño “abrazando” el avatar */
-// .reel-avatar-heart {
-//   position: absolute;
-//   left: 50%;
-//   bottom: -8px;
-//   transform: translateX(-50%);
-//   width: 22px;
-//   height: 22px;
-//   border-radius: 999px;
-//   display: grid;
-//   place-items: center;
-//   font-size: 12px;
-//   line-height: 1;
-
-//   color: #fff; 
-//   background: rgba(0, 0, 0, 0.35);
-//   border: 1px solid rgba(255, 255, 255, 0.15);
-// }
-
-// .reel-avatar-heart.flash {
-//   color: #000;
-//   background: rgba(255, 255, 255, 0.92);
-//   border: 1px solid rgba(0, 0, 0, 0.25);
-//   animation: reelAvatarHeartFade 0.75s ease-out forwards;
-// }
 
 @keyframes reelAvatarHeartFade {
   0% {
@@ -490,63 +523,31 @@
   }
 }
 
-/* badge para el icono de cambiar vista (si no lo tenías ya) */
-.reel-action-icon-wrap {
-  position: relative;
-  display: grid;
-  place-items: center;
-}
-
-.reel-action-badge {
-  position: absolute;
-  top: -6px;
-  right: -8px;
-  min-width: 16px;
-  height: 16px;
-  padding: 0 4px;
-  border-radius: 999px;
-  font-size: 11px;
-  display: grid;
-  place-items: center;
-  background: rgba(255, 255, 255, 0.92);
-  color: #000;
-  border: 1px solid rgba(0, 0, 0, 0.25);
-}
-
 .reel.is-selected .reel-overlay {
   background: linear-gradient(to top, rgba(0,0,0,.78), rgba(0,0,0,0) 45%);
 }
 
-/* reproductor inferior */
 .reel-player {
-  // position: absolute;
-  // left: 12px;
-  // right: 12px;
-  // bottom: 12px;
-  // z-index: 80;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
 
-  // display: flex;
-  // align-items: center;
-  // gap: 10px;
+  width: 100%;
+  // padding: 10px 12px;
+  // padding-bottom: calc(10px + env(safe-area-inset-bottom));
 
-  // padding: 10px 10px;
-  // border-radius: 14px;
+  box-sizing: border-box;
+  z-index: 50;
 
-  // background: rgba(0,0,0,0.55);
-  // border: 1px solid rgba(255,255,255,0.14);
-  // backdrop-filter: blur(6px);
-    position: absolute;
-    left: 33px;
-    right: -33px;
-    bottom: 12px;
-    z-index: 80;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 10px;
-    border-radius: 14px;
-    background: transparent;
+  display: flex;
+  flex-direction: column; // ✅ tiempo arriba, controles abajo
+  // gap: 6px;
+
+  // opcional (si quieres que se lea mejor sobre el video):
+  // background: linear-gradient(to top, rgba(0,0,0,0.55), rgba(0,0,0,0));
 }
+
 
 .reel-player-btn,
 .reel-player-close {
@@ -557,25 +558,44 @@
   border: 1px solid rgba(255,255,255,0.15);
   color: #fff;
   cursor: pointer;
-  // display: grid;
   display: none;
   place-items: center;
   padding: 0;
 }
 
-.reel-player-range {
-  flex: 1;
-  cursor: pointer;
+
+.reel-player-timebar {
+      font-size: 0.9em;
+    padding-right: 3px;
+  width: 100%;
+  text-align: end;
+  font-weight: 600;
+  line-height: 1;
+  pointer-events: none; // ✅ no estorba clicks del reproductor
+  margin-bottom: -16px;
+
 }
 
+.reel-player-controls {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.reel-player-range {
+  flex: 1;       // ✅ ocupa todo el espacio entre botones
+  min-width: 0;  // ✅ evita overflow en flex
+  margin-bottom: -17px;
+}
 .reel-player-time {
   font-size: 12px;
   opacity: 0.95;
   min-width: 92px;
   text-align: left;
+
 }
 
-/* icono guardar */
 .reel-action-icon.saved {
   color: #54afff;
 }
@@ -592,7 +612,238 @@
   pointer-events: none;
 }
 
-/* si por algún motivo el overlay queda montado, lo apagas */
+.reels-root.ui-hidden .reels-topbar,
+.reels-root.ui-hidden .reels-underbar {
+  display: none !important;
+}
+
 .reels-root.ui-hidden .reel-overlay {
   display: none !important;
+}
+
+/* ✅ TOPBAR CENTER: DISEÑO “TÍPICO” con espacio, borde y radius */
+.reels-topbar-center {
+  display: flex;
+  align-items: center;
+  // padding: 6px;
+  gap: 5px;             
+  // border-radius: 999px;
+  // border: 1px solid rgba(255, 255, 255, 0.18);
+  // background: rgba(0, 0, 0, 0.18);
+  // backdrop-filter: blur(6px);
+}
+
+.reels-tab {
+  min-width: 96px;         /* cada uno con “su espacio” */
+  text-align: center;
+  padding: 8px 14px;
+  border-radius: 999px;    /* radius típico */
+  // border: 1px solid rgba(255, 255, 255, 0.28);
+  background: rgba(0, 0, 0, 0.18);
+  color: #fff;
+  cursor: pointer;
+  transition: 0.15s ease;
+}
+
+.reels-tab:hover {
+  transform: translateY(-1px);
+}
+
+.reels-tab.active {
+  border-color: rgba(84, 175, 255, 0.95);
+  background: rgba(84, 175, 255, 0.22);
+}
+/* ✅ reels-selected-extra por encima de todo (como lo tenías) */
+.reels-selected-extra {
+  position: fixed;
+  top: var(--topbar-h);
+  left: 0;
+  right: 0;
+
+  z-index: 4900;          /* debajo del topbar (5000), encima del video/overlay */
+  pointer-events: auto;
+
+  padding: 10px 10px 8px;
+  background: rgba(0, 0, 0, 0.18);
+  backdrop-filter: blur(8px);
+
+  /* opcional: para que se vea “bloque” tipo barra */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+/* Ocultar el header global cuando estás en modo reels */
+.base-mobile.is-reels .header {
+  display: none !important;
+}
+
+.css-1tktgsa-MuiPaper-root-MuiPopover-paper-MuiMenu-paper {
+    top: 119px !important;
+    left: 69px !important;
+}
+.reel-mode-indicator.shared-byName {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.shared-byName-text {
+  font-weight: 700;
+}
+
+.shared-byDesc {
+  font-size: 12px;
+  line-height: 1.2;
+  opacity: 0.9;
+  max-width: min(78vw, 420px);
+  word-break: break-word;
+}
+.reel-mode-indicator.shared-byName {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.shared-byName-text {
+  font-weight: 700;
+}
+
+.shared-byDesc {
+  font-size: 12px;
+  line-height: 1.2;
+  opacity: 0.9;
+  max-width: min(78vw, 420px);
+  word-break: break-word;
+}
+
+.reel-mode-indicator.shared-byName {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-width: min(78vw, 420px);
+}
+
+.shared-by-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.shared-by-badge {
+display: inline-flex;
+    align-items: stretch;
+    justify-content: center;
+    min-width: 11px;
+    margin-top: -30px;
+    margin-left: -9px;
+    border-radius: 999px;
+    font-size: 9px;
+    font-weight: 900;
+    background: #ffffff;
+    color: #111;
+}
+
+.shared-by-desc {
+  font-size: 12px;
+  line-height: 1.2;
+  opacity: 0.9;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.reel-avatar {
+  position: relative;
+  overflow: visible;
+}
+
+.reel-avatar-inner {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.reel-avatar-heart {
+  position: absolute;
+  right: -2px;
+  bottom: -9px;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.reel-avatar-heart--idle {
+  color: #000;        // ✅ negro cuando NO lo sigues
+  opacity: 0.9;
+}
+
+.shared-by-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.shared-by-row--compact {
+  gap: 6px;
+}
+
+.shared-by-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  overflow: hidden;
+  flex: 0 0 auto;
+}
+
+.shared-by-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.shared-by-avatar-fallback {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+}
+
+.shared-by-badge {
+    display: inline-grid;
+    place-items: center;
+    min-width: 10px;
+    height: 13px;
+    padding: 0px 3px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.shared-by-avatar {
+  display: inline-flex;
+  width: 30px !important;
+  height: 30px !important;
+  border-radius: 999px;
+  overflow: hidden;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+
+.shared-by-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.shared-by-avatar-fallback {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+}
+.shared-by-title{
+      display: flex;
+    justify-content: center;
 }

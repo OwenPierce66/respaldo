@@ -355,6 +355,8 @@
 
 
 @media all and (max-width: 500px) {
+  
+
 
   .his {
     margin-top: 15px;
@@ -1668,4 +1670,99 @@
   //   color: blue;
 
   // }
+  .texto-con-ver-mas__text.clamped {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: var(--tclamp, 3);
+  overflow: hidden;
+}
+.sharedtask-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 6000; // por encima de MUI (1300) y demás overlays
+}
+
+.sharedtask-modal {
+  background: #fff;
+  width: min(92vw, 420px);
+  border-radius: 18px;
+  padding: 16px;
+  outline: none;
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.35);
+  max-height: 80vh;
+  overflow: auto;
+}
+
+.sharedtask-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.sharedtask-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.sharedtask-close {
+  border: none;
+  background: transparent;
+  font-size: 26px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 6px;
+}
+
+.sharedtask-textarea {
+  width: 100%;
+  border: 1px solid rgba(0, 0, 0, 0.18);
+  border-radius: 12px;
+  padding: 10px;
+  resize: vertical;
+}
+
+.sharedtask-error {
+  margin-top: 10px;
+  font-size: 13px;
+  color: #b00020;
+}
+
+.sharedtask-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.sharedtask-btn {
+  border: none;
+  border-radius: 12px;
+  padding: 10px 14px;
+  cursor: pointer;
+}
+
+.sharedtask-btn--cancel {
+  background: #6b7280;
+  color: #fff;
+}
+
+.sharedtask-btn--primary {
+  background: #2563eb;
+  color: #fff;
+}
+
+.sharedtask-btn:disabled,
+.sharedtask-close:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+
 }

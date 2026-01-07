@@ -1,67 +1,130 @@
-import React, { useState } from "react";
+// src/components/Dashboard/traductor/SharedTaskModal.js
+import React, { useEffect, useState } from "react";
+import Modal from "react-modal";
 import axios from "axios";
+
+const API_BASE = "http://127.0.0.1:8000";
+
+const getToken = () =>
+  localStorage.getItem("userTokenLG") ||
+  localStorage.getItem("token") ||
+  localStorage.getItem("authToken") ||
+  "";
 
 const SharedTaskModal = ({ isOpen, onClose, taskId, onShared }) => {
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
 
-  if (!isOpen) return null;
-
-  const handleShare = async () => {
-    setLoading(true);
+  useEffect(() => {
     try {
-      const token = localStorage.getItem("userTokenLG");
-const res = await axios.post(
-  "http://127.0.0.1:8000/api/shared-tasks/",
-  { task_id: taskId, description },
-  {
-    headers: {
-      Authorization: `Token ${token}`,
-    },
-  }
-);
+      Modal.setAppElement("#root");
+    } catch {}
+  }, []);
 
-      if (onShared) onShared({ server: res.data, taskId, description }); // callback opcional
+  useEffect(() => {
+    if (isOpen) {
+      setErrorMsg("");
+      setLoading(false);
+    } else {
       setDescription("");
-      onClose();
+      setErrorMsg("");
+      setLoading(false);
+    }
+  }, [isOpen]);
+
+  const handleShare = async (e) => {
+    e?.preventDefault?.();
+
+    if (!taskId) {
+      setErrorMsg("No se pudo compartir: taskId vacío.");
+      return;
+    }
+
+    setLoading(true);
+    setErrorMsg("");
+
+    try {
+      const token = getToken();
+
+      const res = await axios.post(
+        `${API_BASE}/api/shared-tasks/`,
+        { task_id: taskId, description },
+        {
+          headers: token ? { Authorization: `Token ${token}` } : {},
+        }
+      );
+
+      onShared?.({ server: res.data, taskId, description });
+      setDescription("");
+      onClose?.();
     } catch (error) {
       console.error("Error al compartir:", error);
+      setErrorMsg("Error al compartir. Intenta de nuevo.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
-      <div className="bg-white p-6 rounded-2xl shadow-lg w-96">
-        <h2 className="text-xl font-semibold mb-4">Compartir tarea</h2>
+    <Modal
+      isOpen={!!isOpen}
+      onRequestClose={() => {
+        if (!loading) onClose?.();
+      }}
+      shouldCloseOnOverlayClick={!loading}
+      shouldCloseOnEsc={!loading}
+      contentLabel="Compartir tarea"
+      overlayClassName="sharedtask-overlay"
+      className="sharedtask-modal"
+    >
+      <form onSubmit={handleShare}>
+        <div className="sharedtask-header">
+          <h2 className="sharedtask-title">Compartir tarea</h2>
+
+          <button
+            type="button"
+            className="sharedtask-close"
+            onClick={onClose}
+            disabled={loading}
+            aria-label="Cerrar"
+            title="Cerrar"
+          >
+            ×
+          </button>
+        </div>
 
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           placeholder="Escribe un comentario..."
-          className="w-full p-2 border rounded-lg mb-4"
+          className="sharedtask-textarea"
           rows={3}
+          disabled={loading}
         />
 
-        <div className="flex justify-end gap-2">
+        {errorMsg ? <div className="sharedtask-error">{errorMsg}</div> : null}
+
+        <div className="sharedtask-actions">
           <button
+            type="button"
             onClick={onClose}
-            className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
+            className="sharedtask-btn sharedtask-btn--cancel"
             disabled={loading}
           >
             Cancelar
           </button>
+
           <button
-            onClick={handleShare}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            type="submit"
+            className="sharedtask-btn sharedtask-btn--primary"
             disabled={loading}
           >
             {loading ? "Compartiendo..." : "Compartir"}
           </button>
         </div>
-      </div>
-    </div>
+      </form>
+    </Modal>
   );
 };
 
