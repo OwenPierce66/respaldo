@@ -405,6 +405,11 @@
       display: flex;
       margin-top: -21px;
     }
+//     .hole{
+//       .iconsPch{
+// margin-top: 0px;
+//       }
+//     }
 
     .menuPCH {
       margin-right: -5px;
@@ -1349,20 +1354,20 @@
     }
   }
 
-  ul {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-  }
+  // ul {
+  //   list-style: none;
+  //   margin: 0;
+  //   padding: 0;
+  // }
 
-  li {
-    padding: 5px 10px;
-    cursor: pointer;
+  // li {
+  //   padding: 5px 10px;
+  //   cursor: pointer;
 
-    &:hover {
-      background-color: #eee;
-    }
-  }
+  //   &:hover {
+  //     background-color: #eee;
+  //   }
+  // }
 
   .contenedor-consejo,
   .contenedor-factor,
@@ -1483,6 +1488,20 @@
     overflow: hidden;
     border-radius: 50px;
   }
+  /* SOLO category-menu */
+.category-menu ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.category-menu li {
+  padding: 5px 10px;
+  cursor: pointer;
+
+  &:hover { background-color: #eee; }
+}
+
 
   .horizontal-scroll {
     overflow-x: auto;
@@ -1532,24 +1551,20 @@
     margin-bottom: -1px;
   }
 
-  ul {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: inline-block;
-    /* Alinea los elementos de la lista en una fila */
-  }
+  // ul {
+  //   list-style: none;
+  //   margin: 0;
+  //   padding: 0;
+  //   display: inline-block;
+  // }
 
-  li {
-    padding: 5px 10px;
-    cursor: pointer;
-    display: inline-block;
-
-    /* Alinea los elementos de la lista en una fila */
-    &:hover {
-      background-color: #eee;
-    }
-  }
+  // li {
+  //   padding: 5px 10px;
+  //   cursor: pointer;
+  //   &:hover {
+  //     background-color: #eee;
+  //   }
+  // }
 
   .commentsSection {
     max-height: 400px;
@@ -1608,31 +1623,34 @@
 
 
 
-  .user-info {
-    display: grid;
-    grid-template-columns: auto 1fr auto;
-    align-items: center;
-    column-gap: 10px;
-    padding: 5px 10px;
-    border-bottom: 1px solid #f1f1f1;
-    margin-bottom: 15px;
-  }
+.user-info {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto; /* avatar | nombre | likes */
+  grid-template-areas:
+    "avatar name likes"
+    "avatar name2 likes";
+  align-items: center;
+  column-gap: 12px;
+  row-gap: 4px;
+  padding: 8px 10px;
+  border-bottom: 1px solid #f1f1f1;
+}
 
-  .LikeHeart {
-    display: grid;
-    grid-template-columns: auto auto;
-    /* Dos columnas para el contador y el ícono */
-    align-items: center;
-    /* Alinea verticalmente */
-    gap: 5px;
-    /* Espacio entre los elementos */
-  }
+.LikeHeart {
+  grid-area: likes;
+  margin-left: 0;          /* ya no necesitas auto aquí */
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-self: end;       /* ✅ ancla a la derecha */
+  white-space: nowrap;     /* ✅ que no se rompa */
+}
 
-  .user-image-container {
-    display: flex;
-    align-items: center;
-    margin-right: 10px;
-  }
+
+.user-image-container {
+  grid-area: avatar;
+}
 
   .user-circle-image {
     width: 40px;
@@ -1651,16 +1669,41 @@
     background-color: #e0e0e0;
   }
 
-  .user-details {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-  }
 
-  .username-info {
-    font-weight: bold;
-    color: #333;
-  }
+.user-details {
+  grid-area: name;
+  min-width: 0;
+}
+
+.username-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;         /* ✅ el badge baja con el nombre si es necesario */
+  min-width: 0;
+  font-size: 18px;         /* ✅ deja de ser 3em */
+  line-height: 1.15;
+  word-break: break-word;
+}
+
+.username-info .tier-badge {
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid #ccc;
+  white-space: nowrap;
+}
+.username-info .username-text {
+  min-width: 0;
+}
+.ReactModal__Content ul {
+  display: block;
+  width: 100%;
+}
+.ReactModal__Content li {
+  width: 100%;
+}
+
 
   .likes-count-info {
     color: #666;

@@ -26,6 +26,9 @@ import {
   faEllipsis, // ✅ 3 puntos horizontal
   faFilter, // ✅ ICONO FILTRO
 } from "@fortawesome/free-solid-svg-icons";
+import "../owenscss/usersRowModal.scss";
+import UserRow from "./UserRow";
+import TierTabs from "./TierTabs";
 
 // MUI v5
 import Button from "@mui/material/Button";
@@ -39,8 +42,20 @@ import "../owenscss/ReelsPCH.scss";
 import TaskFilterMenu from "./Filtro";
 import CategoriesMenu from "./cetegorymenu";
 import TextoConVerMas from "./TextoConVerMas"; // ✅
+import { API_BASE, cleanVal, toSrc } from "./utils/media";
+import {
+  tierTabs,
+  getTierKey,
+  getTierMeta,
+  normalizeUsersResponse,
+  getUserAvatarSrc,
+} from "./utils/users";
 
-const API_BASE = "http://127.0.0.1:8000";
+// ====== TIER / JERARQUÍA (igual que Peticiones) ======
+const APP_USER_ID = 1;        // owen
+const APP_USERNAME = "owen";
+const SUB_PLUS_THRESHOLD = 8; // “mayor a lo establecido”
+
 
 const getAuthHeaders = () => {
   const token =
@@ -52,67 +67,8 @@ const getAuthHeaders = () => {
   return { Authorization: `Token ${token}` };
 };
 
-const cleanVal = (v) => {
-  if (!v) return null;
-  const s = String(v).trim();
-  if (s === "" || s === "No image available" || s === "undefined" || s === "null") return null;
-  return s;
-};
 
-const toSrc = (path) => {
-  const p = cleanVal(path);
-  if (!p) return "";
-  if (/^https?:\/\//i.test(p) || p.startsWith("blob:") || p.startsWith("data:")) return p;
-  try {
-    return new URL(p.startsWith("/") ? p : `/${p}`, API_BASE).href;
-  } catch {
-    return p;
-  }
-};
 
-const isObj = (v) => v && typeof v === "object" && !Array.isArray(v);
-
-const normalizeUsersResponse = (data) => {
-  let arr = Array.isArray(data)
-    ? data
-    : Array.isArray(data?.results)
-    ? data.results
-    : Array.isArray(data?.users)
-    ? data.users
-    : [];
-
-  arr = arr.filter(isObj);
-
-  return arr.map((u) => ({
-    id: u?.id ?? u?.user?.id ?? u?.pk ?? u?.user_id ?? null,
-    username: u?.username ?? u?.user?.username ?? "",
-    likes_count: u?.likes_count ?? 0,
-    _orig: u,
-  }));
-};
-
-const getUserAvatarSrc = (raw) => {
-  const u = raw?._orig ?? raw;
-
-  const candidates = [
-    u?.user_image,
-    u?.user_image_url,
-    u?.image,
-    u?.avatar,
-    u?.avatar_url,
-    u?.profile_image,
-    u?.photo,
-    u?.picture,
-    u?.user?.user_image,
-    u?.user?.image,
-    u?.user?.avatar,
-    u?.profile?.image,
-    u?.profile?.avatar,
-  ];
-
-  const found = candidates.map(cleanVal).find(Boolean);
-  return found ? toSrc(found) : null;
-};
 
 // ✅ Avatar del que compartió (último que compartió)
 const getSharedByAvatarSrc = (t) => {
@@ -595,18 +551,66 @@ const ReelsPCH = () => {
   // ✅ Estado: "selección" del bloque shared-byName por reel
 const [sharedOpenById, setSharedOpenById] = useState({}); // { [taskId]: true/false }
 
+
+const pauseAndSelect = useCallback((taskId, idx) => {
+  const v = videoRefs.current[idx];
+  if (v) v.pause?.();
+  setSelectedReelId(taskId);
+  setFilterOpen(false);
+  setPlayerState((p) => ({
+    ...p,
+    id: taskId,
+    current: v?.currentTime || 0,
+    duration: v?.duration || 0,
+    paused: true,
+  }));
+}, []);
+
+const [likesModalFilter, setLikesModalFilter] = useState("all");
+const [sharedModalFilter, setSharedModalFilter] = useState("all");
+
+const likesCounts = useMemo(() => {
+  const counts = { all: (listUsers || []).length, verified:0, sub_green:0, sub_red:0, recommended:0, app:0, regular:0 };
+  (listUsers || []).forEach((u) => {
+    const k = getTierKey(u);
+    counts[k] = (counts[k] || 0) + 1;
+  });
+  return counts;
+}, [listUsers]);
+
+const sharedCounts = useMemo(() => {
+  const counts = { all: (sharedUsers || []).length, verified:0, sub_green:0, sub_red:0, recommended:0, app:0, regular:0 };
+  (sharedUsers || []).forEach((u) => {
+    const k = getTierKey(u);
+    counts[k] = (counts[k] || 0) + 1;
+  });
+  return counts;
+}, [sharedUsers]);
+
+const listUsersFiltered = useMemo(() => {
+  const arr = Array.isArray(listUsers) ? listUsers : [];
+  if (likesModalFilter === "all") return arr;
+  return arr.filter((u) => getTierKey(u) === likesModalFilter);
+}, [listUsers, likesModalFilter]);
+
+const sharedUsersFiltered = useMemo(() => {
+  const arr = Array.isArray(sharedUsers) ? sharedUsers : [];
+  if (sharedModalFilter === "all") return arr;
+  return arr.filter((u) => getTierKey(u) === sharedModalFilter);
+}, [sharedUsers, sharedModalFilter]);
+
+
+
 const toggleSharedByIndicator = useCallback(
   (taskId, idx) => {
     if (!taskId) return;
 
-    // Si NO está seleccionado el reel, lo seleccionamos y dejamos abierto el indicador
     if (String(selectedReelId) !== String(taskId)) {
-      pauseAndSelect(taskId, idx); // esto pausa/selecciona tu reel como ya lo haces
+      pauseAndSelect(taskId, idx);
       setSharedOpenById((prev) => ({ ...(prev || {}), [taskId]: true }));
       return;
     }
 
-    // Si ya está seleccionado el reel, SOLO togglear la “selección” del indicador
     setSharedOpenById((prev) => ({
       ...(prev || {}),
       [taskId]: !prev?.[taskId],
@@ -614,6 +618,7 @@ const toggleSharedByIndicator = useCallback(
   },
   [selectedReelId, pauseAndSelect]
 );
+
 
 
   const [playerState, setPlayerState] = useState({
@@ -644,19 +649,19 @@ const toggleSharedByIndicator = useCallback(
     return `${m}:${String(r).padStart(2, "0")}`;
   };
 
-  const pauseAndSelect = useCallback((taskId, idx) => {
-    const v = videoRefs.current[idx];
-    if (v) v.pause?.();
-    setSelectedReelId(taskId);
-    setFilterOpen(false);
-    setPlayerState((p) => ({
-      ...p,
-      id: taskId,
-      current: v?.currentTime || 0,
-      duration: v?.duration || 0,
-      paused: true,
-    }));
-  }, []);
+  // const pauseAndSelect = useCallback((taskId, idx) => {
+  //   const v = videoRefs.current[idx];
+  //   if (v) v.pause?.();
+  //   setSelectedReelId(taskId);
+  //   setFilterOpen(false);
+  //   setPlayerState((p) => ({
+  //     ...p,
+  //     id: taskId,
+  //     current: v?.currentTime || 0,
+  //     duration: v?.duration || 0,
+  //     paused: true,
+  //   }));
+  // }, []);
 
   const closeSelected = useCallback(
     (idx) => {
@@ -722,21 +727,22 @@ const toggleSharedByIndicator = useCallback(
     } catch {}
   }, []);
 
-  const navigateToUserMesseges = useCallback(
-    (userId) => {
-      if (!userId) return;
-      navigate(`/dashboard/usermesseges/${userId}`);
-    },
-    [navigate]
-  );
+const navigateToUserMesseges = useCallback(
+  (userId) => {
+    if (!userId) return;
+    navigate(`/dashboard/direcmassaging/user-${userId}`);
+  },
+  [navigate]
+);
 
-  const navigateToUserForum = useCallback(
-    (userId) => {
-      if (!userId) return;
-      navigate(`/dashboard/userforum/${userId}`);
-    },
-    [navigate]
-  );
+const navigateToUserForum = useCallback(
+  (userId) => {
+    if (!userId) return;
+    navigate(`/dashboard/newcommunity/${userId}`);
+  },
+  [navigate]
+);
+
 
   // =========================
   // ✅ FAVORITOS (perfiles)
@@ -1094,42 +1100,40 @@ const toggleSharedByIndicator = useCallback(
     setIsShareModalOpen(true);
   };
 
-  const openLikesModal = async (taskId) => {
-    try {
-      const { data } = await axios.get(`${API_BASE}/api/tasks/${taskId}/users_who_liked/`, {
-        headers: getAuthHeaders(),
-      });
-      setListUsers(normalizeUsersResponse(data));
-      setIsLikesModalOpen(true);
-    } catch (err) {
-      console.error("openLikesModal error:", err);
-      setListUsers([]);
-      setIsLikesModalOpen(true);
-    }
-  };
+const openLikesModal = async (taskId) => {
+  try {
+    const { data } = await axios.get(`${API_BASE}/api/tasks/${taskId}/users_who_liked/`, {
+      headers: getAuthHeaders(),
+    });
+    setLikesModalFilter("all");
+    setListUsers(normalizeUsersResponse(data));
+    setIsLikesModalOpen(true);
+  } catch (err) {
+    console.error("openLikesModal error:", err);
+    setLikesModalFilter("all");
+    setListUsers([]);
+    setIsLikesModalOpen(true);
+  }
+};
 
-  const openSharedUsersModal = async (taskId) => {
-    try {
-      const { data } = await axios.get(`${API_BASE}/api/tasks/${taskId}/shared-users/`, {
-        headers: getAuthHeaders(),
-      });
+const openSharedUsersModal = async (taskId) => {
+  try {
+    const { data } = await axios.get(`${API_BASE}/api/tasks/${taskId}/shared-users/`, {
+      headers: getAuthHeaders(),
+    });
 
-      const arr = Array.isArray(data)
-        ? data
-        : Array.isArray(data?.results)
-        ? data.results
-        : Array.isArray(data?.users)
-        ? data.users
-        : [];
+    setSharedModalFilter("all");
+    setSharedUsers(normalizeUsersResponse(data));
+    setIsSharedUsersModalOpen(true);
+  } catch (err) {
+    console.error("openSharedUsersModal error:", err);
+    setSharedModalFilter("all");
+    setSharedUsers([]);
+    setIsSharedUsersModalOpen(true);
+  }
+};
 
-      setSharedUsers(arr);
-      setIsSharedUsersModalOpen(true);
-    } catch (err) {
-      console.error("openSharedUsersModal error:", err);
-      setSharedUsers([]);
-      setIsSharedUsersModalOpen(true);
-    }
-  };
+
 
   const toggleTaskLike = async (task) => {
     const url = `${API_BASE}/api/tasks/${task.id}/`;
@@ -1616,7 +1620,7 @@ const sharedByAvatar = getSharedByAvatarSrc(t);
 
             const perfilId = getTaskUserId(t);
             const isFav = perfilId ? !!favUsers[perfilId] : false;
-            const flashing = perfilId ? !!favFlash[perfilId] : false;
+            // const flashing = perfilId ? !!favFlash[perfilId] : false;
 
             const ownerUserId = t?.user?.id ?? t?.user_id ?? t?.user ?? null;
 
@@ -2064,99 +2068,57 @@ const sharedByAvatar = getSharedByAvatarSrc(t);
                       </div>
                     </div>
 
-                    {isSelected && (
-                      <div className="reel-player" onClick={(e) => e.stopPropagation()}>
-                        <button
-                          className="reel-player-btn"
-                          type="button"
-                          onClick={() => {
-                            const v = videoRefs.current[idx];
-                            if (!v) return;
-                            if (v.paused) {
-                              v.muted = muted;
-                              v.play?.().catch(() => {});
-                            } else {
-                              v.pause?.();
-                            }
-                          }}
-                          title={playerState.paused ? "Reproducir" : "Pausar"}
-                        >
-                          <FontAwesomeIcon icon={playerState.paused ? faPlay : faPause} />
-                        </button>
+                   {isSelected && (
+  <div className="reel-player" onClick={(e) => e.stopPropagation()}>
+    <div className="reel-player-timebar">
+      {formatTime(playerState.current)} / {formatTime(playerState.duration)}
+    </div>
 
-                        <input
-                          className="reel-player-range"
-                          type="range"
-                          min="0"
-                          max={Math.max(1, playerState.duration || 0)}
-                          step="0.1"
-                          value={Math.min(playerState.current || 0, playerState.duration || 0)}
-                          onChange={(e) => {
-                            const v = videoRefs.current[idx];
-                            if (!v) return;
-                            v.currentTime = Number(e.target.value || 0);
-                          }}
-                        />
+    <div className="reel-player-controls">
+      <button
+        className="reel-player-btn"
+        type="button"
+        onClick={() => {
+          const v = videoRefs.current[idx];
+          if (!v) return;
+          if (v.paused) {
+            v.muted = muted;
+            v.play?.().catch(() => {});
+          } else {
+            v.pause?.();
+          }
+        }}
+        title={playerState.paused ? "Reproducir" : "Pausar"}
+      >
+        <FontAwesomeIcon icon={playerState.paused ? faPlay : faPause} />
+      </button>
 
-                        <div className="reel-player" onClick={(e) => e.stopPropagation()}>
-                          <div className="reel-player-timebar">
-                            {formatTime(playerState.current)} / {formatTime(playerState.duration)}
-                          </div>
+      <input
+        className="reel-player-range"
+        type="range"
+        min="0"
+        max={Math.max(1, playerState.duration || 0)}
+        step="0.1"
+        value={Math.min(playerState.current || 0, playerState.duration || 0)}
+        onChange={(e) => {
+          const v = videoRefs.current[idx];
+          if (!v) return;
+          v.currentTime = Number(e.target.value || 0);
+        }}
+      />
 
-                          <div className="reel-player-controls">
-                            <button
-                              className="reel-player-btn"
-                              type="button"
-                              onClick={() => {
-                                const v = videoRefs.current[idx];
-                                if (!v) return;
-                                if (v.paused) {
-                                  v.muted = muted;
-                                  v.play?.().catch(() => {});
-                                } else {
-                                  v.pause?.();
-                                }
-                              }}
-                              title={playerState.paused ? "Reproducir" : "Pausar"}
-                            >
-                              <FontAwesomeIcon icon={playerState.paused ? faPlay : faPause} />
-                            </button>
+      <button
+        className="reel-player-close"
+        type="button"
+        onClick={() => closeSelected(idx)}
+        title="Cerrar reproductor"
+      >
+        <FontAwesomeIcon icon={faXmark} />
+      </button>
+    </div>
+  </div>
+)}
 
-                            <input
-                              className="reel-player-range"
-                              type="range"
-                              min="0"
-                              max={Math.max(1, playerState.duration || 0)}
-                              step="0.1"
-                              value={Math.min(playerState.current || 0, playerState.duration || 0)}
-                              onChange={(e) => {
-                                const v = videoRefs.current[idx];
-                                if (!v) return;
-                                v.currentTime = Number(e.target.value || 0);
-                              }}
-                            />
-
-                            <button
-                              className="reel-player-close"
-                              type="button"
-                              onClick={() => closeSelected(idx)}
-                              title="Cerrar reproductor"
-                            >
-                              <FontAwesomeIcon icon={faXmark} />
-                            </button>
-                          </div>
-                        </div>
-
-                        <button
-                          className="reel-player-close"
-                          type="button"
-                          onClick={() => closeSelected(idx)}
-                          title="Cerrar reproductor"
-                        >
-                          <FontAwesomeIcon icon={faXmark} />
-                        </button>
-                      </div>
-                    )}
 
                     {idx > 0 && (
                       <button
@@ -2180,132 +2142,84 @@ const sharedByAvatar = getSharedByAvatarSrc(t);
         </div>
       )}
 
-      {/* Modal: usuarios que dieron like */}
-      <Modal
-        isOpen={isLikesModalOpen}
-        onRequestClose={() => setIsLikesModalOpen(false)}
-        contentLabel="Usuarios que dieron like"
-      >
-        <h2>Usuarios que dieron Like</h2>
-        <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-          {(listUsers || []).map((u, i) => {
-            const avatar = getUserAvatarSrc(u);
-            return (
-              <li
-                key={`like-${u.id ?? u.username}-${i}`}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 12,
-                  marginBottom: 12,
-                }}
-              >
-                <div
-                  style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: "50%",
-                    overflow: "hidden",
-                  }}
-                >
-                  {avatar ? (
-                    <img
-                      src={avatar}
-                      alt={u.username}
-                      style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                      onError={(e) => {
-                        e.currentTarget.onerror = null;
-                        e.currentTarget.src = "/placeholder.png";
-                      }}
-                    />
-                  ) : (
-                    <div
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        display: "grid",
-                        placeItems: "center",
-                      }}
-                    >
-                      <FontAwesomeIcon icon={faUser} />
-                    </div>
-                  )}
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 600 }}>{u.username}</div>
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <div>{u.likes_count ?? 0}</div>
-                  <FontAwesomeIcon icon={faHeart} />
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-        <button onClick={() => setIsLikesModalOpen(false)}>Cerrar</button>
-      </Modal>
+<Modal
+  isOpen={isLikesModalOpen}
+  onRequestClose={() => setIsLikesModalOpen(false)}
+  contentLabel="Usuarios que dieron like"
+  className="users-modal"
+  overlayClassName="users-modal-overlay"
+>
+  <TierTabs
+    tabs={tierTabs}
+    counts={likesCounts}
+    activeKey={likesModalFilter}
+    onChange={setLikesModalFilter}
+  />
 
-      {/* Modal: usuarios que compartieron */}
-      <Modal
-        isOpen={isSharedUsersModalOpen}
-        onRequestClose={() => setIsSharedUsersModalOpen(false)}
-        contentLabel="Usuarios que compartieron"
-      >
-        <h2>Usuarios que compartieron</h2>
-        <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-          {(sharedUsers || []).map((u, i) => {
-            const avatar = getUserAvatarSrc(u);
-            const username = u?.username ?? u?.user?.username ?? "";
-            return (
-              <li
-                key={`shared-${u.id ?? username}-${i}`}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 12,
-                  marginBottom: 12,
-                }}
-              >
-                <div
-                  style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: "50%",
-                    overflow: "hidden",
-                  }}
-                >
-                  {avatar ? (
-                    <img
-                      src={avatar}
-                      alt={username}
-                      style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                      onError={(e) => {
-                        e.currentTarget.onerror = null;
-                        e.currentTarget.src = "/placeholder.png";
-                      }}
-                    />
-                  ) : (
-                    <div
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        display: "grid",
-                        placeItems: "center",
-                      }}
-                    >
-                      <FontAwesomeIcon icon={faUser} />
-                    </div>
-                  )}
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 600 }}>{username}</div>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-        <button onClick={() => setIsSharedUsersModalOpen(false)}>Cerrar</button>
-      </Modal>
+  <ul className="users-modal__list">
+    {(listUsersFiltered || []).map((u, i) => {
+      const meta = getTierMeta(u);
+      const avatar = getUserAvatarSrc(u);
+      const badge = meta.key !== "regular" ? meta.label : null;
+
+      return (
+        <UserRow
+          key={`like-${u.id ?? u.username}-${i}`}
+          avatarSrc={avatar}
+          username={u.username}
+          badgeLabel={badge}
+          right={
+            <>
+              <span className="user-row__count">{u.likes_count ?? 0}</span>
+              <FontAwesomeIcon icon={faHeart} style={{ color: meta.color }} />
+            </>
+          }
+        />
+      );
+    })}
+  </ul>
+</Modal>
+
+
+
+<Modal
+  isOpen={isSharedUsersModalOpen}
+  onRequestClose={() => setIsSharedUsersModalOpen(false)}
+  contentLabel="Usuarios que compartieron"
+  className="users-modal"
+  overlayClassName="users-modal-overlay"
+>
+  <TierTabs
+    tabs={tierTabs}
+    counts={sharedCounts}
+    activeKey={sharedModalFilter}
+    onChange={setSharedModalFilter}
+  />
+
+  <ul className="users-modal__list">
+    {(sharedUsersFiltered || []).map((u, i) => {
+      const meta = getTierMeta(u);
+      const avatar = getUserAvatarSrc(u);
+      const badge = meta.key !== "regular" ? meta.label : null;
+
+      return (
+        <UserRow
+          key={`shared-${u.id ?? u.username}-${i}`}
+          avatarSrc={avatar}
+          username={u.username}
+          badgeLabel={badge}
+          right={<FontAwesomeIcon icon={faArrowRight} style={{ color: meta.color }} />}
+        />
+      );
+    })}
+  </ul>
+
+  <button type="button" onClick={() => setIsSharedUsersModalOpen(false)}>
+    Cerrar
+  </button>
+</Modal>
+
+
 
       {/* SharedTaskModal */}
       <SharedTaskModal

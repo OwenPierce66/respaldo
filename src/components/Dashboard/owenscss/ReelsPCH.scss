@@ -345,8 +345,6 @@ pointer-events: none;
 .reel-mode-indicator {
   font-size: 12px;
   opacity: 0.92;
-  // background: rgba(0, 0, 0, 0.35);
-  // border: 1px solid rgba(255,255,255,0.12);
   width: fit-content;
   padding: 4px 10px;
   border-radius: 999px;
@@ -383,11 +381,11 @@ pointer-events: none;
   touch-action: pan-y;
 }
 
-.reel-mode-indicator.shared-byName {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
+// .reel-mode-indicator.shared-byName {
+//   display: inline-flex;
+//   align-items: center;
+//   gap: 6px;
+// }
 
 .reel-userline {
   display: flex;
@@ -680,11 +678,11 @@ pointer-events: none;
     top: 119px !important;
     left: 69px !important;
 }
-.reel-mode-indicator.shared-byName {
-  display: inline-flex;
-  flex-direction: column;
-  gap: 4px;
-}
+// .reel-mode-indicator.shared-byName {
+//   display: inline-flex;
+//   flex-direction: column;
+//   gap: 4px;
+// }
 
 .shared-byName-text {
   font-weight: 700;
@@ -697,11 +695,11 @@ pointer-events: none;
   max-width: min(78vw, 420px);
   word-break: break-word;
 }
-.reel-mode-indicator.shared-byName {
-  display: inline-flex;
-  flex-direction: column;
-  gap: 4px;
-}
+// .reel-mode-indicator.shared-byName {
+//   display: inline-flex;
+//   flex-direction: column;
+//   gap: 4px;
+// }
 
 .shared-byName-text {
   font-weight: 700;
