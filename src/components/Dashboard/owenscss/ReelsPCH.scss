@@ -398,7 +398,6 @@ pointer-events: none;
   border: 0;
   padding: 0;
   cursor: pointer;
-  margin-bottom: 16px;
 }
 
 .reel-avatar {
@@ -447,6 +446,7 @@ pointer-events: none;
   border-radius: 50%;
   border: 1px solid rgba(255,255,255,0.25);
   overflow: visible;
+  bottom: 16px;
 }
 
 .reel-avatar-inner {
@@ -844,4 +844,86 @@ display: inline-flex;
 .shared-by-title{
       display: flex;
     justify-content: center;
+}
+
+.reel-profile-btn {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  // gap: 16px;
+}
+
+.reel-profile-likecount {
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0,0,0,.65);
+}
+.reel-profile-btn {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  // gap: 16px;
+}
+
+.reel-profile-favbtn {
+  position: absolute;
+  right: 13px;
+  top: 39px;;
+  bottom: -6px;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(0,0,0,0.45);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.reel-profile-likecount {
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0,0,0,.65);
+  margin-bottom: 5px;
+}
+
+.reel-profile-likedigits {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.reel-action-iconbtn {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+
+.reel-action-digits {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.reel-action-digit {
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1;
 }

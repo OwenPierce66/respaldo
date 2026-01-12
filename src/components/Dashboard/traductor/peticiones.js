@@ -80,7 +80,7 @@ const [searchInput, setSearchInput] = useState('');
   const [hashtags, setHashtags] = useState("");
   const [filtro, setFiltro] = useState("popularidad");
   const [mostrarBuscar, setMostrarBuscar] = useState(false);
-
+const [perfilLikesModalFilter, setPerfilLikesModalFilter] = useState("all");
   // Usuario y perfiles
   const [usuario, setUsuario] = useState(null);
   // ✅ Admin: superuser/staff (robusto para tus 2 formas de user: usuario.user y redux user)
@@ -1063,19 +1063,25 @@ const handleClose = (taskId) => {
 
   // const closeModal = () => setModalIsOpen(false);
 
-  const obtenerLikes = async (userId) => {
-    try {
-      const res = await axios.get(`http://127.0.0.1:8000/api/profiles/${userId}/likes/`, {
-        headers: {
-          Authorization: `Token ${localStorage.getItem("userTokenLG")}`,
-        },
-      });
-      setLikes(res.data);
-      setIsLikesModalOpen(true);
-    } catch (error) {
-      console.error(error);
-    }
-  };
+const obtenerLikes = async (userId) => {
+  try {
+    const res = await axios.get(`${API_BASE}/api/profiles/${userId}/likes/`, {
+      headers: { Authorization: `Token ${localStorage.getItem("userTokenLG")}` },
+    });
+
+    const normalized = normalizeUsersResponse(res.data);
+    setLikes(normalized);
+
+    setPerfilLikesModalFilter("all"); // ✅ resetea tabs
+    setIsLikesModalOpen(true);
+  } catch (error) {
+    console.error(error);
+    setLikes([]);
+    setPerfilLikesModalFilter("all");
+    setIsLikesModalOpen(true);
+  }
+};
+
 
   // ---------- file change handlers for factores / fuentes ----------
   const handlePostFileChangeFuente = (index, e) => {
@@ -1219,6 +1225,32 @@ const temaMatch = task.pch === tema;
   });
 }, [feedWithLike, selectedCategory, combinedSearchTerm, peticionajena, tema]);
 
+
+// ✅ COUNTS del modal de likes de PERFIL
+const perfilLikesCounts = useMemo(() => {
+  const counts = (tierTabs || []).reduce((acc, t) => {
+    acc[t.key] = 0;
+    return acc;
+  }, {});
+
+  const arr = Array.isArray(likes) ? likes : [];
+  counts.all = arr.length;
+
+  arr.forEach((u) => {
+    const k = getTierKey(u);
+    if (!k || k === "all") return;
+    counts[k] = (counts[k] || 0) + 1;
+  });
+
+  return counts;
+}, [likes]);
+
+// ✅ LISTA filtrada del modal de likes de PERFIL
+const perfilLikesFiltered = useMemo(() => {
+  const arr = Array.isArray(likes) ? likes : [];
+  if (perfilLikesModalFilter === "all") return arr;
+  return arr.filter((u) => getTierKey(u) === perfilLikesModalFilter);
+}, [likes, perfilLikesModalFilter]);
 
   // ---------- portadas / imagen fija fetch ----------
   const fetchPortadas = async () => {
@@ -1696,72 +1728,86 @@ return (
 
             <div>
               <Modal
-                isOpen={isLikesModalOpen}
-                onRequestClose={() => setIsLikesModalOpen(false)}
-                contentLabel="Lista de Likes"
-                shouldCloseOnOverlayClick={true}
-                shouldCloseOnEsc={true}
-              >
-                <h2>Usuarios que dieron Like</h2>
+  isOpen={isLikesModalOpen}
+  onRequestClose={() => setIsLikesModalOpen(false)}
+  contentLabel="Lista de Likes"
+  shouldCloseOnOverlayClick={true}
+  shouldCloseOnEsc={true}
+  className="users-modal"
+  overlayClassName="users-modal-overlay"
+>
+  <h2>Usuarios que dieron Like</h2>
 
-                <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-                  {(likes || []).map((u, i) => {
-                    const meta = getTierMeta(u);
-                    const avatar = getUserAvatarSrc(u);
+  {/* ✅ Tabs por categoría/tier */}
+  <TierTabs
+    tabs={tierTabs}
+    counts={perfilLikesCounts}
+    activeKey={perfilLikesModalFilter}
+    onChange={setPerfilLikesModalFilter}
+  />
 
-                    return (
-                      <li
-                        key={`like-${u.id ?? u.user?.id ?? u.username}-${i}`}
-                        className="user-info-container"
-                        style={{ marginBottom: 12 }}
-                      >
-                        <div className="user-info" style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 12,
-                          width: "100% !important",
-                        }}>
-                          <div className="user-image-container">
-                            {avatar ? (
-                              <img
-                                src={avatar}
-                                alt={u.username || 'usuario'}
-                                className="user-circle-image"
-                                style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover' }}
-                                onError={onAvatarError}
-                              />
-                            ) : (
-                              <div className="user-icon-placeholder">
-                                <FontAwesomeIcon icon={faUser} style={{ color: "grey", cursor: "default" }} />
-                              </div>
-                            )}
-                          </div>
+  <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+    {(perfilLikesFiltered || []).map((u, i) => {
+      const meta = getTierMeta(u);
+      const avatar = getUserAvatarSrc(u);
 
-                          <div className="user-details" style={{ flex: 1, minWidth: 0 }}>
-                            <div className="username-info">{u.username}</div>
-                          </div>
+      return (
+        <li
+          key={`like-${u.id ?? u.user?.id ?? u.username}-${i}`}
+          className="user-info-container"
+          style={{ marginBottom: 12 }}
+        >
+          <div
+            className="user-info"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              width: "100%",
+            }}
+          >
+            <div className="user-image-container">
+              {avatar ? (
+                <img
+                  src={avatar}
+                  alt={u.username || "usuario"}
+                  className="user-circle-image"
+                  style={{ width: 40, height: 40, borderRadius: "50%", objectFit: "cover" }}
+                  onError={onAvatarError}
+                />
+              ) : (
+                <div className="user-icon-placeholder">
+                  <FontAwesomeIcon icon={faUser} style={{ color: "grey", cursor: "default" }} />
+                </div>
+              )}
+            </div>
 
-                          <div className="LikeHeart" style={{
-                            marginLeft: "auto",
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 8,
-                            flex: "0 0 auto",
-                          }}>
-                            <div className="likes-count-info">{u.likes_count ?? 0}</div>
-                            <FontAwesomeIcon
-                              icon={faHeart}
-                              style={{ color: meta.color }}
-                            />
-                          </div>
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
+            <div className="user-details" style={{ flex: 1, minWidth: 0 }}>
+              <div className="username-info">{u.username}</div>
+            </div>
 
-                <button onClick={() => setIsLikesModalOpen(false)}>Cerrar</button>
-              </Modal>
+            <div
+              className="LikeHeart"
+              style={{
+                marginLeft: "auto",
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                flex: "0 0 auto",
+              }}
+            >
+              <div className="likes-count-info">{u.likes_count ?? 0}</div>
+              <FontAwesomeIcon icon={faHeart} style={{ color: meta.color }} />
+            </div>
+          </div>
+        </li>
+      );
+    })}
+  </ul>
+
+  <button onClick={() => setIsLikesModalOpen(false)}>Cerrar</button>
+</Modal>
+
             </div>
 
             <div className="tema-buttons">
@@ -2427,9 +2473,9 @@ return (
                             </div>
                           </div>
 
-                          {videoPath && (
+                          {/* {videoPath && (
                             <video controls preload="metadata" className="testimonial-video" src={toSrc(videoPath)} />
-                          )}
+                          )} */}
 
                           {/* Subtasks */}
                           {visibleSections[link.id] === 'subtasks' && (

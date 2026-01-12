@@ -57,15 +57,6 @@ const APP_USERNAME = "owen";
 const SUB_PLUS_THRESHOLD = 8; // “mayor a lo establecido”
 
 
-const getAuthHeaders = () => {
-  const token =
-    localStorage.getItem("userTokenLG") ||
-    localStorage.getItem("token") ||
-    localStorage.getItem("authToken");
-
-  if (!token) return {};
-  return { Authorization: `Token ${token}` };
-};
 
 
 
@@ -408,12 +399,187 @@ const normalizeTema = (v) => {
 const getTaskUserId = (t) =>
   t?.user?.id ?? t?.user_id ?? t?.userId ?? t?.profile?.id ?? t?.profile_id ?? t?.user ?? null;
 
+function getAuthHeaders() {
+  const token =
+    localStorage.getItem("userTokenLG") ||
+    localStorage.getItem("token") ||
+    localStorage.getItem("authToken");
+
+  if (!token) return {};
+  return { Authorization: `Token ${token}` };
+}
+
+const makeTierCounts = (usersArr) => {
+  const counts = (tierTabs || []).reduce((acc, t) => {
+    acc[t.key] = 0;
+    return acc;
+  }, {});
+  const arr = Array.isArray(usersArr) ? usersArr : [];
+  counts.all = arr.length;
+
+  arr.forEach((u) => {
+    const k = getTierKey(u);
+    if (!k || k === "all") return;
+    counts[k] = (counts[k] || 0) + 1;
+  });
+  return counts;
+};
+
+const getMetaByKey = (key) => {
+  const label = tierTabs.find((t) => t.key === key)?.label || key;
+  switch (key) {
+    case "app":
+      return { key, label, color: "#000" };
+    case "recommended":
+      return { key, label, color: "#ff0000" };
+    case "sub_red":
+      return { key, label, color: "#ff2e2e" };
+    case "verified":
+      return { key, label, color: "#54afff" };
+    case "sub_green":
+      return { key, label, color: "#3bce0f" };
+    default:
+      return { key: "regular", label: label || "Otros", color: "grey" };
+  }
+};
+const PROFILE_LIKE_IMPORTANCE = ["app", "recommended", "verified", "sub_red", "sub_green", "regular"];
+
 const ReelsPCH = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
   const reduxUser = useSelector((s) => s.auth.user);
   const loggedUserId = reduxUser?.id ?? reduxUser?.user?.id ?? null;
+
+  // ✅ Likes del PERFIL (cache por perfilId) — DENTRO del componente
+const [profileLikesById, setProfileLikesById] = useState({});
+const profileLikesCacheRef = useRef({}); // evita re-fetch
+
+const fetchProfileLikesSummary = useCallback(async (perfilId) => {
+  if (!perfilId) return;
+
+  const cache = profileLikesCacheRef.current || {};
+  const existing = cache[perfilId];
+  if (existing?.status === "loading" || existing?.status === "ok") return;
+
+  profileLikesCacheRef.current = { ...cache, [perfilId]: { status: "loading" } };
+  setProfileLikesById((prev) => ({
+    ...(prev || {}),
+    [perfilId]: { status: "loading", total: prev?.[perfilId]?.total ?? null, counts: prev?.[perfilId]?.counts ?? null },
+  }));
+
+  try {
+    const { data } = await axios.get(`${API_BASE}/api/profiles/${perfilId}/likes/`, {
+      headers: getAuthHeaders(),
+    });
+
+    const normalized = normalizeUsersResponse(data);
+    const counts = makeTierCounts(normalized);
+
+    profileLikesCacheRef.current = { ...(profileLikesCacheRef.current || {}), [perfilId]: { status: "ok" } };
+    setProfileLikesById((prev) => ({
+      ...(prev || {}),
+      [perfilId]: { status: "ok", total: counts.all ?? 0, counts },
+    }));
+  } catch (err) {
+    console.error("fetchProfileLikesSummary error:", err?.response?.data || err);
+    profileLikesCacheRef.current = { ...(profileLikesCacheRef.current || {}), [perfilId]: { status: "error" } };
+    setProfileLikesById((prev) => ({
+      ...(prev || {}),
+      [perfilId]: { status: "error", total: prev?.[perfilId]?.total ?? 0, counts: prev?.[perfilId]?.counts ?? null },
+    }));
+  }
+}, [makeTierCounts]);
+
+// ✅ Resumen por TAREA: LIKES (tiers) — cache por taskId
+const [taskLikesById, setTaskLikesById] = useState({});
+const taskLikesCacheRef = useRef({});
+
+const fetchTaskLikesSummary = useCallback(async (taskId) => {
+  if (!taskId) return;
+
+  const cache = taskLikesCacheRef.current || {};
+  const existing = cache[taskId];
+  if (existing?.status === "loading" || existing?.status === "ok") return;
+
+  taskLikesCacheRef.current = { ...cache, [taskId]: { status: "loading" } };
+  setTaskLikesById((prev) => ({
+    ...(prev || {}),
+    [taskId]: {
+      status: "loading",
+      total: prev?.[taskId]?.total ?? null,
+      counts: prev?.[taskId]?.counts ?? null,
+    },
+  }));
+
+  try {
+    const { data } = await axios.get(`${API_BASE}/api/tasks/${taskId}/users_who_liked/`, {
+      headers: getAuthHeaders(),
+    });
+
+    const normalized = normalizeUsersResponse(data);
+    const counts = makeTierCounts(normalized);
+
+    taskLikesCacheRef.current = { ...(taskLikesCacheRef.current || {}), [taskId]: { status: "ok" } };
+    setTaskLikesById((prev) => ({
+      ...(prev || {}),
+      [taskId]: { status: "ok", total: counts.all ?? 0, counts },
+    }));
+  } catch (err) {
+    console.error("fetchTaskLikesSummary error:", err?.response?.data || err);
+    taskLikesCacheRef.current = { ...(taskLikesCacheRef.current || {}), [taskId]: { status: "error" } };
+    setTaskLikesById((prev) => ({
+      ...(prev || {}),
+      [taskId]: { status: "error", total: prev?.[taskId]?.total ?? 0, counts: prev?.[taskId]?.counts ?? null },
+    }));
+  }
+}, []);
+
+// ✅ Resumen por TAREA: SHARES (tiers) — cache por taskId
+const [taskSharesById, setTaskSharesById] = useState({});
+const taskSharesCacheRef = useRef({});
+
+const fetchTaskSharesSummary = useCallback(async (taskId) => {
+  if (!taskId) return;
+
+  const cache = taskSharesCacheRef.current || {};
+  const existing = cache[taskId];
+  if (existing?.status === "loading" || existing?.status === "ok") return;
+
+  taskSharesCacheRef.current = { ...cache, [taskId]: { status: "loading" } };
+  setTaskSharesById((prev) => ({
+    ...(prev || {}),
+    [taskId]: {
+      status: "loading",
+      total: prev?.[taskId]?.total ?? null,
+      counts: prev?.[taskId]?.counts ?? null,
+    },
+  }));
+
+  try {
+    const { data } = await axios.get(`${API_BASE}/api/tasks/${taskId}/shared-users/`, {
+      headers: getAuthHeaders(),
+    });
+
+    const normalized = normalizeUsersResponse(data);
+    const counts = makeTierCounts(normalized);
+
+    taskSharesCacheRef.current = { ...(taskSharesCacheRef.current || {}), [taskId]: { status: "ok" } };
+    setTaskSharesById((prev) => ({
+      ...(prev || {}),
+      [taskId]: { status: "ok", total: counts.all ?? 0, counts },
+    }));
+  } catch (err) {
+    console.error("fetchTaskSharesSummary error:", err?.response?.data || err);
+    taskSharesCacheRef.current = { ...(taskSharesCacheRef.current || {}), [taskId]: { status: "error" } };
+    setTaskSharesById((prev) => ({
+      ...(prev || {}),
+      [taskId]: { status: "error", total: prev?.[taskId]?.total ?? 0, counts: prev?.[taskId]?.counts ?? null },
+    }));
+  }
+}, []);
+
+
 
   // =========================
   // ✅ FILTROS / CATEGORÍAS
@@ -565,6 +731,54 @@ const pauseAndSelect = useCallback((taskId, idx) => {
     paused: true,
   }));
 }, []);
+// ✅ Modal: usuarios que dieron like al PERFIL (con TierTabs)
+const [isProfileLikesModalOpen, setIsProfileLikesModalOpen] = useState(false);
+const [profileLikeUsers, setProfileLikeUsers] = useState([]);
+const [profileLikesModalFilter, setProfileLikesModalFilter] = useState("all");
+
+const openProfileLikesModal = useCallback(async (perfilId) => {
+  if (!perfilId) return;
+
+  try {
+    const { data } = await axios.get(`${API_BASE}/api/profiles/${perfilId}/likes/`, {
+      headers: getAuthHeaders(),
+    });
+
+    setProfileLikesModalFilter("all");
+    setProfileLikeUsers(normalizeUsersResponse(data));
+    setIsProfileLikesModalOpen(true);
+  } catch (err) {
+    console.error("openProfileLikesModal error:", err?.response?.data || err);
+    setProfileLikesModalFilter("all");
+    setProfileLikeUsers([]);
+    setIsProfileLikesModalOpen(true);
+  }
+}, []);
+
+const profileLikesCounts = useMemo(() => {
+  const counts = (tierTabs || []).reduce((acc, t) => {
+    acc[t.key] = 0;
+    return acc;
+  }, {});
+
+  const arr = Array.isArray(profileLikeUsers) ? profileLikeUsers : [];
+  counts.all = arr.length;
+
+  arr.forEach((u) => {
+    const k = getTierKey(u);
+    if (!k || k === "all") return;
+    counts[k] = (counts[k] || 0) + 1;
+  });
+
+  return counts;
+}, [profileLikeUsers]);
+
+const profileLikeUsersFiltered = useMemo(() => {
+  const arr = Array.isArray(profileLikeUsers) ? profileLikeUsers : [];
+  if (profileLikesModalFilter === "all") return arr;
+  return arr.filter((u) => getTierKey(u) === profileLikesModalFilter);
+}, [profileLikeUsers, profileLikesModalFilter]);
+
 
 const [likesModalFilter, setLikesModalFilter] = useState("all");
 const [sharedModalFilter, setSharedModalFilter] = useState("all");
@@ -943,6 +1157,31 @@ const navigateToUserForum = useCallback(
     soloFavoritosTareas,
     pchFavoritos,
   ]);
+
+  useEffect(() => {
+  const t = reels?.[activeIndex];
+  const pid = getTaskUserId(t);
+  if (pid) fetchProfileLikesSummary(pid);
+
+  const next = reels?.[activeIndex + 1];
+  const pid2 = getTaskUserId(next);
+  if (pid2) fetchProfileLikesSummary(pid2);
+}, [reels, activeIndex, fetchProfileLikesSummary]);
+
+
+useEffect(() => {
+  const cur = reels?.[activeIndex];
+  const next = reels?.[activeIndex + 1];
+
+  if (cur?.id) {
+    fetchTaskLikesSummary(cur.id);
+    fetchTaskSharesSummary(cur.id);
+  }
+  if (next?.id) {
+    fetchTaskLikesSummary(next.id);
+    fetchTaskSharesSummary(next.id);
+  }
+}, [reels, activeIndex, fetchTaskLikesSummary, fetchTaskSharesSummary]);
 
   const activeTaskId = reels?.[activeIndex]?.id ?? null;
   const uiSuppressedActive = isUiSuppressedFor(activeTaskId);
@@ -1601,30 +1840,28 @@ const openSharedUsersModal = async (taskId) => {
 
             const videoUrl = entry?.src ? toSrc(entry.src) : toSrc(t._anyVideo);
             const avatar = t.user_image ? toSrc(t.user_image) : null;
-
             // ✅ shared info
             const sharedByInfo = getSharedByInfo(t);
             const sharedByName = sharedByInfo?.name || null;
             const sharedByDesc = sharedByInfo?.description || null;
-
-            // ✅ notificación de descripción (1) antes de seleccionar
             const sharedBadgeCount = sharedByDesc ? 1 : 0;
 const sharedByAvatar = getSharedByAvatarSrc(t);
-
-            // (lo dejo tal cual tu lógica, aunque no lo uses)
             const isPausedSelectedThis =
               isSelected && playerState?.id === t.id && !!playerState?.paused;
-
             const counterLabel = list.length ? `${eff.pos + 1}/${list.length}` : "—";
             const viewLabel = getViewLabel(eff.mode, tema);
-
             const perfilId = getTaskUserId(t);
+const profLike = perfilId ? profileLikesById?.[perfilId] : null;
+const totalPerfilLikes =
+  profLike?.status === "loading" && profLike?.total == null ? null : (profLike?.total ?? 0);
+const isPausedThis =
+  isSelected && playerState?.id === t.id && !!playerState?.paused;
             const isFav = perfilId ? !!favUsers[perfilId] : false;
-            // const flashing = perfilId ? !!favFlash[perfilId] : false;
-
             const ownerUserId = t?.user?.id ?? t?.user_id ?? t?.user ?? null;
-
             const suppressedThisReel = isUiSuppressedFor(t.id);
+            const taskLike = taskLikesById?.[t.id] || null;
+const taskShare = taskSharesById?.[t.id] || null;
+
 
             return (
               <section
@@ -1823,42 +2060,85 @@ const sharedByAvatar = getSharedByAvatarSrc(t);
                     </div>
 
                     <div className="reel-right">
-                      <button
-                        className="reel-profile-btn"
-                        type="button"
-                        title={t.username || "usuario"}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleProfileFavorite(t);
-                        }}
-                      >
-                        <div className="reel-avatar reel-avatar--right reel-avatar-clickable">
-                          <div className="reel-avatar-inner">
-                            {avatar ? (
-                              <img
-                                src={avatar}
-                                alt={t.username || "usuario"}
-                                onError={(e) => {
-                                  e.currentTarget.onerror = null;
-                                  e.currentTarget.src = "/placeholder.png";
-                                }}
-                              />
-                            ) : (
-                              <div className="reel-avatar-fallback">
-                                <FontAwesomeIcon icon={faUser} />
-                              </div>
-                            )}
-                          </div>
+<button
+  className="reel-profile-btn"
+  type="button"
+  title="Ver usuarios que dieron like al perfil"
+  onClick={(e) => {
+    e.stopPropagation();
+    if (perfilId) openProfileLikesModal(perfilId);
+  }}
+>
+  <div className="reel-avatar reel-avatar--right reel-avatar-clickable">
+    <div className="reel-avatar-inner">
+      {avatar ? (
+        <img
+          src={avatar}
+          alt={t.username || "usuario"}
+          onError={(e) => {
+            e.currentTarget.onerror = null;
+            e.currentTarget.src = "/placeholder.png";
+          }}
+        />
+      ) : (
+        <div className="reel-avatar-fallback">
+          <FontAwesomeIcon icon={faUser} />
+        </div>
+      )}
+    </div>
 
-             {perfilId && !isFav ? (
-  <div className="reel-avatar-heart reel-avatar-heart--idle">
-    <FontAwesomeIcon icon={faHeart} />
+    {/* ✅ Favorito: click SOLO aquí (no abre modal) */}
+    <span
+      className="reel-profile-favbtn"
+      title={isFav ? "Quitar de favoritos" : "Agregar a favoritos"}
+      role="button"
+      tabIndex={0}
+      onClick={(e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        toggleProfileFavorite(t);
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          e.stopPropagation();
+          toggleProfileFavorite(t);
+        }
+      }}
+    >
+      <FontAwesomeIcon icon={faHeart} style={{ color: isFav ? "#54afff" : "#fff" }} />
+    </span>
   </div>
-) : null}
+
+  {/* ✅ TOTAL de likes del PERFIL (siempre visible) */}
+  <div className="reel-profile-likecount">
+    {totalPerfilLikes == null ? "…" : totalPerfilLikes}
+  </div>
+
+  {/* ✅ Dígitos por categoría: SOLO cuando está pausado y SOLO si n > 0 */}
+  {isPausedThis && profLike?.status === "ok" && profLike?.counts && (
+    <div className="reel-profile-likedigits">
+      {PROFILE_LIKE_IMPORTANCE.map((key) => {
+        const n = profLike.counts?.[key] ?? 0;
+        if (!n) return null; // ✅ si no hay likes en esa categoría, NO aparece
+
+        const meta = getMetaByKey(key);
+        return (
+          <span
+            key={`mini-${perfilId}-${key}`}
+            className="reel-profile-likedigit"
+            style={{ color: meta.color }}
+            title={meta.label}
+          >
+            {n}
+          </span>
+        );
+      })}
+    </div>
+  )}
+</button>
 
 
-                        </div>
-                      </button>
 
                       <button
                         className="reel-action"
@@ -1877,28 +2157,66 @@ const sharedByAvatar = getSharedByAvatarSrc(t);
                       </button>
 
                       <button
-                        className="reel-action"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleTaskLike(t);
-                        }}
-                        title="Me gusta"
-                      >
-                        <FontAwesomeIcon
-                          icon={faHeart}
-                          className={`reel-action-icon ${t.userHasLiked ? "liked" : ""}`}
-                        />
-                        <div
-                          className="reel-action-count"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            openLikesModal(t.id);
-                          }}
-                          title="Ver usuarios que dieron like"
-                        >
-                          {t.likes_count ?? 0}
-                        </div>
-                      </button>
+  className="reel-action reel-action--likes"
+  type="button"
+  title="Ver usuarios que dieron like"
+  onClick={(e) => {
+    e.stopPropagation();
+    openLikesModal(t.id);
+    fetchTaskLikesSummary(t.id); // asegura digits
+  }}
+>
+  {/* ✅ Toggle like SOLO en el ícono */}
+  <span
+    className="reel-action-iconbtn"
+    role="button"
+    tabIndex={0}
+    title={t.userHasLiked ? "Quitar me gusta" : "Dar me gusta"}
+    onClick={(e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      toggleTaskLike(t);
+    }}
+    onKeyDown={(e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleTaskLike(t);
+      }
+    }}
+  >
+    <FontAwesomeIcon
+      icon={faHeart}
+      className={`reel-action-icon ${t.userHasLiked ? "liked" : ""}`}
+    />
+  </span>
+
+  {/* ✅ Total siempre visible */}
+  <div className="reel-action-count">{t.likes_count ?? 0}</div>
+
+  {/* ✅ Dígitos por categoría: SOLO pausado, SOLO n>0 */}
+  {isPausedThis && taskLike?.status === "ok" && taskLike?.counts && (
+    <div className="reel-action-digits">
+      {PROFILE_LIKE_IMPORTANCE.map((key) => {
+        const n = taskLike.counts?.[key] ?? 0;
+        if (!n) return null;
+
+        const meta = getMetaByKey(key);
+        return (
+          <span
+            key={`tl-${t.id}-${key}`}
+            className="reel-action-digit"
+            style={{ color: meta.color }}
+            title={meta.label}
+          >
+            {n}
+          </span>
+        );
+      })}
+    </div>
+  )}
+</button>
+
 
                       <button
                         className="reel-action"
@@ -1909,29 +2227,67 @@ const sharedByAvatar = getSharedByAvatarSrc(t);
                         title="Responder"
                       >
                         <FontAwesomeIcon icon={faReply} className="reel-action-icon" />
-                        <div className="reel-action-label">Responder</div>
+                        {/* <div className="reel-action-label">Responder</div> */}
                       </button>
 
                       <button
-                        className="reel-action"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openShareModal(t);
-                        }}
-                        title="Compartir"
-                      >
-                        <FontAwesomeIcon icon={faArrowRight} className="reel-action-icon" />
-                        <div
-                          className="reel-action-count"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            openSharedUsersModal(t.id);
-                          }}
-                          title="Ver usuarios que compartieron"
-                        >
-                          {t.share_count ?? 0}
-                        </div>
-                      </button>
+  className="reel-action reel-action--share"
+  type="button"
+  title="Ver usuarios que compartieron"
+  onClick={(e) => {
+    e.stopPropagation();
+    openSharedUsersModal(t.id);
+    fetchTaskSharesSummary(t.id); // asegura digits
+  }}
+>
+  {/* ✅ Compartir SOLO en el ícono */}
+  <span
+    className="reel-action-iconbtn"
+    role="button"
+    tabIndex={0}
+    title="Compartir"
+    onClick={(e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      openShareModal(t);
+    }}
+    onKeyDown={(e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        e.stopPropagation();
+        openShareModal(t);
+      }
+    }}
+  >
+    <FontAwesomeIcon icon={faArrowRight} className="reel-action-icon" />
+  </span>
+
+  {/* ✅ Total siempre visible */}
+  <div className="reel-action-count">{t.share_count ?? 0}</div>
+
+  {/* ✅ Dígitos por categoría: SOLO pausado, SOLO n>0 */}
+  {isPausedThis && taskShare?.status === "ok" && taskShare?.counts && (
+    <div className="reel-action-digits">
+      {PROFILE_LIKE_IMPORTANCE.map((key) => {
+        const n = taskShare.counts?.[key] ?? 0;
+        if (!n) return null;
+
+        const meta = getMetaByKey(key);
+        return (
+          <span
+            key={`ts-${t.id}-${key}`}
+            className="reel-action-digit"
+            style={{ color: meta.color }}
+            title={meta.label}
+          >
+            {n}
+          </span>
+        );
+      })}
+    </div>
+  )}
+</button>
+
 
                       <button
                         className="reel-action"
@@ -1946,7 +2302,7 @@ const sharedByAvatar = getSharedByAvatarSrc(t);
                           className="reel-action-icon"
                           style={{ color: pchFavoritos.includes(t.id) ? "#54afff" : undefined }}
                         />
-                        <div className="reel-action-label">Guardar</div>
+                        {/* <div className="reel-action-label">Guardar</div> */}
                       </button>
 
                       <div
@@ -2218,6 +2574,49 @@ const sharedByAvatar = getSharedByAvatarSrc(t);
     Cerrar
   </button>
 </Modal>
+
+<Modal
+  isOpen={isProfileLikesModalOpen}
+  onRequestClose={() => setIsProfileLikesModalOpen(false)}
+  contentLabel="Usuarios que dieron like al perfil"
+  className="users-modal"
+  overlayClassName="users-modal-overlay"
+>
+  <TierTabs
+    tabs={tierTabs}
+    counts={profileLikesCounts}
+    activeKey={profileLikesModalFilter}
+    onChange={setProfileLikesModalFilter}
+  />
+
+  <ul className="users-modal__list">
+    {(profileLikeUsersFiltered || []).map((u, i) => {
+      const meta = getTierMeta(u);
+      const avatar = getUserAvatarSrc(u);
+      const badge = meta.key !== "regular" ? meta.label : null;
+
+      return (
+        <UserRow
+          key={`profile-like-${u.id ?? u.username}-${i}`}
+          avatarSrc={avatar}
+          username={u.username}
+          badgeLabel={badge}
+          right={
+            <>
+              <span className="user-row__count">{u.likes_count ?? 0}</span>
+              <FontAwesomeIcon icon={faHeart} style={{ color: meta.color }} />
+            </>
+          }
+        />
+      );
+    })}
+  </ul>
+
+  <button type="button" onClick={() => setIsProfileLikesModalOpen(false)}>
+    Cerrar
+  </button>
+</Modal>
+
 
 
 
