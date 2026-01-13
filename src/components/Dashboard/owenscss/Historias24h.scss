@@ -1,0 +1,653 @@
+/* src/components/Dashboard/owenscss/Historias24h.scss */
+
+/* =========================
+   Variables / base
+   ========================= */
+:root {
+  --stories-bg: #000;
+  --stories-fg: #fff;
+  --stories-accent: #54afff;  /* azul */
+  --stories-accent2: #3bce0f; /* verde */
+  --stories-danger: #ff2e2e;
+  --stories-muted: rgba(255, 255, 255, 0.65);
+  --stories-border: rgba(255, 255, 255, 0.14);
+  --stories-glass: rgba(0, 0, 0, 0.55);
+  --stories-shadow: 0 10px 26px rgba(0, 0, 0, 0.45);
+}
+
+.stories24-root {
+  min-height: 100vh;
+  background: var(--stories-bg);
+  color: var(--stories-fg);
+  display: flex;
+  flex-direction: column;
+}
+
+/* =========================
+   Top bar
+   ========================= */
+.stories24-top {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: calc(10px + env(safe-area-inset-top)) 12px 10px 12px;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--stories-border);
+}
+
+.stories24-title {
+  flex: 1;
+  text-align: center;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+}
+
+.stories24-back,
+.stories24-refresh {
+  background: transparent;
+  border: none;
+  color: var(--stories-fg);
+  cursor: pointer;
+  font-size: 18px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  transition: transform 120ms ease, background 120ms ease;
+
+  &:active {
+    transform: scale(0.98);
+  }
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.06);
+  }
+}
+
+/* =========================
+   Strip (bubbles)
+   ========================= */
+.stories24-strip {
+  display: flex;
+  gap: 14px;
+  padding: 14px 12px 10px 12px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.22) transparent;
+
+  &::-webkit-scrollbar {
+    height: 8px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.18);
+    border-radius: 999px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+.stories24-bubble {
+  background: transparent;
+  border: none;
+  color: var(--stories-fg);
+  cursor: pointer;
+  width: 78px;
+  flex: 0 0 auto;
+  padding: 0;
+  text-align: center;
+  transition: transform 140ms ease;
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+.stories24-bubble-avatar {
+  position: relative;
+  width: 66px;
+  height: 66px;
+  border-radius: 999px;
+  margin: 0 auto 6px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.08);
+
+  /* aro gradient tipo story */
+  &::before {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    border-radius: 999px;
+    background: conic-gradient(
+      from 180deg,
+      #54afff,
+      #ff2e2e,
+      #3bce0f,
+      #54afff
+    );
+    filter: saturate(1.05);
+    z-index: 0;
+  }
+
+  /* “hueco” para que el aro no tape la imagen */
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 2px;
+    border-radius: 999px;
+    background: var(--stories-bg);
+    z-index: 1;
+  }
+
+  img {
+    position: relative;
+    z-index: 2;
+    width: calc(100% - 8px);
+    height: calc(100% - 8px);
+    border-radius: 999px;
+    object-fit: cover;
+  }
+}
+
+.stories24-bubble-fallback {
+  position: relative;
+  z-index: 2;
+  width: calc(100% - 8px);
+  height: calc(100% - 8px);
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.10);
+  font-size: 18px;
+}
+
+.stories24-bubble.is-me .stories24-bubble-avatar::before {
+  background: conic-gradient(from 180deg, #3bce0f, #54afff, #3bce0f);
+}
+
+.stories24-bubble-name {
+  display: block;
+  font-size: 12px;
+  line-height: 1.1;
+  color: rgba(255, 255, 255, 0.92);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* =========================
+   Empty / loading states
+   ========================= */
+.stories24-empty {
+  padding: 26px 14px;
+  text-align: center;
+}
+
+.stories24-empty-title {
+  font-weight: 800;
+  font-size: 16px;
+  margin-bottom: 8px;
+}
+
+.stories24-empty-sub {
+  font-size: 13px;
+  color: var(--stories-muted);
+}
+
+.stories24-loading {
+  padding: 10px 12px 18px;
+  font-size: 13px;
+  color: var(--stories-muted);
+}
+
+/* =========================
+   Viewer modal
+   ========================= */
+.stories24-viewer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.92);
+  z-index: 9999;
+}
+
+.stories24-viewer {
+  position: fixed;
+  inset: 0;
+  outline: none;
+  background: var(--stories-bg);
+  color: var(--stories-fg);
+}
+
+.stories24-viewer-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: pan-y;
+}
+
+/* =========================
+   Progress (segments)
+   ========================= */
+.stories24-progress {
+  position: absolute;
+  top: calc(10px + env(safe-area-inset-top));
+  left: 10px;
+  right: 10px;
+  z-index: 20;
+  display: flex;
+  gap: 6px;
+  pointer-events: none;
+}
+
+.stories24-progress-seg {
+  height: 3px;
+  background: rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+  overflow: hidden;
+  flex: 1;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35) inset;
+}
+
+.stories24-progress-fill {
+  height: 100%;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.98);
+  transform-origin: left center;
+  transform: scaleX(0);
+}
+
+/* =========================
+   Header inside viewer
+   ========================= */
+.stories24-header {
+  position: absolute;
+  top: calc(20px + env(safe-area-inset-top));
+  left: 10px;
+  right: 10px;
+  z-index: 25;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.stories24-close,
+.stories24-mute,
+.stories24-more {
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: var(--stories-fg);
+  cursor: pointer;
+  padding: 10px 12px;
+  border-radius: 14px;
+  transition: transform 120ms ease, background 120ms ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.06);
+  }
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+.stories24-user {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 16px;
+  padding: 8px 10px;
+  box-shadow: var(--stories-shadow);
+}
+
+.stories24-user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.10);
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.stories24-user-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.stories24-user-name {
+  font-weight: 800;
+  font-size: 13px;
+}
+
+.stories24-user-time {
+  font-size: 12px;
+  color: var(--stories-muted);
+}
+
+.stories24-header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* =========================
+   Media stage
+   ========================= */
+.stories24-media {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: #000;
+}
+
+.stories24-video,
+.stories24-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.stories24-image {
+  /* si quieres un look más “premium” para fotos */
+  filter: contrast(1.02) saturate(1.02);
+}
+
+/* =========================
+   Tap zones (left/right)
+   ========================= */
+.stories24-nav-hints {
+  position: absolute;
+  inset: 0;
+  z-index: 5; /* debajo de header/foot */
+  display: flex;
+}
+
+.stories24-nav-left,
+.stories24-nav-right {
+  flex: 1;
+}
+
+/* =========================
+   Footer actions
+   ========================= */
+.stories24-footer {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: calc(14px + env(safe-area-inset-bottom));
+  z-index: 25;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.stories24-actions-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.stories24-like,
+.stories24-reply,
+.stories24-share,
+.stories24-save,
+.stories24-play {
+  background: rgba(0, 0, 0, 0.40);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: var(--stories-fg);
+  padding: 10px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: var(--stories-shadow);
+  transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.06);
+  }
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+.stories24-like.liked {
+  border-color: var(--stories-accent);
+}
+
+.stories24-count {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+/* =========================
+   Viewer loading state
+   ========================= */
+.stories24-viewer-loading {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  color: var(--stories-muted);
+}
+
+/* =========================
+   Ajustes MUI Menu dentro de viewer
+   ========================= */
+.MuiMenu-paper {
+  background: rgba(15, 15, 15, 0.95) !important;
+  color: #fff !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  backdrop-filter: blur(12px);
+}
+
+.MuiMenuItem-root {
+  font-size: 13px !important;
+}
+
+/* =========================
+   Responsive tweaks
+   ========================= */
+@media (max-width: 420px) {
+  .stories24-bubble {
+    width: 72px;
+  }
+
+  .stories24-bubble-avatar {
+    width: 62px;
+    height: 62px;
+  }
+
+  .stories24-like,
+  .stories24-reply,
+  .stories24-share,
+  .stories24-save,
+  .stories24-play {
+    padding: 9px 11px;
+  }
+}
+
+/* =========================
+   ✅ Botón "Tu historia" (+)
+   ========================= */
+.stories24-add-avatar {
+  display: grid;
+  place-items: center;
+}
+
+.stories24-add-plus {
+  position: relative;
+  z-index: 2;
+  width: calc(100% - 8px);
+  height: calc(100% - 8px);
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.10);
+  font-size: 18px;
+}
+
+.stories24-add .stories24-bubble-name {
+  color: rgba(255, 255, 255, 0.92);
+}
+
+/* =========================
+   ✅ Upload Modal
+   ========================= */
+.stories24-upload-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.85);
+  z-index: 10000;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+}
+
+.stories24-upload-modal {
+  width: min(560px, 100%);
+  background: rgba(12,12,12,.96);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 18px;
+  color: #fff;
+  outline: none;
+  box-shadow: 0 20px 55px rgba(0,0,0,.55);
+  overflow: hidden;
+}
+
+.stories24-upload-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 14px;
+  border-bottom: 1px solid rgba(255,255,255,.10);
+}
+
+.stories24-upload-title {
+  font-weight: 800;
+  font-size: 14px;
+}
+
+.stories24-upload-close {
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.12);
+  color: #fff;
+  border-radius: 12px;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
+.stories24-upload-body {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.stories24-upload-pick input[type="file"] {
+  width: 100%;
+  color: rgba(255,255,255,.9);
+}
+
+.stories24-upload-preview {
+  width: 100%;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.12);
+  background: #000;
+
+  img,
+  video {
+    width: 100%;
+    max-height: 52vh;
+    object-fit: cover;
+    display: block;
+  }
+}
+
+.stories24-upload-placeholder {
+  border: 1px dashed rgba(255,255,255,.18);
+  border-radius: 14px;
+  padding: 16px;
+  color: rgba(255,255,255,.65);
+  text-align: center;
+}
+
+.stories24-upload-caption {
+  width: 100%;
+  resize: none;
+  border-radius: 14px;
+  padding: 12px 12px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(0,0,0,.35);
+  color: #fff;
+  outline: none;
+
+  &:focus {
+    border-color: rgba(84,175,255,.6);
+  }
+}
+
+.stories24-upload-error {
+  color: #ffb0b0;
+  font-size: 13px;
+  border: 1px solid rgba(255,46,46,.35);
+  background: rgba(255,46,46,.10);
+  border-radius: 14px;
+  padding: 10px 12px;
+}
+
+.stories24-upload-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  padding: 14px;
+  border-top: 1px solid rgba(255,255,255,.10);
+}
+
+.stories24-upload-btn {
+  border-radius: 999px;
+  padding: 10px 14px;
+  border: 1px solid rgba(255,255,255,.14);
+  cursor: pointer;
+  color: #fff;
+  background: rgba(255,255,255,.06);
+
+  &:disabled {
+    opacity: .55;
+    cursor: not-allowed;
+  }
+}
+
+.stories24-upload-submit {
+  border-color: rgba(84,175,255,.45);
+  background: rgba(84,175,255,.18);
+}
+
+.stories24-upload-cancel {
+  background: rgba(255,255,255,.05);
+}
+.stories24-bubble-avatar {
+  position: relative; // ya lo tienes
+  isolation: isolate; // ✅ fuerza stacking context limpio
+}
+.stories24-bubble-avatar { isolation: isolate; }

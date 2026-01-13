@@ -45,6 +45,7 @@ import NewPeticionPost from "./traductor/newforum/newpeticionpost";
 
 import RequireAdmin from "../HOC/requireAdmin";
 import ReelsPCH from "./traductor/ReelsPCH";
+import Historias24h from "./traductor/Historias24h";
 
 const AuthLinks = () => {
   const [usuarioName, setUsuarioName] = useState("");
@@ -67,6 +68,14 @@ const AuthLinks = () => {
       <Route path="home" element={<DashboardHome />} />
       <Route path="calendar" element={<Calendar />} />
 
+
+
+
+
+
+
+
+
       {/* Traductor */}
       <Route
         path="peticiones"
@@ -81,8 +90,14 @@ const AuthLinks = () => {
       />
 
       <Route path="direcmassaging/:userId" element={<DirectMessaging />} />
-
 <Route path="reels" element={<ReelsPCH />} />
+<Route path="historias24h" element={<Historias24h />} />
+
+
+
+
+
+
 
       {/* Blog */}
       <Route path="blog" element={<Blog />} />
