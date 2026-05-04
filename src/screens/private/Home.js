@@ -23,6 +23,8 @@ export default class HomePrivate extends Component {
       activeSlider: 1,
       defaultAlreadyChecked: true,
       blogs: [],
+      isLoading: true,
+      error: null,
     };
   }
 
@@ -55,9 +57,14 @@ export default class HomePrivate extends Component {
   };
 
   getLatestBlogs = () => {
-    Axios.get("http://localhost:8000/api/landing/").then((response) => {
-      this.setState({ ...response.data });
-    });
+    Axios.get("http://localhost:8000/api/landing/")
+      .then((response) => {
+        this.setState({ ...response.data, isLoading: false, error: null });
+      })
+      .catch((error) => {
+        console.error("[HomePrivate] /api/landing/ failed:", error);
+        this.setState({ isLoading: false, error: error.message || "Failed to load landing posts" });
+      });
   };
 
   componentDidMount() {
@@ -114,9 +121,11 @@ export default class HomePrivate extends Component {
           className="landing-blog-container"
           style={{ backgroundImage: `url(${backgroundImageUrl})` }}
         >
-          <div className="landing-blog-header">Recent Posts</div>
+          <div className="landing-blog-header">Entradas recientes</div>
 
-          {this.blogSquareMaker()}
+          {this.state.isLoading && <div className="loading">Cargando publicaciones...</div>}
+          {this.state.error && <div className="error">Error: {this.state.error}</div>}
+          {!this.state.isLoading && !this.state.error && this.blogSquareMaker()}
         </div>
 
         <img
